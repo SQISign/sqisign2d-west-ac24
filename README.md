@@ -1,4 +1,4 @@
-# SQIsignHD
+# SQIsign_dim2
 
 This library is a C implementation of SQIsign_dim2
 It uses the base code of SQIsign and SQIsignHD (sqisign.org)
