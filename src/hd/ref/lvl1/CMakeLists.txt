@@ -1,6 +1,7 @@
 set(SOURCE_FILES_HD_${SVARIANT_UPPER}_REF
     ${HDX_DIR}/hd.c
     ${HDX_DIR}/theta_structure.c 
+    ${HDX_DIR}/theta_isogenies.c 
 )
 
 add_library(${LIB_HD_${SVARIANT_UPPER}} ${SOURCE_FILES_HD_${SVARIANT_UPPER}_REF})

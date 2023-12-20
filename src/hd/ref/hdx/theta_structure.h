@@ -11,6 +11,31 @@
 #ifndef THETA_STRUCTURE_H
 #define THETA_STRUCTURE_H
 
+
+/** @brief Type for couple point * 
+ * @typedef theta_couple_point_t
+ *
+ * @struct theta_couple_point
+ * 
+ * the  theta_couple_point structure   
+*/
+typedef struct theta_couple_point {  
+    ec_point_t P1;
+    ec_point_t P2;
+} theta_couple_point_t;
+
+/** @brief Type for couple curve * 
+ * @typedef theta_couple_curve_t
+ *
+ * @struct theta_couple_curve
+ * 
+ * the  theta_couple_curve structure   
+*/
+typedef struct theta_couple_curve {  
+    ec_curve_t E1;
+    ec_curve_t E2;
+} theta_couple_curve_t;
+
 /** @brief Type for theta point * 
  * @typedef theta_point_t
  *
@@ -48,7 +73,17 @@ typedef struct theta_structure {
 /*************************** Functions *****************************/
 
 
-
+/**
+ * @brief Compute the double of the theta couple point in on the elliptic product E12
+ *
+ * @param out Output: the theta_couple_point 
+ * @param E12 an elliptic product
+ * @param in the theta couple point in the elliptic product   
+ * in = (P1,P2)
+ * out = [2] (P1,P2)
+ *  
+   */
+void double_couple_point(theta_couple_point_t *out,const theta_couple_curve_t *A,const theta_couple_point_t *in);
 
 /**
  * @brief Perform the hadamard transform on a theta point
