@@ -1,4 +1,5 @@
 #include "theta_structure.h"
+#include <assert.h>
 
 
 /**
@@ -15,6 +16,23 @@ void double_couple_point(theta_couple_point_t *out,const theta_couple_curve_t *A
     ec_dbl(&out->P1,&A->E1,&in->P1);
     ec_dbl(&out->P2,&A->E2,&in->P2);
 }
+
+/**
+ * @brief Compute the addition of theta couple points in the elliptic product E12
+ *
+ * @param out Output: the theta_couple_point 
+ * @param E12 an elliptic product
+ * @param T1 a theta couple point in the elliptic product 
+ * @param T2 a theta couple point in the elliptic product   
+ * T1 = (P1,P2) T2 = (Q1,Q2)
+ * out = (P1+Q1,P2+Q2)
+ *  
+   */
+void add_couple_point(theta_couple_point_t *out,const theta_couple_curve_t *A,const theta_couple_point_t *T1,const theta_couple_point_t *T2) {
+    // TODO : we need a lifting to use the addition ? 
+    assert(0);
+}
+
 
 /**
  * @brief Perform the hadamard transform on a theta point

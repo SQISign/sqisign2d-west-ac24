@@ -48,8 +48,9 @@ typedef struct theta_gluing {
     fp2_t M31;
     fp2_t M32;
     fp2_t M33;
-
-    theta_structure_t codomain;
+    int32_t zero_idx;
+    theta_point_t precomputation;
+    theta_point_t codomain;
 } theta_gluing_t;
 
 /*************************** Functions *****************************/
@@ -72,16 +73,14 @@ void gluing_comput(theta_gluing_t *out,const theta_couple_curve_t *E12,const the
  * @brief Evaluate a gluing isogeny from an elliptic product
  *
  * @param image Output: the theta_point of the image 
- * @param P1 : a point in E1 
- * @param E1 : an elliptic curve
- * @param P2 : a point in E2
- * @param E2 : an elliptic curve
+ * @param P : a couple point in E12 
+ * @param E12 : an elliptic product
  * @param phi : an isogeny E1 x E2 -> A 
  * 
  * out : phi( P1,P2 ) 
  *  
    */
-void gluing_eval(theta_point_t *image,const ec_point_t *P1,const ec_curve_t *E1,const ec_point_t *P2,const ec_curve_t *E2,theta_gluing_t *phi);
+void gluing_eval(theta_point_t *image,const theta_couple_point_t *P,const theta_couple_curve_t *E12, const theta_gluing_t *phi);
 
 
 #endif

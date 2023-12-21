@@ -1,7 +1,38 @@
 #include "theta_isogenies.h"
+#include <assert.h>
 
 
+void choose_index_theta_point(fp2_t *res,int ind, const theta_point_t *T) {
+    int t = ind%4;
+    if (t == 0) {
+        fp2_copy(res,&T->x);
+    }
+    else if (t==1) {
+        fp2_copy(res,&T->y);
+    }
+    else if (t==2) {
+        fp2_copy(res,&T->z);
+    }
+    else {
+        fp2_copy(res,&T->t);
+    }
+}
 
+void set_index_theta_point(theta_point_t *res,int ind, const fp2_t *val) {
+    int t = ind%4;
+    if (t == 0) {
+        fp2_copy(&res->x,val);
+    }
+    else if (t==1) {
+        fp2_copy(&res->y,val);
+    }
+    else if (t==2) {
+        fp2_copy(&res->z,val);
+    }
+    else {
+        fp2_copy(&res->t,val);
+    }
+}
 
 // TODO check that we computed the matrix the right way (and not the transpose)
 void get_matrix(fp2_t *a00,fp2_t *a01,fp2_t *a10,fp2_t *a11,const ec_point_t *P, const ec_curve_t *E) {
@@ -44,22 +75,76 @@ void get_matrix(fp2_t *a00,fp2_t *a01,fp2_t *a10,fp2_t *a11,const ec_point_t *P,
     fp2_neg(a01,a01);
 }
 
+// compute the theta_point corresponding to the couple of point T on an elliptic product
+void base_change( theta_point_t *out, const theta_gluing_t *phi, const theta_couple_point_t *T) {
+    fp2_t a,b,c,d,x1,x2;
+    if (fp2_is_zero(&T->P1.z) && fp2_is_zero(&T->P1.x)) {
+        fp2_set(&x1,1);       
+    }
+    else {
+        x1 = T->P1.x;
+    }
+    if (fp2_is_zero(&T->P2.z) && fp2_is_zero(&T->P2.x)) {
+        fp2_set(&x2,1);       
+    }
+    else {
+        x2 = T->P2.x;
+    }
+    // a = P1.x P2.x, b = P1.x P2.z, c =P1.z P2.x, d = P1.z P2.z  
+    fp2_mul(&a,&x1,&x2);
+    fp2_mul(&b,&x1,&T->P2.z);
+    fp2_mul(&c,&x2,&T->P1.z);
+    fp2_mul(&d,&T->P1.z,&T->P2.z);
+
+    // Apply the matrix
+    fp2_mul(&out->x,&a,&phi->M00);
+    fp2_mul(&x1,&b,&phi->M01);
+    fp2_add(&out->x,&out->x,&x1);
+    fp2_mul(&x1,&c,&phi->M02);
+    fp2_add(&out->x,&out->x,&x1);
+    fp2_mul(&x1,&d,&phi->M03);
+    fp2_add(&out->x,&out->x,&x1);
+
+    fp2_mul(&out->y,&a,&phi->M10);
+    fp2_mul(&x1,&b,&phi->M11);
+    fp2_add(&out->y,&out->y,&x1);
+    fp2_mul(&x1,&c,&phi->M12);
+    fp2_add(&out->y,&out->y,&x1);
+    fp2_mul(&x1,&d,&phi->M13);
+    fp2_add(&out->y,&out->y,&x1);
+
+    fp2_mul(&out->z,&a,&phi->M20);
+    fp2_mul(&x1,&b,&phi->M21);
+    fp2_add(&out->z,&out->z,&x1);
+    fp2_mul(&x1,&c,&phi->M22);
+    fp2_add(&out->z,&out->z,&x1);
+    fp2_mul(&x1,&d,&phi->M23);
+    fp2_add(&out->z,&out->z,&x1);
+
+    fp2_mul(&out->t,&a,&phi->M30);
+    fp2_mul(&x1,&b,&phi->M31);
+    fp2_add(&out->t,&out->t,&x1);
+    fp2_mul(&x1,&c,&phi->M32);
+    fp2_add(&out->t,&out->t,&x1);
+    fp2_mul(&x1,&d,&phi->M33);
+    fp2_add(&out->t,&out->t,&x1);
+
+
+
+}
 
 /**
  * @brief Compute the gluing isogeny from an elliptic product
  *
  * @param out Output: the theta_gluing 
  * @param K1_8 a couple point
- * @param L1_8 a point in E1[8]
- * @param E2 an elliptic curve
+ * @param E12 an elliptic curve product
  * @param K2_8 a point in E2[8]
- * @param L2_8 a point in E2[8]  
  * 
  * out : E1xE2 -> A of kernel [4](K1_8,K2_8) 
  *  
    */
-void gluing_comput(theta_gluing_t *out,const theta_couple_curve_t *E12,const theta_couple_point_t *K1_8,const theta_couple_point_t *K2_8)
-{
+void gluing_comput(theta_gluing_t *out,const theta_couple_curve_t *E12,const theta_couple_point_t *K1_8,const theta_couple_point_t *K2_8) {
 
     // var init
     fp2_t M1100;fp2_t M1101;fp2_t M1110;fp2_t M1111;
@@ -68,6 +153,7 @@ void gluing_comput(theta_gluing_t *out,const theta_couple_curve_t *E12,const the
     fp2_t M2200;fp2_t M2201;fp2_t M2210;fp2_t M2211;
     fp2_t t001,t101,t002,t102,temp;
     
+    theta_point_t TT1,TT2;
 
     // K1_4 = [2] K1_8  and K2_4 = [2] K2_8
     double_couple_point(&out->K1_4,E12,K1_8);
@@ -177,6 +263,118 @@ void gluing_comput(theta_gluing_t *out,const theta_couple_curve_t *E12,const the
     fp2_mul(&out->M33,&M1110,&out->M11);
     fp2_add(&out->M33,&out->M33,&temp);
 
-    
+    // apply the base change 
+    base_change(&out->T1_8,out,K1_8);
+    base_change(&out->T2_8,out,K2_8);
 
+    // computing the codomain 
+
+    // computation of the zero index
+    to_squared_theta(&TT1,&out->T1_8);
+    to_squared_theta(&TT2,&out->T2_8);
+
+    if (fp2_is_zero(&TT1.x)) { out->zero_idx = 0;}
+    else if (fp2_is_zero(&TT1.y)) {out->zero_idx = 1;}
+    else if (fp2_is_zero(&TT1.z)) {out->zero_idx = 2;}
+    else {out->zero_idx=3;}
+
+    #ifndef NDEBUG
+        fp2_t a1,a2;
+        choose_index_theta_point(&a1,out->zero_idx,&TT1);
+        choose_index_theta_point(&a2,out->zero_idx,&TT2);
+        assert(fp2_is_zero(&a1) && fp2_is_zero(&a2));
+    #endif 
+
+    choose_index_theta_point(&t001,1+out->zero_idx,&TT2);
+    choose_index_theta_point(&t002,2+out->zero_idx,&TT1);
+    choose_index_theta_point(&t101,3+out->zero_idx,&TT2);
+    choose_index_theta_point(&t102,3+out->zero_idx,&TT1);
+
+    fp2_t t1,t2,t3,t4;
+    t1 = t001;t2=t002;t3=t101;t4=t102;
+
+    // TODO batch inversion?
+    fp2_inv(&t001);fp2_inv(&t002);fp2_inv(&t102);fp2_inv(&t101);
+
+    // Compute A,B,C,D
+    fp2_set(&temp,0);
+    set_index_theta_point(&out->codomain,out->zero_idx,&temp);
+    fp2_mul(&temp,&t101,&t1);
+    set_index_theta_point(&out->codomain,1+out->zero_idx,&temp);
+    fp2_mul(&temp,&t2,&t102);
+    set_index_theta_point(&out->codomain,2+out->zero_idx,&temp);
+    fp2_set(&temp,1);
+    set_index_theta_point(&out->codomain,3+out->zero_idx,&temp);
+
+    // compute precomp 
+    fp2_set(&temp,0);
+    set_index_theta_point(&out->precomputation,out->zero_idx,&temp);
+    fp2_mul(&temp,&t001,&t3);
+    set_index_theta_point(&out->precomputation,1+out->zero_idx,&temp);
+    fp2_mul(&temp,&t4,&t002);
+    set_index_theta_point(&out->precomputation,2+out->zero_idx,&temp);
+    fp2_set(&temp,1);
+    set_index_theta_point(&out->precomputation,3+out->zero_idx,&temp);
+
+    // compute the final codomain 
+    hadamard(&out->codomain,&out->codomain);
+}
+
+void gluing_eval(theta_point_t *image,const theta_couple_point_t *P,const theta_couple_curve_t *E12, const theta_gluing_t *phi){
+    
+    theta_couple_point_t Pt;
+    theta_point_t T,Tt;
+
+    fp2_t x,y,z,t,temp;
+
+    // First we translate the point 
+    add_couple_point(&Pt,E12,P,&phi->K1_4);
+
+    // apply the basis change
+    base_change(&T,phi,P);
+    base_change(&Tt,phi,&Pt);
+
+    // apply the to_squared_theta transform
+    to_squared_theta(&T,&T);
+    to_squared_theta(&Tt,&Tt);
+
+    // compute y,z,t
+    choose_index_theta_point(&y,1+phi->zero_idx,&T);
+    choose_index_theta_point(&temp,1+phi->zero_idx,&phi->precomputation);
+    fp2_mul(&y,&y,&temp);
+    choose_index_theta_point(&z,2+phi->zero_idx,&T);
+    choose_index_theta_point(&temp,2+phi->zero_idx,&phi->precomputation);
+    fp2_mul(&z,&z,&temp);
+    choose_index_theta_point(&z,3+phi->zero_idx,&T);
+
+    //  normalize
+    if (!fp2_is_zero(&z)) {
+        fp2_copy(&x,&z);
+        choose_index_theta_point(&temp,3+phi->zero_idx,&Tt);
+        fp2_inv(&temp);
+        fp2_mul(&x,&x,&temp);
+    }
+    else {
+        choose_index_theta_point(&temp,2+phi->zero_idx,&Tt);
+        choose_index_theta_point(&x,2+phi->zero_idx,&phi->precomputation);
+        fp2_mul(&temp,&temp,&x);
+        fp2_inv(&temp);
+        fp2_copy(&x,&t);
+        fp2_mul(&x,&x,&temp);
+    }
+
+    // recover x
+    choose_index_theta_point(&temp,1+phi->zero_idx,&Tt);
+    fp2_mul(&x,&x,&temp);
+    choose_index_theta_point(&temp,1+phi->zero_idx,&phi->precomputation);
+    fp2_mul(&x,&x,&temp);
+
+    // fill the image coordinates 
+    set_index_theta_point(image,phi->zero_idx,&x);
+    set_index_theta_point(image,1+phi->zero_idx,&y);
+    set_index_theta_point(image,2+phi->zero_idx,&z);
+    set_index_theta_point(image,3+phi->zero_idx,&t);
+
+    // hadamard
+    hadamard(image,image);
 }
