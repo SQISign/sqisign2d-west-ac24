@@ -2,6 +2,21 @@
 
 
 /**
+ * @brief Compute the double of the theta couple point in on the elliptic product E12
+ *
+ * @param out Output: the theta_couple_point 
+ * @param E12 an elliptic product
+ * @param in the theta couple point in the elliptic product   
+ * in = (P1,P2)
+ * out = [2] (P1,P2)
+ *  
+   */
+void double_couple_point(theta_couple_point_t *out,const theta_couple_curve_t *A,const theta_couple_point_t *in) {
+    ec_dbl(&out->P1,&A->E1,&in->P1);
+    ec_dbl(&out->P2,&A->E2,&in->P2);
+}
+
+/**
  * @brief Perform the hadamard transform on a theta point
  *
  * @param out Output: the theta_point 

@@ -29,6 +29,26 @@ typedef struct theta_gluing {
     theta_point_t T1_8;
     theta_point_t T2_8;
 
+    fp2_t M00;
+    fp2_t M01;
+    fp2_t M02;
+    fp2_t M03;
+
+    fp2_t M10;
+    fp2_t M11;
+    fp2_t M12;
+    fp2_t M13;
+
+    fp2_t M20;
+    fp2_t M21;
+    fp2_t M22;
+    fp2_t M23;
+
+    fp2_t M30;
+    fp2_t M31;
+    fp2_t M32;
+    fp2_t M33;
+
     theta_structure_t codomain;
 } theta_gluing_t;
 
