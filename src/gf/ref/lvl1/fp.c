@@ -1,10 +1,6 @@
 #include "include/fp.h"
 
-// const uint64_t p[NWORDS_FIELD] =  { 0xffffffffffffffff, 0x252C9E49355147FF, 0x33A6A86587407437, 0x34E29E286B95D98C };
-const uint64_t p[NWORDS_FIELD] =  { 0xffffffffffffffff, 0x3fffffffffffffff, 0xa4382e87ff9dc589, 0x2827baebd5c8e56e };
-const uint64_t R2[NWORDS_FIELD] = { 0x00, 0x00, 0x00, 0x00 }; // not used?
-const uint64_t pp[NWORDS_FIELD] = { 0x00, 0x00, 0x00, 0x00 }; // not used?
-
+const uint64_t p[NWORDS_FIELD] = { 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x4ffffffffffffff };
 
 void fp_set(digit_t* x, const digit_t val)
 { // Set field element x = val, where val has wordsize

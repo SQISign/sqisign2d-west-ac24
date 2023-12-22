@@ -1,7 +1,5 @@
 #include <fp2.h>
 
-extern const digit_t R[NWORDS_FIELD];
-
 /* Arithmetic modulo X^2 + 1 */
 
 void fp2_set(fp2_t* x, const digit_t val)
