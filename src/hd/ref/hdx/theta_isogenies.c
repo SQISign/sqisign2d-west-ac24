@@ -378,3 +378,135 @@ void gluing_eval(theta_point_t *image,const theta_couple_point_t *P,const theta_
     // hadamard
     hadamard(image,image);
 }
+
+
+/**
+ * @brief Compute  a (2,2) isogeny in dimension 2 in the theta_model
+ *
+ * @param out Output: the theta_gluing 
+ * @param A a theta null point for the domain
+ * @param T1_8 a point in A[8]
+ * @param T2_8 a point in A[8]
+ * @param bool1 a boolean
+ * @param boo2 a boolean
+ *   
+ * out : A -> B of kernel [4](T1_8,T2_8)
+ * bool1 controls if the domain is in standard or dual coordinates
+ * bool2 controls if the codomain is in standard or dual coordinates 
+ *  
+   */
+void theta_isogeny_comput(theta_isogeny_t *out,const theta_structure_t *A,const theta_point_t *T1_8,const theta_point_t *T2_8,int bool1, int bool2) {
+    out->bool1=bool1;
+    out->bool2=bool2;
+    out->domain=*A;
+    out->T1_8=*T1_8;
+    out->T2_8=*T2_8;
+    out->codomain.precomputation=0;
+
+    theta_point_t TT1,TT2;
+
+    fp2_t xA_inv,zA_inv,tB_inv;
+
+    if (bool1) {
+        // TODO we do not need all the values of the results, so we may save some operations? 
+        hadamard(&TT1,T1_8);
+        to_squared_theta(&TT1,&TT1);
+        hadamard(&TT2,T2_8);
+        to_squared_theta(&TT2,&TT2);
+    } 
+    else {
+        to_squared_theta(&TT1,T1_8);
+        to_squared_theta(&TT2,T2_8);
+    }
+
+    if (!bool1 && A->precomputation) {
+        xA_inv = TT1.x;
+        zA_inv = TT2.x;
+        tB_inv = TT2.y;
+        //TODO bach_inversion?
+        fp2_inv(&xA_inv);
+        fp2_inv(&zA_inv);
+        fp2_inv(&tB_inv);
+
+        fp2_set(&out->precomputation.x,1);
+        fp2_set(&out->codomain.null_point.x,1);
+
+        // computation of B,C,D for the codomain
+        fp2_mul(&out->codomain.null_point.y,&xA_inv,&TT1.y);
+        fp2_mul(&out->codomain.null_point.z,&zA_inv,&TT2.z);
+        fp2_mul(&out->codomain.null_point.t,&tB_inv,&TT1.t);
+        fp2_mul(&out->codomain.null_point.t,&out->codomain.null_point.t,&out->codomain.null_point.y);
+
+        // computation B_inv,C_inv,D_inv for the precomputation
+        fp2_mul(&out->precomputation.y,&out->codomain.null_point.y,&out->domain.Y0);
+        fp2_mul(&out->precomputation.z,&out->codomain.null_point.z,&out->domain.Z0);
+        fp2_mul(&out->precomputation.t,&out->codomain.null_point.t,&out->domain.T0);
+    }
+    else {
+        fp2_t xB_inv,zC_inv,tD_inv;
+        xA_inv = TT1.x;
+        zA_inv = TT2.x;
+        tB_inv = TT2.y;
+        xB_inv=TT1.y;
+        zC_inv=TT2.z;
+        tD_inv=TT2.t;
+        //TODO bach_inversion?
+        fp2_inv(&xA_inv);
+        fp2_inv(&zA_inv);
+        fp2_inv(&tB_inv);
+        fp2_inv(&xB_inv);
+        fp2_inv(&zC_inv);
+        fp2_inv(&tD_inv);
+
+
+        fp2_set(&out->precomputation.x,1);
+        fp2_set(&out->codomain.null_point.x,1);
+
+        // computation of B,C,D for the codomain
+        fp2_mul(&out->codomain.null_point.y,&xA_inv,&TT1.y);
+        fp2_mul(&out->codomain.null_point.z,&zA_inv,&TT2.z);
+        fp2_mul(&out->codomain.null_point.t,&tB_inv,&TT1.t);
+        fp2_mul(&out->codomain.null_point.t,&out->codomain.null_point.t,&out->codomain.null_point.y);
+
+        // computation of B_inv,C_inv,D_inv for the precomputation
+        fp2_mul(&out->precomputation.y,&xB_inv,&TT1.x);
+        fp2_mul(&out->precomputation.z,&zC_inv,&TT2.x);
+        fp2_mul(&out->precomputation.t,&tD_inv,&TT2.y);
+        fp2_mul(&out->precomputation.t,&out->precomputation.t,&out->precomputation.y);
+
+        if (bool2) {
+            hadamard(&out->codomain.null_point,&out->codomain.null_point);
+        }
+
+    }
+
+}
+
+/**
+ * @brief Evaluate a theta isogeny
+ *
+ * @param out Output: the evaluating point 
+ * @param phi a theta isogeny
+ * @param P a point in the domain of phi
+ *   
+ * out = phi(P) 
+ *  
+   */
+void theta_isogeny_eval(theta_point_t *out,const theta_isogeny_t *phi,const theta_point_t *P) {
+
+    if (phi->bool1) {
+        hadamard(out,P);
+        to_squared_theta(out,out);
+    }
+    else {
+        to_squared_theta(out,P);
+    }
+    fp2_mul(&out->y,&out->y,&phi->precomputation.y);
+    fp2_mul(&out->z,&out->z,&phi->precomputation.z);
+    fp2_mul(&out->t,&out->t,&phi->precomputation.t);
+
+    if (phi->bool2) {
+        hadamard(out,out);
+    }
+    
+}

@@ -60,6 +60,7 @@ typedef struct theta_point {
 */
 typedef struct theta_structure {
     theta_point_t null_point;
+    int precomputation;
     fp2_t y0;
     fp2_t z0;
     fp2_t t0;

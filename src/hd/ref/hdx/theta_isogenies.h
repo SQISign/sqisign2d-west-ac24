@@ -53,6 +53,24 @@ typedef struct theta_gluing {
     theta_point_t codomain;
 } theta_gluing_t;
 
+
+/** @brief Type for standard (2,2) theta isogeny * 
+ * @typedef theta_isogeny_t
+ *
+ * @struct theta_isogeny
+ * 
+ * the  theta_isogeny structure  
+*/
+typedef struct theta_isogeny {  
+    theta_point_t T1_8;
+    theta_point_t T2_8;
+    int bool1;
+    int bool2;
+    theta_structure_t domain;
+    theta_point_t precomputation;
+    theta_structure_t codomain;
+} theta_isogeny_t;
+
 /*************************** Functions *****************************/
 
 /**
@@ -82,5 +100,33 @@ void gluing_comput(theta_gluing_t *out,const theta_couple_curve_t *E12,const the
    */
 void gluing_eval(theta_point_t *image,const theta_couple_point_t *P,const theta_couple_curve_t *E12, const theta_gluing_t *phi);
 
+/**
+ * @brief Compute  a (2,2) isogeny in dimension 2 in the theta_model
+ *
+ * @param out Output: the theta_gluing 
+ * @param A a theta null point for the domain
+ * @param T1_8 a point in A[8]
+ * @param T2_8 a point in A[8]
+ * @param bool1 a boolean
+ * @param boo2 a boolean
+ *   
+ * out : A -> B of kernel [4](T1_8,T2_8)
+ * bool1 controls if the domain is in standard or dual coordinates
+ * bool2 controls if the codomain is in standard or dual coordinates 
+ *  
+   */
+void theta_isogeny_comput(theta_isogeny_t *out,const theta_structure_t *A,const theta_point_t *T1_8,const theta_point_t *T2_8,int bool1, int bool2);
+
+/**
+ * @brief Evaluate a theta isogeny
+ *
+ * @param out Output: the evaluating point 
+ * @param phi a theta isogeny
+ * @param P a point in the domain of phi
+ *   
+ * out = phi(P) 
+ *  
+   */
+void theta_isogeny_eval(theta_point_t *out,const theta_isogeny_t *phi,const theta_point_t *P);
 
 #endif

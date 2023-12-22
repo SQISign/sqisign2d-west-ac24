@@ -92,7 +92,8 @@ void to_squared_theta(theta_point_t *out,const theta_point_t *in) {
    */
 void theta_precomputation(theta_structure_t *A){
 
-    // temp = (xx,yy,zz,tt)
+    if (!A->precomputation) {
+         // temp = (xx,yy,zz,tt)
     theta_point_t temp;
     to_squared_theta(&temp,&A->null_point);
     // Computes t1,t2,t3,t4,t5,t6 = 1/y,1/z,1/t,1/YY,1/ZZ,1/TT
@@ -118,6 +119,10 @@ void theta_precomputation(theta_structure_t *A){
     fp2_mul(&A->Y0,&t4,&temp.x);
     fp2_mul(&A->Z0,&t5,&temp.x);
     fp2_mul(&A->T0,&t6,&temp.x);
+
+    A->precomputation=1;
+    }
+   
 }
 
 /**
