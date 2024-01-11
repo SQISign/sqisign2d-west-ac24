@@ -512,6 +512,313 @@ void theta_isogeny_eval(theta_point_t *out,const theta_isogeny_t *phi,const thet
 }
 
 
+/** 
+ * @brief Compute the splitting isomorphism from a theta structure to the product theta structure, returns false if the given theta structure is not isomorphic to an elliptic product
+ * 
+ * @return a boolean indicating if A is isomorphic to an elliptic product
+ * @param out: the splitting isomorphism
+ * @param A : the theta_structure in consideration
+ *
+ * out : A -> B where B is theta product associated to ExF an elliptic product 
+*/
+int splitting_comput(theta_splitting_t *out, const theta_structure_t *A) {
+
+    // init 
+    int good=0;
+    int even_index[10][2] = { {0,0},{0,1},{0,2},{0,3},{1,0},{1,2},{2,0},{2,1},{3,0},{3,3}};
+    int chi_eval[4][4] = {{1,1,1,1},{1,-1,1,-1},{1,1,-1,-1},{1,-1,-1,1}};
+
+    fp2_t U_cst,temp,temp2;
+
+    // enumerate through all indices
+    for (int i=0;i<10;i++) {
+       fp2_set(&U_cst,0);
+       for (int t=0;t<4;t++) {
+        choose_index_theta_point(&temp2,t,&A->null_point);
+        choose_index_theta_point(&temp,t+even_index[i][1],&A->null_point);
+        fp2_mul(&temp,&temp,&temp2);
+        fp2_set(&temp2,chi_eval[even_index[i][0]][t]);
+        fp2_mul(&temp,&temp,&temp2);
+        fp2_add(&U_cst,&U_cst,&temp);    
+       }
+       if (fp2_is_zero(&U_cst)) {
+        good =1+i;
+        break;
+       }
+    }
+
+    // temp = sqrt{-1}
+    // TODO precompute this?
+    fp2_set(&temp,-1);
+    fp2_sqrt(&temp);
+
+    // compute the matrix
+    if (good==1) {
+        // (0, 0): [1, i, 1, i,
+        //          1, -i, -1, i, 
+        //          1, i, -1, -i, 
+        //          -1, i, -1, i],
+        fp2_set(&out->M00,1);
+        fp2_copy(&out->M01,&temp);
+        fp2_set(&out->M02,1);
+        fp2_copy(&out->M03,&temp);
+        fp2_set(&out->M10,1);
+        fp2_neg(&out->M11,&temp);
+        fp2_set(&out->M12,-1);
+        fp2_copy(&out->M13,&temp);
+        fp2_set(&out->M20,1);
+        fp2_copy(&out->M21,&temp);
+        fp2_neg(&out->M23,&temp);
+        fp2_set(&out->M22,-1);
+        fp2_set(&out->M30,-1);
+        fp2_copy(&out->M31,&temp);
+        fp2_set(&out->M32,-1);
+        fp2_copy(&out->M33,&temp);
+        
+    }
+    else if (good==2) {
+        // (0, 1): [1, 0, 0, 0,
+        //          0, 0, 0, 1, 
+        //          0, 0, 1, 0, 
+        //          0, -1, 0, 0],
+        fp2_set(&out->M00,1);
+        fp2_set(&out->M01,0);
+        fp2_set(&out->M02,0);
+        fp2_set(&out->M03,0);
+        fp2_set(&out->M10,0);
+        fp2_set(&out->M11,0);
+        fp2_set(&out->M12,0);
+        fp2_set(&out->M13,1);
+        fp2_set(&out->M20,0);
+        fp2_set(&out->M21,0);
+        fp2_set(&out->M22,1);
+        fp2_set(&out->M23,0);
+        fp2_set(&out->M30,0);
+        fp2_set(&out->M31,-1);
+        fp2_set(&out->M32,0);
+        fp2_set(&out->M33,0);
+    }
+    else if (good==3) {
+        // (0, 2): [1, 0, 0, 0, 
+        //          0, 1, 0, 0,
+        //          0, 0, 0, 1,
+            //      0, 0, -1, 0],
+        fp2_set(&out->M00,1);
+        fp2_set(&out->M01,0);
+        fp2_set(&out->M02,0);
+        fp2_set(&out->M03,0);
+        fp2_set(&out->M10,0);
+        fp2_set(&out->M11,1);
+        fp2_set(&out->M12,0);
+        fp2_set(&out->M13,0);
+        fp2_set(&out->M20,0);
+        fp2_set(&out->M21,0);
+        fp2_set(&out->M22,0);
+        fp2_set(&out->M23,1);
+        fp2_set(&out->M30,0);
+        fp2_set(&out->M31,0);
+        fp2_set(&out->M32,-1);
+        fp2_set(&out->M33,0);
+    }
+    else if (good==4) {
+        // (0, 3): [1, 0, 0, 0,
+        //          0, 1, 0, 0, 
+        //          0, 0, 1, 0, 
+        //          0, 0, 0, -1],
+        fp2_set(&out->M00,1);
+        fp2_set(&out->M01,0);
+        fp2_set(&out->M02,0);
+        fp2_set(&out->M03,0);
+        fp2_set(&out->M10,0);
+        fp2_set(&out->M11,1);
+        fp2_set(&out->M12,0);
+        fp2_set(&out->M13,0);
+        fp2_set(&out->M20,0);
+        fp2_set(&out->M21,0);
+        fp2_set(&out->M22,1);
+        fp2_set(&out->M23,0);
+        fp2_set(&out->M30,0);
+        fp2_set(&out->M31,0);
+        fp2_set(&out->M32,0);
+        fp2_set(&out->M33,-1);
+
+    }
+    else if (good==7) {
+        // (2, 0): [1, 1, 1, 1, 
+        //          1, -1, 1, -1, 
+        //          1, -1, -1, 1, 
+        //          -1, -1, 1, 1],
+        fp2_set(&out->M00,1);
+        fp2_set(&out->M01,1);
+        fp2_set(&out->M02,1);
+        fp2_set(&out->M03,1);
+        fp2_set(&out->M10,1);
+        fp2_set(&out->M11,-1);
+        fp2_set(&out->M12,1);
+        fp2_set(&out->M13,-1);
+        fp2_set(&out->M20,1);
+        fp2_set(&out->M21,-1);
+        fp2_set(&out->M22,-1);
+        fp2_set(&out->M23,1);
+        fp2_set(&out->M30,-1);
+        fp2_set(&out->M31,-1);
+        fp2_set(&out->M32,1);
+        fp2_set(&out->M33,1);
+    }
+    else if (good==8) {
+        //(2, 1): [1, 1, 1, 1, 
+        //          1, -1, 1, -1, 
+        //          1, -1, -1, 1, 
+        //          1, 1, -1, -1],
+
+        fp2_set(&out->M00,1);
+        fp2_set(&out->M01,1);
+        fp2_set(&out->M02,1);
+        fp2_set(&out->M03,1);
+        fp2_set(&out->M10,1);
+        fp2_set(&out->M11,-1);
+        fp2_set(&out->M12,1);
+        fp2_set(&out->M13,-1);
+        fp2_set(&out->M20,1);
+        fp2_set(&out->M21,-1);
+        fp2_set(&out->M22,-1);
+        fp2_set(&out->M23,1);
+        fp2_set(&out->M30,1);
+        fp2_set(&out->M31,1);
+        fp2_set(&out->M32,-1);
+        fp2_set(&out->M33,-1);
+    }
+    else if (good==5){
+        // (1, 0): [1, 1, 1, 1, 
+        //          1, -1, -1, 1, 
+        //          1, 1, -1, -1, 
+        //          -1, 1, -1, 1],
+        fp2_set(&out->M00,1);
+        fp2_set(&out->M01,1);
+        fp2_set(&out->M02,1);
+        fp2_set(&out->M03,1);
+        fp2_set(&out->M10,1);
+        fp2_set(&out->M11,-1);
+        fp2_set(&out->M12,-1);
+        fp2_set(&out->M13,1);
+        fp2_set(&out->M20,1);
+        fp2_set(&out->M21,1);
+        fp2_set(&out->M22,-1);
+        fp2_set(&out->M23,-1);
+        fp2_set(&out->M30,-1);
+        fp2_set(&out->M31,1);
+        fp2_set(&out->M32,-1);
+        fp2_set(&out->M33,1);
+
+    }
+    else if (good==6) {
+        //(1, 2): [1, 0, 0, 0, 
+        //          0, 1, 0, 0, 
+        //          0, 0, 0, 1, 
+        //          0, 0, 1, 0],
+        fp2_set(&out->M00,1);
+        fp2_set(&out->M01,0);
+        fp2_set(&out->M02,0);
+        fp2_set(&out->M03,0);
+        fp2_set(&out->M10,0);
+        fp2_set(&out->M11,1);
+        fp2_set(&out->M12,0);
+        fp2_set(&out->M13,0);
+        fp2_set(&out->M20,0);
+        fp2_set(&out->M21,0);
+        fp2_set(&out->M22,0);
+        fp2_set(&out->M23,1);
+        fp2_set(&out->M30,0);
+        fp2_set(&out->M31,0);
+        fp2_set(&out->M32,1);
+        fp2_set(&out->M33,0);
+
+    }
+    else if (good==9) {
+        // (3, 0): [1, 1, 1, 1, 
+        //          1, -1, 1, -1, 
+        //          1, 1, -1, -1, 
+        //          -1, 1, 1, -1],
+        fp2_set(&out->M00,1);
+        fp2_set(&out->M01,1);
+        fp2_set(&out->M02,1);
+        fp2_set(&out->M03,1);
+        fp2_set(&out->M10,1);
+        fp2_set(&out->M11,-1);
+        fp2_set(&out->M12,1);
+        fp2_set(&out->M13,-1);
+        fp2_set(&out->M20,1);
+        fp2_set(&out->M21,1);
+        fp2_set(&out->M22,-1);
+        fp2_set(&out->M23,-1);
+        fp2_set(&out->M30,-1);
+        fp2_set(&out->M31,1);
+        fp2_set(&out->M32,1);
+        fp2_set(&out->M33,-1);
+    }
+    else if (good==10) {
+        // (3, 3): [1, 0, 0, 0, 
+        //          0, 1, 0, 0, 
+        //          0, 0, 1, 0,
+        //          0, 0, 0, 1],
+        fp2_set(&out->M00,1);
+        fp2_set(&out->M01,0);
+        fp2_set(&out->M02,0);
+        fp2_set(&out->M03,0);
+        fp2_set(&out->M10,0);
+        fp2_set(&out->M11,1);
+        fp2_set(&out->M12,0);
+        fp2_set(&out->M13,0);
+        fp2_set(&out->M20,0);
+        fp2_set(&out->M21,0);
+        fp2_set(&out->M22,1);
+        fp2_set(&out->M23,0);
+        fp2_set(&out->M30,0);
+        fp2_set(&out->M31,0);
+        fp2_set(&out->M32,0);
+        fp2_set(&out->M33,1);
+
+    }
+
+    // now we apply the isomorphism if it was computed
+    if (good) {
+        fp2_t x1;
+        fp2_mul(&out->B.null_point.x,&A->null_point.x,&out->M00);
+        fp2_mul(&x1,&A->null_point.y,&out->M01);
+        fp2_add(&out->B.null_point.x,&out->B.null_point.x,&x1);
+        fp2_mul(&x1,&A->null_point.z,&out->M02);
+        fp2_add(&out->B.null_point.x,&out->B.null_point.x,&x1);
+        fp2_mul(&x1,&A->null_point.t,&out->M03);
+        fp2_add(&out->B.null_point.x,&out->B.null_point.x,&x1);
+
+        fp2_mul(&out->B.null_point.y,&A->null_point.x,&out->M10);
+        fp2_mul(&x1,&A->null_point.y,&out->M11);
+        fp2_add(&out->B.null_point.y,&out->B.null_point.y,&x1);
+        fp2_mul(&x1,&A->null_point.z,&out->M12);
+        fp2_add(&out->B.null_point.y,&out->B.null_point.y,&x1);
+        fp2_mul(&x1,&A->null_point.t,&out->M13);
+        fp2_add(&out->B.null_point.y,&out->B.null_point.y,&x1);
+
+        fp2_mul(&out->B.null_point.z,&A->null_point.x,&out->M20);
+        fp2_mul(&x1,&A->null_point.y,&out->M21);
+        fp2_add(&out->B.null_point.z,&out->B.null_point.z,&x1);
+        fp2_mul(&x1,&A->null_point.z,&out->M22);
+        fp2_add(&out->B.null_point.z,&out->B.null_point.z,&x1);
+        fp2_mul(&x1,&A->null_point.t,&out->M23);
+        fp2_add(&out->B.null_point.z,&out->B.null_point.z,&x1);
+
+        fp2_mul(&out->B.null_point.t,&A->null_point.x,&out->M30);
+        fp2_mul(&x1,&A->null_point.y,&out->M31);
+        fp2_add(&out->B.null_point.t,&out->B.null_point.t,&x1);
+        fp2_mul(&x1,&A->null_point.z,&out->M32);
+        fp2_add(&out->B.null_point.t,&out->B.null_point.t,&x1);
+        fp2_mul(&x1,&A->null_point.t,&out->M33);
+        fp2_add(&out->B.null_point.t,&out->B.null_point.t,&x1);
+    }
+    return good;
+}
+
+
 /**
  * @brief Compute  a (2,2) isogeny chain in dimension 2 between elliptic products in the theta_model
  *

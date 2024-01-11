@@ -72,6 +72,39 @@ typedef struct theta_isogeny {
 } theta_isogeny_t;
 
 
+/** @brief Type for splitting isomorphism * 
+ * @typedef theta_splitting_t
+ *
+ * @struct theta_splitting
+ * 
+ * the theta_splitting structure  
+*/
+typedef struct theta_splitting {  
+
+    fp2_t M00;
+    fp2_t M01;
+    fp2_t M02;
+    fp2_t M03;
+
+    fp2_t M10;
+    fp2_t M11;
+    fp2_t M12;
+    fp2_t M13;
+
+    fp2_t M20;
+    fp2_t M21;
+    fp2_t M22;
+    fp2_t M23;
+
+    fp2_t M30;
+    fp2_t M31;
+    fp2_t M32;
+    fp2_t M33;
+    theta_structure_t B;
+    
+} theta_splitting_t;
+
+
 /** @brief Type for chain of (2,2) theta isogenies with preimage by 4 multiplication above * 
  * @typedef theta_chain_t
  *
@@ -88,6 +121,7 @@ typedef struct theta_chain {
     theta_gluing_t first_step;
     theta_isogeny_t *steps;
 } theta_chain_t;
+
 
 
 /*************************** Functions *****************************/
@@ -147,6 +181,19 @@ void theta_isogeny_comput(theta_isogeny_t *out,const theta_structure_t *A,const 
  *  
    */
 void theta_isogeny_eval(theta_point_t *out,const theta_isogeny_t *phi,const theta_point_t *P);
+
+
+/** 
+ * @brief Compute the splitting isomorphism from a theta structure to the product theta structure, returns false if the given theta structure is not isomorphic to an elliptic product
+ * 
+ * @return a boolean indicating if A is isomorphic to an elliptic product
+ * @param out: the splitting isomorphism
+ * @param A : the theta_structure in consideration
+ *
+ * out : A -> B where B is theta product associated to ExF an elliptic product 
+*/
+int splitting_comput(theta_splitting_t *out, const theta_structure_t *A);
+
 
 /**
  * @brief Compute  a (2,2) isogeny chain in dimension 2 between elliptic products in the theta_model
