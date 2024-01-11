@@ -119,6 +119,7 @@ typedef struct theta_chain {
     theta_couple_curve_t domain;
     theta_couple_curve_t codomain;
     theta_gluing_t first_step;
+    theta_splitting_t last_step;
     theta_isogeny_t *steps;
 } theta_chain_t;
 

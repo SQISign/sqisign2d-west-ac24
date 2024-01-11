@@ -511,6 +511,41 @@ void theta_isogeny_eval(theta_point_t *out,const theta_isogeny_t *phi,const thet
     
 }
 
+void apply_isomorphism(theta_point_t *res,const theta_splitting_t *out,const theta_point_t *P) {
+        fp2_t x1;
+        fp2_mul(&res->x,&P->x,&out->M00);
+        fp2_mul(&x1,&P->y,&out->M01);
+        fp2_add(&res->x,&res->x,&x1);
+        fp2_mul(&x1,&P->z,&out->M02);
+        fp2_add(&res->x,&res->x,&x1);
+        fp2_mul(&x1,&P->t,&out->M03);
+        fp2_add(&res->x,&res->x,&x1);
+
+        fp2_mul(&res->y,&P->x,&out->M10);
+        fp2_mul(&x1,&P->y,&out->M11);
+        fp2_add(&res->y,&res->y,&x1);
+        fp2_mul(&x1,&P->z,&out->M12);
+        fp2_add(&res->y,&res->y,&x1);
+        fp2_mul(&x1,&P->t,&out->M13);
+        fp2_add(&res->y,&res->y,&x1);
+
+        fp2_mul(&res->z,&P->x,&out->M20);
+        fp2_mul(&x1,&P->y,&out->M21);
+        fp2_add(&res->z,&res->z,&x1);
+        fp2_mul(&x1,&P->z,&out->M22);
+        fp2_add(&res->z,&res->z,&x1);
+        fp2_mul(&x1,&P->t,&out->M23);
+        fp2_add(&res->z,&res->z,&x1);
+
+        fp2_mul(&res->t,&P->x,&out->M30);
+        fp2_mul(&x1,&P->y,&out->M31);
+        fp2_add(&res->t,&res->t,&x1);
+        fp2_mul(&x1,&P->z,&out->M32);
+        fp2_add(&res->t,&res->t,&x1);
+        fp2_mul(&x1,&P->t,&out->M33);
+        fp2_add(&res->t,&res->t,&x1);
+}
+
 
 /** 
  * @brief Compute the splitting isomorphism from a theta structure to the product theta structure, returns false if the given theta structure is not isomorphic to an elliptic product
@@ -782,42 +817,45 @@ int splitting_comput(theta_splitting_t *out, const theta_structure_t *A) {
 
     // now we apply the isomorphism if it was computed
     if (good) {
-        fp2_t x1;
-        fp2_mul(&out->B.null_point.x,&A->null_point.x,&out->M00);
-        fp2_mul(&x1,&A->null_point.y,&out->M01);
-        fp2_add(&out->B.null_point.x,&out->B.null_point.x,&x1);
-        fp2_mul(&x1,&A->null_point.z,&out->M02);
-        fp2_add(&out->B.null_point.x,&out->B.null_point.x,&x1);
-        fp2_mul(&x1,&A->null_point.t,&out->M03);
-        fp2_add(&out->B.null_point.x,&out->B.null_point.x,&x1);
-
-        fp2_mul(&out->B.null_point.y,&A->null_point.x,&out->M10);
-        fp2_mul(&x1,&A->null_point.y,&out->M11);
-        fp2_add(&out->B.null_point.y,&out->B.null_point.y,&x1);
-        fp2_mul(&x1,&A->null_point.z,&out->M12);
-        fp2_add(&out->B.null_point.y,&out->B.null_point.y,&x1);
-        fp2_mul(&x1,&A->null_point.t,&out->M13);
-        fp2_add(&out->B.null_point.y,&out->B.null_point.y,&x1);
-
-        fp2_mul(&out->B.null_point.z,&A->null_point.x,&out->M20);
-        fp2_mul(&x1,&A->null_point.y,&out->M21);
-        fp2_add(&out->B.null_point.z,&out->B.null_point.z,&x1);
-        fp2_mul(&x1,&A->null_point.z,&out->M22);
-        fp2_add(&out->B.null_point.z,&out->B.null_point.z,&x1);
-        fp2_mul(&x1,&A->null_point.t,&out->M23);
-        fp2_add(&out->B.null_point.z,&out->B.null_point.z,&x1);
-
-        fp2_mul(&out->B.null_point.t,&A->null_point.x,&out->M30);
-        fp2_mul(&x1,&A->null_point.y,&out->M31);
-        fp2_add(&out->B.null_point.t,&out->B.null_point.t,&x1);
-        fp2_mul(&x1,&A->null_point.z,&out->M32);
-        fp2_add(&out->B.null_point.t,&out->B.null_point.t,&x1);
-        fp2_mul(&x1,&A->null_point.t,&out->M33);
-        fp2_add(&out->B.null_point.t,&out->B.null_point.t,&x1);
+        apply_isomorphism(&out->B.null_point,out,&A->null_point);
     }
     return good;
 }
 
+
+void theta_product_structure_to_elliptic_product(theta_couple_curve_t *E12, theta_structure_t *A) {
+    fp2_t xx,yy,temp1,temp2;
+
+    // xx = x², yy = y² 
+    fp2_sqr(&xx,&A->null_point.x);
+    fp2_sqr(&yy,&A->null_point.y);
+
+    // A1 = ( (xx² + yy²)² + (xx² - yy²)² )  / (xx² - yy²)
+    fp2_add(&temp1,&xx,&yy);
+    fp2_sub(&temp2,&xx,&yy);
+    fp2_mul(&E12->E1.A,&temp1,&temp2);
+    fp2_sqr(&temp1,&temp1);
+    fp2_sqr(&temp2,&temp2);
+    fp2_add(&temp1,&temp1,&temp2);
+    fp2_inv(&E12->E1.A);
+    fp2_mul(&E12->E1.A,&E12->E1.A,&temp1);
+    fp2_neg(&E12->E1.A,&E12->E1.A);
+
+    // same with t,z
+    fp2_sqr(&xx,&A->null_point.z);
+    fp2_sqr(&yy,&A->null_point.t);
+
+    // A2 = ( (xx² + yy²)² + (xx² - yy²)² )  / (xx² - yy²)
+    fp2_add(&temp1,&xx,&yy);
+    fp2_sub(&temp2,&xx,&yy);
+    fp2_mul(&E12->E2.A,&temp1,&temp2);
+    fp2_sqr(&temp1,&temp1);
+    fp2_sqr(&temp2,&temp2);
+    fp2_add(&temp1,&temp1,&temp2);
+    fp2_inv(&E12->E2.A);
+    fp2_mul(&E12->E2.A,&E12->E2.A,&temp1);
+    fp2_neg(&E12->E2.A,&E12->E2.A);
+}
 
 /**
  * @brief Compute  a (2,2) isogeny chain in dimension 2 between elliptic products in the theta_model
@@ -839,8 +877,6 @@ void theta_chain_comput(theta_chain_t *out,int n,const theta_couple_curve_t *E12
     theta_structure_t codomain;
 
     // TODO use a better strategy
-
-
 
     // init of the isogeny chain
     out->domain=*E12;
@@ -888,11 +924,74 @@ void theta_chain_comput(theta_chain_t *out,int n,const theta_couple_curve_t *E12
         codomain=steps[i].codomain;
 
         // pushing the kernel
-        theta_isogeny_eval(&Q1,&steps[i],&Q1);
-        theta_isogeny_eval(&Q2,&steps[i],&Q2);
-        
+        if (i< n-2) {
+            theta_isogeny_eval(&Q1,&steps[i],&Q1);
+            theta_isogeny_eval(&Q2,&steps[i],&Q2);
+        }
+    
     }
 
+    // copying the steps
+    out->steps=steps;
+
     //final splitting step
+    splitting_comput(&out->last_step,&steps[n-2].codomain);
+
+    // computing the curves of the codomain
+    theta_product_structure_to_elliptic_product(&out->codomain,&out->last_step.B);
+
+}
+
+
+void theta_point_to_montgomery_point(theta_couple_point_t *P12, const theta_point_t *P, const theta_structure_t *A){
+
+    fp2_t temp;
+
+    // P1.X = A.null_point.x * P.x + A.null_point.y * P.y
+    // P1.Z = A.null_point.x * P.x - A.null_point.y * P.y
+    fp2_mul(&P12->P1.x,&A->null_point.x,&P->x);
+    fp2_mul(&temp,&A->null_point.y,&P->y);
+    fp2_sub(&P12->P1.z,&P12->P1.x,&temp);
+    fp2_add(&P12->P1.x,&P12->P1.x,&temp);
+
+    // P2.X = A.null_point.z * P.z + A.null_point.t * P.t
+    // P2.Z = A.null_point.z * P.z - A.null_point.t * P.t
+    fp2_mul(&P12->P2.x,&A->null_point.z,&P->z);
+    fp2_mul(&temp,&A->null_point.t,&P->t);
+    fp2_sub(&P12->P2.z,&P12->P2.x,&temp);
+    fp2_add(&P12->P2.x,&P12->P2.x,&temp);
+    
+
+}
+
+/**
+ * @brief Evaluate a (2,2) isogeny chain in dimension 2 between elliptic products in the theta_model
+ *
+ * @param out Output: the image point
+ * @param phi : the (2,2) isogeny chain of domain E12
+ * @param P12 a couple point on E12, 
+ *   
+ * phi : E1xE2 -> E3xE4 of kernel 
+ * P12 in E1xE2
+ * out = phi(P12) in E3xE4 
+ *  
+   */
+void theta_chain_eval(theta_couple_point_t *out,theta_chain_t *phi,theta_couple_point_t *P12) {
+    
+    theta_point_t temp;
+
+    // first, we apply the gluing 
+    gluing_eval(&temp,P12,&phi->domain,&phi->first_step);
+
+    // then, we apply the successive isogenies
+    for (int i=0;i<phi->length-1;i++) {
+        theta_isogeny_eval(&temp,&phi->steps[i],&temp);
+    }
+
+    // we send the result to the theta product structure of the codomain
+    apply_isomorphism(&temp,&phi->last_step,&temp);
+
+    // finaly the send the result to the elliptic product
+    theta_point_to_montgomery_point(out,&temp,&phi->last_step.B);
 
 }
