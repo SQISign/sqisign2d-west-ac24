@@ -510,3 +510,82 @@ void theta_isogeny_eval(theta_point_t *out,const theta_isogeny_t *phi,const thet
     }
     
 }
+
+
+/**
+ * @brief Compute  a (2,2) isogeny chain in dimension 2 between elliptic products in the theta_model
+ *
+ * @param out Output: the theta_chain
+ * @param n : the length of the isogeny chain
+ * @param E12 an elliptic curve product 
+ * @param T1 a couple point on E12[2^(n+2)]
+ * @param T2 a couple point on E12[2^(n+2)]
+ *   
+ * out : E1xE2 -> E3xE4 of kernel [4](T1,T2) 
+ *  
+   */
+void theta_chain_comput(theta_chain_t *out,int n,const theta_couple_curve_t *E12,const theta_couple_point_t *T1,const theta_couple_point_t *T2) {
+
+    theta_couple_point_t P1,P2;
+    theta_point_t Q1,Q2,R1,R2;
+    theta_isogeny_t steps[n-1];
+    theta_structure_t codomain;
+
+    // TODO use a better strategy
+
+
+
+    // init of the isogeny chain
+    out->domain=*E12;
+    out->length=n;
+    out->T1=*T1;
+    out->T2=*T2;
+    out->steps=malloc((n-1)*sizeof(theta_isogeny_t));
+
+    // First, we compute the first step  
+    // multiply by 2^n-1
+    double_couple_point_iter(&P1,n-1,E12,T1);
+    double_couple_point_iter(&P2,n-1,E12,T2);
+    
+
+    // compute the gluing isogeny 
+    gluing_comput(&out->first_step,E12,&P1,&P2);
+
+    // push the kernel through the gluing isogeny
+    gluing_eval(&Q1,T1,E12,&out->first_step);
+    gluing_eval(&Q2,T2,E12,&out->first_step);
+
+    // set-up the theta_structure for the first codomain 
+    codomain.null_point=out->first_step.codomain;
+    codomain.precomputation=0;
+    theta_precomputation(&codomain);
+
+    for (int i=0;i<n-1;i++) {
+
+        // computing the kernel of the next step
+        double_iter(&R1,&codomain,&Q1,n-i-1);
+        double_iter(&R2,&codomain,&Q2,n-i-1);
+    
+        // computing the next step
+        if (i==n-3) {
+            theta_isogeny_comput(&steps[i],&codomain,&R1,&R2,0,0);
+        }
+        else if (i==n-2) {
+            theta_isogeny_comput(&steps[i],&codomain,&R1,&R2,1,0);
+        }
+        else {
+            theta_isogeny_comput(&steps[i],&codomain,&R1,&R2,0,1);
+        }
+
+        // updating the codomain
+        codomain=steps[i].codomain;
+
+        // pushing the kernel
+        theta_isogeny_eval(&Q1,&steps[i],&Q1);
+        theta_isogeny_eval(&Q2,&steps[i],&Q2);
+        
+    }
+
+    //final splitting step
+
+}

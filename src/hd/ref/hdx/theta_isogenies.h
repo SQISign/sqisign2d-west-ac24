@@ -71,6 +71,25 @@ typedef struct theta_isogeny {
     theta_structure_t codomain;
 } theta_isogeny_t;
 
+
+/** @brief Type for chain of (2,2) theta isogenies with preimage by 4 multiplication above * 
+ * @typedef theta_chain_t
+ *
+ * @struct theta_chain
+ * 
+ * the  theta_chain structure  
+*/
+typedef struct theta_chain {  
+    theta_couple_point_t T1;
+    theta_couple_point_t T2;
+    int length;
+    theta_couple_curve_t domain;
+    theta_couple_curve_t codomain;
+    theta_gluing_t first_step;
+    theta_isogeny_t *steps;
+} theta_chain_t;
+
+
 /*************************** Functions *****************************/
 
 /**
@@ -103,7 +122,7 @@ void gluing_eval(theta_point_t *image,const theta_couple_point_t *P,const theta_
 /**
  * @brief Compute  a (2,2) isogeny in dimension 2 in the theta_model
  *
- * @param out Output: the theta_gluing 
+ * @param out Output: the theta_isogeny 
  * @param A a theta null point for the domain
  * @param T1_8 a point in A[8]
  * @param T2_8 a point in A[8]
@@ -128,5 +147,33 @@ void theta_isogeny_comput(theta_isogeny_t *out,const theta_structure_t *A,const 
  *  
    */
 void theta_isogeny_eval(theta_point_t *out,const theta_isogeny_t *phi,const theta_point_t *P);
+
+/**
+ * @brief Compute  a (2,2) isogeny chain in dimension 2 between elliptic products in the theta_model
+ *
+ * @param out Output: the theta_chain
+ * @param n : the length of the isogeny chain
+ * @param E12 an elliptic curve product 
+ * @param T1 a couple point on E12[2^(n+2)]
+ * @param T2 a couple point on E12[2^(n+2)]
+ *   
+ * out : E1xE2 -> E3xE4 of kernel [4](T1,T2) 
+ * 
+   */
+void theta_chain_comput(theta_chain_t *out,int n,const theta_couple_curve_t *E12,const theta_couple_point_t *T1,const theta_couple_point_t *T2);
+
+/**
+ * @brief Evaluate a (2,2) isogeny chain in dimension 2 between elliptic products in the theta_model
+ *
+ * @param out Output: the image point
+ * @param phi : the (2,2) isogeny chain of domain E12
+ * @param P12 a couple point on E12, 
+ *   
+ * phi : E1xE2 -> E3xE4 of kernel 
+ * P12 in E1xE2
+ * out = phi(P12) in E3xE4 
+ *  
+   */
+void theta_chain_eval(theta_couple_point_t *out,theta_chain_t *phi,theta_couple_point_t *P12);
 
 #endif
