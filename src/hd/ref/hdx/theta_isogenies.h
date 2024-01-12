@@ -1,6 +1,7 @@
 #include <ec.h> 
 #include <fp2.h>
 #include "theta_structure.h"
+#include <hd.h>
 
 /** @file
  * 
@@ -15,113 +16,9 @@
 
 
 
-/** @brief Type for gluing (2,2) theta isogeny * 
- * @typedef theta_gluing_t
- *
- * @struct theta_gluing
- * 
- * the  theta_gluing structure  
-*/
-typedef struct theta_gluing {  
-
-    theta_couple_point_t K1_4;
-    theta_couple_point_t K2_4;
-    theta_point_t T1_8;
-    theta_point_t T2_8;
-
-    fp2_t M00;
-    fp2_t M01;
-    fp2_t M02;
-    fp2_t M03;
-
-    fp2_t M10;
-    fp2_t M11;
-    fp2_t M12;
-    fp2_t M13;
-
-    fp2_t M20;
-    fp2_t M21;
-    fp2_t M22;
-    fp2_t M23;
-
-    fp2_t M30;
-    fp2_t M31;
-    fp2_t M32;
-    fp2_t M33;
-    int32_t zero_idx;
-    theta_point_t precomputation;
-    theta_point_t codomain;
-} theta_gluing_t;
 
 
-/** @brief Type for standard (2,2) theta isogeny * 
- * @typedef theta_isogeny_t
- *
- * @struct theta_isogeny
- * 
- * the  theta_isogeny structure  
-*/
-typedef struct theta_isogeny {  
-    theta_point_t T1_8;
-    theta_point_t T2_8;
-    int bool1;
-    int bool2;
-    theta_structure_t domain;
-    theta_point_t precomputation;
-    theta_structure_t codomain;
-} theta_isogeny_t;
 
-
-/** @brief Type for splitting isomorphism * 
- * @typedef theta_splitting_t
- *
- * @struct theta_splitting
- * 
- * the theta_splitting structure  
-*/
-typedef struct theta_splitting {  
-
-    fp2_t M00;
-    fp2_t M01;
-    fp2_t M02;
-    fp2_t M03;
-
-    fp2_t M10;
-    fp2_t M11;
-    fp2_t M12;
-    fp2_t M13;
-
-    fp2_t M20;
-    fp2_t M21;
-    fp2_t M22;
-    fp2_t M23;
-
-    fp2_t M30;
-    fp2_t M31;
-    fp2_t M32;
-    fp2_t M33;
-    theta_structure_t B;
-    
-} theta_splitting_t;
-
-
-/** @brief Type for chain of (2,2) theta isogenies with preimage by 4 multiplication above * 
- * @typedef theta_chain_t
- *
- * @struct theta_chain
- * 
- * the  theta_chain structure  
-*/
-typedef struct theta_chain {  
-    theta_couple_point_t T1;
-    theta_couple_point_t T2;
-    int length;
-    theta_couple_curve_t domain;
-    theta_couple_curve_t codomain;
-    theta_gluing_t first_step;
-    theta_splitting_t last_step;
-    theta_isogeny_t *steps;
-} theta_chain_t;
 
 
 

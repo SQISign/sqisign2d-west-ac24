@@ -1,6 +1,22 @@
 #include "theta_isogenies.h"
+#include <stdio.h>
+#include <inttypes.h>
 #include <assert.h>
 
+
+//XXX FIXME stolen from src/ec/opt/generic/test/isog-test.c
+void fp2_print(char *name, fp2_t const a){
+    fp2_t b;
+    fp2_set(&b, 1);
+    fp2_mul(&b, &b, &a);
+    printf("%s = 0x", name);
+    for(int i = NWORDS_FIELD - 1; i >=0; i--)
+        printf("%016" PRIx64, b.re[i]);
+    printf(" + i*0x");
+    for(int i = NWORDS_FIELD - 1; i >=0; i--)
+        printf("%016" PRIx64, b.im[i]);
+    printf("\n");
+}
 
 void choose_index_theta_point(fp2_t *res,int ind, const theta_point_t *T) {
     int t = ind%4;
@@ -282,6 +298,10 @@ void gluing_comput(theta_gluing_t *out,const theta_couple_curve_t *E12,const the
         fp2_t a1,a2;
         choose_index_theta_point(&a1,out->zero_idx,&TT1);
         choose_index_theta_point(&a2,out->zero_idx,&TT2);
+        char s1[2000],s2[2000];
+        fp2_print(s1,a1);
+        fp2_print(s2,a2);
+        printf("%s %s %d \n",s1,s2,out->zero_idx);
         assert(fp2_is_zero(&a1) && fp2_is_zero(&a2));
     #endif 
 
@@ -889,6 +909,35 @@ void theta_chain_comput(theta_chain_t *out,int n,const theta_couple_curve_t *E12
     // multiply by 2^n-1
     double_couple_point_iter(&P1,n-1,E12,T1);
     double_couple_point_iter(&P2,n-1,E12,T2);
+
+    #ifndef NDEBUG
+        // checking that the points have order 8 
+        ec_point_t test1,test2;
+        test1=P1.P1;
+        test2=P1.P2;
+        ec_dbl(&test1,&E12->E1,&test1);
+        ec_dbl(&test1,&E12->E1,&test1);
+        ec_dbl(&test2,&E12->E2,&test2);
+        ec_dbl(&test2,&E12->E2,&test2);
+        assert(!fp2_is_zero(&test1.z));
+        assert(!fp2_is_zero(&test2.z));
+        ec_dbl(&test1,&E12->E1,&test1);
+        ec_dbl(&test2,&E12->E2,&test2);
+        assert(fp2_is_zero(&test1.z));
+        assert(fp2_is_zero(&test2.z));
+        test1=P2.P1;
+        test2=P2.P2;
+        ec_dbl(&test1,&E12->E1,&test1);
+        ec_dbl(&test1,&E12->E1,&test1);
+        ec_dbl(&test2,&E12->E2,&test2);
+        ec_dbl(&test2,&E12->E2,&test2);
+        assert(!fp2_is_zero(&test1.z));
+        assert(!fp2_is_zero(&test2.z));
+        ec_dbl(&test1,&E12->E1,&test1);
+        ec_dbl(&test2,&E12->E2,&test2);
+        assert(fp2_is_zero(&test1.z));
+        assert(fp2_is_zero(&test2.z));
+    #endif
     
 
     // compute the gluing isogeny 
@@ -935,7 +984,8 @@ void theta_chain_comput(theta_chain_t *out,int n,const theta_couple_curve_t *E12
     out->steps=steps;
 
     //final splitting step
-    splitting_comput(&out->last_step,&steps[n-2].codomain);
+    int is_split = splitting_comput(&out->last_step,&steps[n-2].codomain);
+    assert(is_split);
 
     // computing the curves of the codomain
     theta_product_structure_to_elliptic_product(&out->codomain,&out->last_step.B);

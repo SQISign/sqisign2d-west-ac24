@@ -1,5 +1,6 @@
 #include <ec.h> 
 #include <fp2.h>
+#include <hd.h>
 
 /** @file
  * 
@@ -12,106 +13,13 @@
 #define THETA_STRUCTURE_H
 
 
-/** @brief Type for couple point * 
- * @typedef theta_couple_point_t
- *
- * @struct theta_couple_point
- * 
- * the  theta_couple_point structure   
-*/
-typedef struct theta_couple_point {  
-    ec_point_t P1;
-    ec_point_t P2;
-} theta_couple_point_t;
-
-/** @brief Type for couple curve * 
- * @typedef theta_couple_curve_t
- *
- * @struct theta_couple_curve
- * 
- * the  theta_couple_curve structure   
-*/
-typedef struct theta_couple_curve {  
-    ec_curve_t E1;
-    ec_curve_t E2;
-} theta_couple_curve_t;
-
-/** @brief Type for theta point * 
- * @typedef theta_point_t
- *
- * @struct theta_point
- * 
- * the  theta_point structure used  
-*/
-typedef struct theta_point {  
-    fp2_t x;
-    fp2_t y;
-    fp2_t z;
-    fp2_t t;
-} theta_point_t;
 
 
-/** @brief Type for theta structure * 
- * @typedef theta_structure_t
- *
- * @struct theta_structure
- * 
- * the  theta_structure structure used  
-*/
-typedef struct theta_structure {
-    theta_point_t null_point;
-    int precomputation;
-    fp2_t y0;
-    fp2_t z0;
-    fp2_t t0;
-    fp2_t Y0;
-    fp2_t Z0;
-    fp2_t T0;
-    
-} theta_structure_t;
 
 
 /*************************** Functions *****************************/
 
 
-/**
- * @brief Compute the double of the theta couple point in on the elliptic product E12
- *
- * @param out Output: the theta_couple_point 
- * @param E12 an elliptic product
- * @param in the theta couple point in the elliptic product   
- * in = (P1,P2)
- * out = [2] (P1,P2)
- *  
-   */
-void double_couple_point(theta_couple_point_t *out,const theta_couple_curve_t *A,const theta_couple_point_t *in);
-
-/**
- * @brief Compute the iterated double of the theta couple point in on the elliptic product E12
- *
- * @param out Output: the theta_couple_point 
- * @param n : the number of iteration
- * @param E12 an elliptic product
- * @param in the theta couple point in the elliptic product   
- * in = (P1,P2)
- * out = [2^n] (P1,P2)
- *  
-   */
-void double_couple_point_iter(theta_couple_point_t *out,int n,const theta_couple_curve_t *A,const theta_couple_point_t *in);
-
-
-/**
- * @brief Compute the addition of theta couple points in the elliptic product E12
- *
- * @param out Output: the theta_couple_point 
- * @param E12 an elliptic product
- * @param T1 a theta couple point in the elliptic product 
- * @param T2 a theta couple point in the elliptic product   
- * T1 = (P1,P2) T2 = (Q1,Q2)
- * out = (P1+Q1,P2+Q2)
- *  
-   */
-void add_couple_point(theta_couple_point_t *out,const theta_couple_curve_t *A,const theta_couple_point_t *T1,const theta_couple_point_t *T2);
 
 /**
  * @brief Perform the hadamard transform on a theta point
