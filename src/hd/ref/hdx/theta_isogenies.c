@@ -53,7 +53,7 @@ void set_index_theta_point(theta_point_t *res,int ind, const fp2_t *val) {
 // TODO check that we computed the matrix the right way (and not the transpose)
 void get_matrix(fp2_t *a00,fp2_t *a01,fp2_t *a10,fp2_t *a11,const ec_point_t *P, const ec_curve_t *E) {
     ec_point_t P2;
-    fp2_t det,x,u,invz,temp;
+    fp2_t det,u,invz,temp;
     
     // temp = [2]P
     ec_dbl(&P2,E,P);
@@ -61,7 +61,6 @@ void get_matrix(fp2_t *a00,fp2_t *a01,fp2_t *a10,fp2_t *a11,const ec_point_t *P,
     // invz = 1/P.z  
     invz = P->z;
     fp2_inv(&invz);
-    fp2_inv(&x);
 
     // P = (x,z) P2 = (u,w)
     // det = x w - u z
@@ -186,19 +185,19 @@ void gluing_comput(theta_gluing_t *out,const theta_couple_curve_t *E12,const the
     // t001,t101 (resp t002,t102) first column of M11 * M21 (resp M12 * M22)
     fp2_mul(&t001,&M1100,&M2100);
     fp2_mul(&temp,&M1101,&M2110); 
-    fp2_mul(&t001,&t001,&temp);  
+    fp2_add(&t001,&t001,&temp);  
 
     fp2_mul(&t101,&M1110,&M2100);
     fp2_mul(&temp,&M1111,&M2110); 
-    fp2_mul(&t101,&t101,&temp);
+    fp2_add(&t101,&t101,&temp);
 
     fp2_mul(&t002,&M1200,&M2200);
     fp2_mul(&temp,&M1201,&M2210); 
-    fp2_mul(&t002,&t002,&temp);  
+    fp2_add(&t002,&t002,&temp);  
 
     fp2_mul(&t102,&M1210,&M2200);
     fp2_mul(&temp,&M1211,&M2210); 
-    fp2_mul(&t102,&t102,&temp); 
+    fp2_add(&t102,&t102,&temp); 
 
     // trace for the first row 
     fp2_set(&out->M00,1);
