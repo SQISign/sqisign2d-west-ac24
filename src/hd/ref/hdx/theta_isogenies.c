@@ -36,7 +36,7 @@ static void theta_print(char *name, theta_point_t P) {
     assert(!fp2_is_zero(&P.x));
     fp2_copy(&a,&P.x);
     fp2_inv(&a);
-    fp2_mul(&a,&a,&P.t);
+    fp2_mul(&a,&a,&P.y);
     fp2_print(name,a);
 }
 
@@ -1044,7 +1044,7 @@ void theta_product_structure_to_elliptic_product(theta_couple_curve_t *E12, thet
  * out : E1xE2 -> E3xE4 of kernel [4](T1,T2) 
  *  
    */
-void theta_chain_comput(theta_chain_t *out,int n,const theta_couple_curve_t *E12,const theta_couple_point_t *T1,const theta_couple_point_t *T2, const theta_couple_point_t *T1m2) {
+void theta_chain_comput_naive(theta_chain_t *out,int n,const theta_couple_curve_t *E12,const theta_couple_point_t *T1,const theta_couple_point_t *T2, const theta_couple_point_t *T1m2) {
 
     theta_couple_point_t P1,P2,P1m2;
     theta_point_t Q1,Q2,R1,R2;
@@ -1187,6 +1187,244 @@ void theta_chain_comput(theta_chain_t *out,int n,const theta_couple_curve_t *E12
     printf("\n");
     //final splitting step
     int is_split = splitting_comput(&out->last_step,&steps[n-2].codomain);
+    printf("\n");
+    // theta_print("T_fin",out->last_step.B.null_point);
+    // fp2_t inv_x;
+    // fp2_copy(&inv_x,&out->last_step.B.null_point.x);
+    // fp2_inv(&inv_x);
+    // fp2_mul(&out->last_step.B.null_point.x,&out->last_step.B.null_point.x,&inv_x);
+    // fp2_mul(&out->last_step.B.null_point.y,&out->last_step.B.null_point.y,&inv_x);
+    // fp2_mul(&out->last_step.B.null_point.z,&out->last_step.B.null_point.z,&inv_x);
+    // fp2_mul(&out->last_step.B.null_point.t,&out->last_step.B.null_point.t,&inv_x);
+    fp2_print("x",out->last_step.B.null_point.x);
+    fp2_print("y",out->last_step.B.null_point.y);
+    fp2_print("z",out->last_step.B.null_point.z);
+    fp2_print("t",out->last_step.B.null_point.t);
+    assert(is_split);
+
+    // computing the curves of the codomain
+    theta_product_structure_to_elliptic_product(&out->codomain,&out->last_step.B);
+
+    fp2_t j2,j3;
+    ec_j_inv(&j2,&out->codomain.E1);
+    ec_j_inv(&j3,&out->codomain.E2);
+
+    printf("\n");
+
+    fp2_print("j2",j2);
+    fp2_print("j3",j3);
+
+    ibz_finalize(&a);
+    ibz_finalize(&b);
+
+}
+
+
+void theta_chain_comput_rec(theta_chain_t *out, theta_structure_t *codomain,theta_point_t *R1,theta_point_t *R2, long len, long index, bool advance, theta_point_t *P1, theta_point_t *P2, long stacklen) {
+
+    if (len == 0) {
+        return;
+    }
+    if (len == 1) {
+        if ((index < 4)|(index > 114)) {
+            printf("\nK1_%ld",index+1);
+            theta_print("",*R1);
+            printf("K2_%ld",index+1);
+            theta_print("",*R2);
+        }
+        // first we compute the isogeny and update the codomain
+        theta_isogeny_comput(&out->steps[index],codomain,R1,R2,0,1);
+        *codomain=out->steps[index].codomain;
+        if ((index < 4)|(index > 114)) {
+            printf("\n");
+            printf("T%ld",index+1);
+            theta_print("",codomain->null_point);
+            fp2_print("precomp",out->steps[index].precomputation.z);
+            
+        }
+        // push points
+        for (int i = 0; i < stacklen; i++) {
+            theta_isogeny_eval(P1+i,&out->steps[index],P1+i);
+            theta_isogeny_eval(P2+i,&out->steps[index],P2+i);
+        }
+        if ((index < 4)|(index > 114)) {
+            printf("\nphi%ld",index+1);
+            theta_print("(K1)",P1[0]);
+            printf("phi%ld",index+1);
+            theta_print("(K2)",P2[0]);
+        }
+
+    } else {
+        long right = len / 2;
+        long left = len - right;
+        P1[stacklen] = *R1;
+        P2[stacklen] = *R2;
+        double_iter(R1,codomain,R1,left);
+        double_iter(R2,codomain,R2,left);
+    
+        theta_chain_comput_rec(out,codomain, R1,R2, right,index,advance, P1,P2,stacklen+1);
+        R1[right*advance] = P1[stacklen];
+        R2[right*advance] = P2[stacklen];
+        theta_chain_comput_rec(out,codomain,R1+right*advance,R2+right*advance,left,right+index,advance,P1,P2,stacklen);
+    }
+}
+
+void theta_chain_comput(theta_chain_t *out,int n,const theta_couple_curve_t *E12,const theta_couple_point_t *T1,const theta_couple_point_t *T2, const theta_couple_point_t *T1m2) {
+
+    theta_couple_point_t P1,P2,P1m2;
+    theta_point_t Q1,Q2,R1,R2;
+    theta_isogeny_t steps[n-1];
+    theta_structure_t codomain;
+
+    ibz_t a,b;
+    ibz_init(&a);
+    ibz_init(&b);
+
+    // TODO use a better strategy
+
+    // init of the isogeny chain
+    out->domain=*E12;
+    out->length=n;
+    out->T1=*T1;
+    out->T2=*T2;
+    out->steps=malloc((n-1)*sizeof(theta_isogeny_t));
+
+    // First, we compute the first step  
+    // multiply by 2^n-1
+    double_couple_point_iter(&P1,n-1,E12,T1);
+    double_couple_point_iter(&P2,n-1,E12,T2);
+    double_couple_point_iter(&P1m2,n-1,E12,T1m2);
+
+    #ifndef NDEBUG
+        // checking that the points have order 8 
+        ec_point_t test1,test2;
+        test1=P1.P1;
+        test2=P1.P2;
+        ec_dbl(&test1,&E12->E1,&test1);
+        ec_dbl(&test1,&E12->E1,&test1);
+        ec_dbl(&test2,&E12->E2,&test2);
+        ec_dbl(&test2,&E12->E2,&test2);
+        assert(!fp2_is_zero(&test1.z));
+        assert(!fp2_is_zero(&test2.z));
+        ec_dbl(&test1,&E12->E1,&test1);
+        ec_dbl(&test2,&E12->E2,&test2);
+        assert(fp2_is_zero(&test1.z));
+        assert(fp2_is_zero(&test2.z));
+        test1=P2.P1;
+        test2=P2.P2;
+        ec_dbl(&test1,&E12->E1,&test1);
+        ec_dbl(&test1,&E12->E1,&test1);
+        ec_dbl(&test2,&E12->E2,&test2);
+        ec_dbl(&test2,&E12->E2,&test2);
+        assert(!fp2_is_zero(&test1.z));
+        assert(!fp2_is_zero(&test2.z));
+        ec_dbl(&test1,&E12->E1,&test1);
+        ec_dbl(&test2,&E12->E2,&test2);
+        assert(fp2_is_zero(&test1.z));
+        assert(fp2_is_zero(&test2.z));
+    #endif
+    
+    // compute the gluing isogeny 
+    gluing_comput(&out->first_step,E12,&P1,&P2);
+
+    printf("\n");
+    theta_print("T0",out->first_step.codomain);
+
+
+    // set-up the theta_structure for the first codomain 
+    codomain.null_point=out->first_step.codomain;
+    codomain.precomputation=0;
+    theta_precomputation(&codomain);
+
+
+    // push the kernel through the gluing isogeny
+    // need to setup the input before
+    ibz_pow(&a,&ibz_const_two,n);
+    ibz_set(&b,0);
+    gluing_eval_basis(&Q1,&Q2,T1,T2,T1m2,&a,&b,E12,&out->first_step);
+    
+    printf("\n");
+    theta_print("phi0(K1)",Q1);
+    theta_print("phi0(K2)",Q2);
+
+    // now we launch the evaluation of the n-3 with a strategy other steps
+    // setting_up the kernel
+    double_iter(&R1,&codomain,&Q1,2);
+    double_iter(&R2,&codomain,&Q2,2);
+    // setting up other parameters
+    long log,len = n-3;
+    for (log = 0; len > 1; len >>= 1) log++;
+    theta_point_t stack1[1+log];
+    theta_point_t stack2[1+log];
+    stack1[0]=Q1;
+    stack2[0]=Q2;
+    printf("right up the reccursive computation \n");
+    theta_chain_comput_rec(out,&codomain,&R1,&R2,n-3,0,false,stack1,stack2,1);
+    Q1 = stack1[0];
+    Q2 = stack2[0];
+
+    // and now we do the remaining steps
+    for (int i=n-3;i<n-1;i++) {
+
+        // computing the kernel of the next step
+        double_iter(&R1,&codomain,&Q1,n-i-2);
+        double_iter(&R2,&codomain,&Q2,n-i-2);
+        if ((i < 4)|(i > 114)) {
+            printf("\nK1_%d",i+1);
+            theta_print("",R1);
+            printf("K2_%d",i+1);
+            theta_print("",R2);
+        }
+    
+        // computing the next step
+        if (i==n-3) {
+            printf("avant-dernier %d \n",i+1);
+            theta_isogeny_comput(&out->steps[i],&codomain,&R1,&R2,0,0);
+        }
+        else if (i==n-2) {
+            printf("dernier %d \n",i+1);
+            theta_isogeny_comput(&out->steps[i],&codomain,&R1,&R2,1,0);
+        }
+        else {
+            theta_isogeny_comput(&out->steps[i],&codomain,&R1,&R2,0,1);
+        }
+
+        // updating the codomain
+        codomain=out->steps[i].codomain;
+        if ((i < 4)|(i > 114)) {
+            printf("\n");
+            printf("T%d",i+1);
+            theta_print("",codomain.null_point);
+            fp2_print("precomp",out->steps[i].precomputation.z);
+            
+        }
+        
+
+        // pushing the kernel
+        if (i< n-2) {
+            theta_isogeny_eval(&Q1,&out->steps[i],&Q1);
+            theta_isogeny_eval(&Q2,&out->steps[i],&Q2);
+        }
+        if ((i < 4)|(i > 114 && i<n-2)) {
+            printf("\nphi%d",i+1);
+            theta_print("(K1)",Q1);
+            printf("phi%d",i+1);
+            theta_print("(K2)",Q2);
+        }
+    
+    }
+
+
+    printf("\n");
+    fp2_print("x",out->steps[n-2].codomain.null_point.x);
+    fp2_print("y",out->steps[n-2].codomain.null_point.y);
+    fp2_print("z",out->steps[n-2].codomain.null_point.z);
+    fp2_print("t",out->steps[n-2].codomain.null_point.t);
+
+
+    printf("\n");
+    //final splitting step
+    int is_split = splitting_comput(&out->last_step,&out->steps[n-2].codomain);
     printf("\n");
     // theta_print("T_fin",out->last_step.B.null_point);
     // fp2_t inv_x;
