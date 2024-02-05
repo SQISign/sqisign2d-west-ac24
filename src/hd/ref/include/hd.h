@@ -234,11 +234,12 @@ void add_couple_point(theta_couple_point_t *out,const theta_couple_curve_t *A,co
  * @param E12 an elliptic curve product 
  * @param T1 a couple point on E12[2^(n+2)]
  * @param T2 a couple point on E12[2^(n+2)]
+ * @param T1m2 a couple point on E12[2^(n+2)] equal to T1-T2
  *   
  * out : E1xE2 -> E3xE4 of kernel [4](T1,T2) 
  * 
    */
-void theta_chain_comput(theta_chain_t *out,int n,const theta_couple_curve_t *E12,const theta_couple_point_t *T1,const theta_couple_point_t *T2);
+void theta_chain_comput(theta_chain_t *out,int n,const theta_couple_curve_t *E12,const theta_couple_point_t *T1,const theta_couple_point_t *T2, const theta_couple_point_t *T1m2);
 
 /**
  * @brief Evaluate a (2,2) isogeny chain in dimension 2 between elliptic products in the theta_model
@@ -246,12 +247,14 @@ void theta_chain_comput(theta_chain_t *out,int n,const theta_couple_curve_t *E12
  * @param out Output: the image point
  * @param phi : the (2,2) isogeny chain of domain E12
  * @param P12 a couple point on E12, 
+ * @param Help a couple point on E12 
  *   
  * phi : E1xE2 -> E3xE4 of kernel 
  * P12 in E1xE2
  * out = phi(P12) in E3xE4 
+ * Help is equal to phi.first_step.K1_4 + P12
  *  
    */
-void theta_chain_eval(theta_couple_point_t *out,theta_chain_t *phi,theta_couple_point_t *P12);
+void theta_chain_eval(theta_couple_point_t *out,theta_chain_t *phi,const theta_couple_point_t *P12,const theta_couple_point_t *Help);
 
 #endif

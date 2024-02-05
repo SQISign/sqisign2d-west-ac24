@@ -22,6 +22,18 @@ static int test_point_order_twof(const ec_point_t *P, const ec_curve_t *E) {
     return (fp2_is_zero(&test.z));
 }
 
+static int test_point_order_twof_var(const ec_point_t *P, const ec_curve_t *E,int t) {
+    ec_point_t test;
+    copy_point(&test, P);
+    if (fp2_is_zero(&test.z)) return 0;
+    for (int i = 0;i<t-1;i++) {
+        ec_dbl(&test,E,&test);
+    }
+    if (fp2_is_zero(&test.z)) return 0;
+    ec_dbl(&test,E,&test);
+    return (fp2_is_zero(&test.z));
+}
+
 static int test_point_order_threef(const ec_point_t *P, const ec_curve_t *E) {
     ec_point_t test;
     copy_point(&test, P);
@@ -37,16 +49,15 @@ static int test_point_order_threef(const ec_point_t *P, const ec_curve_t *E) {
 }
 
 void fp2_printt(char *name, fp2_t const a){
-    fp2_t b;
-    fp2_copy(&b,&a);
-    // fp2_set(&b, 1);
-    // fp2_mul(&b, &b, &a);
+    fp_t b1,b2;
+    fp_frommont(b1,a.re);
+    fp_frommont(b2,a.im);
     printf("%s = 0x", name);
     for(int i = NWORDS_FIELD - 1; i >=0; i--)
-        printf("%016" PRIx64, b.re[i]);
+        printf("%016" PRIx64, b1[i]);
     printf(" + i*0x");
     for(int i = NWORDS_FIELD - 1; i >=0; i--)
-        printf("%016" PRIx64, b.im[i]);
+        printf("%016" PRIx64, b2[i]);
     printf("\n");
 }
 
@@ -94,76 +105,32 @@ int hd_chain_test() {
     ec_basis_t B0_two,B1_two,B0_three;
     ec_isog_odd_t phi;
 
-
-    // fp2_test 
-    fp2_t xx,yy,z;
+    #ifndef NDEBUG
+        // fp2_test 
+        fp2_t xx,yy,z;
     
-    fp2_set(&xx,1);
-    fp2_set(&yy,1);
-    printf("test printing %ld \n",xx.re[0]);
-    fp2_printt("1=",xx);
-    fp2_set(&z,2);
-    fp2_add(&xx,&xx,&yy);
-    assert(fp2_is_equal(&xx,&z));    
-    fp2_sub(&xx,&xx,&yy);
-    assert(fp2_is_equal(&xx,&yy));
-    fp2_sub(&xx,&xx,&yy);
-    assert(fp2_is_zero(&xx));
-    fp2_neg(&xx,&yy);
-    fp2_printt("-1=",xx);
-    printf("also 1 =%ld \n",yy.re[0]);
-    fp2_add(&xx,&xx,&yy);
-    printf("also 0 =%ld \n",xx.re[0]);
-    assert(fp2_is_zero(&xx));
-    fp2_printt("0=",xx);
-    fp2_set(&yy,1);
-    fp2_set(&xx,1);
-    fp2_sqr(&xx,&yy);
-    fp2_printt("1^2 = ",xx);
-    assert(fp2_is_equal(&xx,&yy));
-    fp2_mul(&xx,&yy,&yy);
-    // assert(fp2_is_equal(&xx,&yy));
+        fp_set(xx.im,0);
+        fp_set(yy.im,0);
+        fp_mont_setone(xx.re);
+        fp_mont_setone(yy.re);
+        fp2_sub(&xx,&xx,&yy);
+        assert(fp2_is_zero(&xx));
+        fp2_neg(&xx,&yy);
+        fp2_sqr(&xx,&yy);
+        assert(fp2_is_equal(&xx,&yy));
+        fp2_mul(&xx,&yy,&yy);
+        assert(fp2_is_equal(&xx,&yy));
 
 
-    fp_set(yy.im,1);
-    fp_set(yy.re,0);
-    fp_set(z.im,1);
-    fp_set(z.re,0);
-    fp2_printt("y=",yy);
-    fp2_printt("z=",z);
-
-
-
-    fp_t t0,t1,check;
-    fp_set(check,1);
-    fp_add(t0, yy.re, yy.im);
-    fp_add(t1, z.re, z.im);
-    assert(fp_is_equal(t0,t1));
-    assert(fp_is_equal(check,t0));
-    assert(fp_is_equal(check,t1));
-    fp_mul(t0, t0, t1);
-    // assert(fp_is_equal(check,t0));
-    fp_mul(t1, yy.im, z.im);
-    // assert(fp_is_equal(check,t1));
-    fp_mul(xx.re, yy.re, z.re);
-    assert(fp_is_zero(xx.re));
-    fp_sub(xx.im, t0, t1);
-    assert(fp_is_zero(xx.im));
-    fp_sub(xx.im, xx.im, xx.re);
-    assert(fp_is_zero(xx.im));
-    fp_sub(xx.re, xx.re, t1);
-    fp2_printt("i^2 = ",xx);
-
-
-    fp2_t test_i,min;
-    fp_set(test_i.im,1);
-    fp_set(test_i.re,0);
-    fp_set(min.im,0);
-    fp_set(min.re,1);
-    fp2_mul(&test_i,&test_i,&test_i);
-    fp2_add(&test_i,&test_i,&min);
-    fp2_printt("i^2 + 1=",test_i);
-    // assert(fp2_is_zero(&test_i));
+        fp2_t test_i,min;
+        fp_mont_setone(test_i.im);
+        fp_set(test_i.re,0);
+        fp_set(min.im,0);
+        fp_mont_setone(min.re);
+        fp2_mul(&test_i,&test_i,&test_i);
+        fp2_add(&test_i,&test_i,&min);
+        assert(fp2_is_zero(&test_i));
+    #endif
 
     // setting the coefficient 
     ibz_set(&x,2305140776455892706);
@@ -179,6 +146,13 @@ int hd_chain_test() {
     copy_point(&B0_three.PmQ,&BASIS_THREE.PmQ);
 
     E0=CURVE_E0;
+
+
+    point_print("P1",B0_two.P);
+    point_print("P2",B0_two.Q);
+    point_print("P1m2",B0_two.PmQ);
+    // point_print("PmQ",B0_two.PmQ);
+
 
     #ifndef NDEBUG
         assert(test_point_order_twof(&B0_two.P,&E0));
@@ -204,46 +178,29 @@ int hd_chain_test() {
     // first basis element
     ibz_to_digit_array(scalars[0],&mat[0][0]);
     // ibz_set(&mat[0][1],0);
-    ibz_to_digit_array(scalars[1],&mat[0][1]);
+    ibz_to_digit_array(scalars[1],&mat[1][0]);
     
     ec_biscalar_mul(&B1_two.P,&CURVE_E0,scalars[0],scalars[1],&B0_two);
-    ibz_to_digit_array(scalars[0],&mat[1][0]);
+    ibz_to_digit_array(scalars[0],&mat[0][1]);
     ibz_to_digit_array(scalars[1],&mat[1][1]);
     ec_biscalar_mul(&B1_two.Q,&CURVE_E0,scalars[0],scalars[1],&B0_two);
 
-    fp2_t test_print,test_print2;
-    fp_set(test_print2.re,1);
-    fp_set(test_print2.im,0);
-    fp2_printt("1= ",test_print2);
-    fp2_neg(&test_print2,&test_print2);
-    fp2_printt("-1= ",test_print2);
+    ibz_sub(&tmp,&mat[0][0],&mat[0][1]);
+    ibz_to_digit_array(scalars[0],&tmp);
+    ibz_sub(&tmp,&mat[1][0],&mat[1][1]);
+    ibz_to_digit_array(scalars[1],&tmp);
+    ec_biscalar_mul(&B1_two.PmQ,&CURVE_E0,scalars[0],scalars[1],&B0_two);
 
-    fp_set(test_print.re,0);
-    fp_set(test_print.im,1);
-    fp2_printt("i= ",test_print);
-    fp2_mul(&test_print,&test_print,&test_print);
-    fp2_printt("i^2 = ",test_print);
-    
-    if (fp2_is_equal(&test_print,&test_print2)) {
-        printf("equality \n");
-    }
-    else {
-        printf("non equality \n");
-    }
-
-
-    point_print("P",B0_two.P);
-    point_print("Q",B0_two.Q);
-    point_print("PmQ",B0_two.PmQ);
-
-    fp2_t jj;
-    ec_j_inv(&jj,&E0);
-    fp2_printt("1728=",jj);
-
-
+    // point_print("x + y*iota(Q)",B1_two.Q);
 
     assert(test_point_order_twof(&B1_two.P,&E0));
     assert(test_point_order_twof(&B1_two.Q,&E0));
+    assert(test_point_order_twof(&B1_two.PmQ,&E0));
+
+    printf("\n");
+    point_print("Q1",B1_two.P);
+    point_print("Q2",B1_two.Q);
+    point_print("Q1m2",B1_two.PmQ);
 
 
     // setting up the isogeny 
@@ -252,7 +209,6 @@ int hd_chain_test() {
     phi.degree[0]=tab[0];
     phi.degree[1]=tab[1];
     phi.degree[2]=tab[2];
-    printf("%d %d %d \n",phi.degree[0],phi.degree[1],phi.degree[2]);
     ec_set_zero(&phi.ker_minus);
     // preparating the kernel of phi as a point of 3 torsion
     digit_t three[NWORDS_ORDER] = {0};
@@ -263,14 +219,26 @@ int hd_chain_test() {
     }
     ec_eval_odd_basis(&E1,&phi,&B0_two,1);
 
+    fp2_t j1;
+    ec_j_inv(&j1,&E1);
+    printf("\n");
+    fp2_printt("j1",j1);
+
     assert(test_point_order_twof(&B0_two.P,&E1));
     assert(test_point_order_twof(&B0_two.Q,&E1));
 
     // ready to make the dim 2 computation
     theta_couple_curve_t E01;
     theta_couple_point_t T1;
-    theta_couple_point_t T2;
+    theta_couple_point_t T2,T1m2;
     theta_chain_t dimtwo_chain;
+
+    printf("\n");
+    point_print("phi(P1)",B0_two.P);
+    point_print("phi(P2)",B0_two.Q);
+    point_print("phi(P1m2)",B0_two.PmQ);
+    printf("\n");
+
 
     // setting the couples
     E01.E1=E0;
@@ -279,6 +247,8 @@ int hd_chain_test() {
     T1.P2=B0_two.P;
     T2.P1=B1_two.Q;
     T2.P2=B0_two.Q;
+    T1m2.P1=B1_two.PmQ;
+    T1m2.P2=B0_two.PmQ; 
 
     assert(test_point_order_twof(&T1.P1,&E01.E1));
     assert(test_point_order_twof(&T1.P2,&E01.E2));
@@ -300,6 +270,7 @@ int hd_chain_test() {
     // multiplying by 2
     double_couple_point_iter(&T1,2,&E01,&T1);
     double_couple_point_iter(&T2,2,&E01,&T2);
+    double_couple_point_iter(&T1m2,2,&E01,&T1m2);
 
     int length=122;
 
@@ -331,8 +302,28 @@ int hd_chain_test() {
         assert(fp2_is_zero(&test2.z));
     #endif
 
-    theta_chain_comput(&dimtwo_chain,length,&E01,&T1,&T2);
+    theta_chain_comput(&dimtwo_chain,length,&E01,&T1,&T2,&T1m2);
 
+    // computing dim_twochain(T1.P1,0)
+
+    theta_couple_point_t FP,Help;
+    FP.P1 = T1.P1;
+    ec_set_zero(&FP.P2);
+    ibz_t scal;
+    ibz_init(&scal);
+    digit_t scal_dig[NWORDS_ORDER] = {0};
+    ibz_pow(&scal,&ibz_const_two,length);
+    ibz_add(&scal,&ibz_const_one,&scal);
+    ibz_to_digit_array(scal_dig,&scal);
+    ec_mul(&Help.P1,&E0,scal_dig,&T1.P1);
+    Help.P2=dimtwo_chain.first_step.K1_4.P2;
+
+    theta_chain_eval(&FP,&dimtwo_chain,&FP,&Help);
+
+    assert( test_point_order_twof_var(&FP.P1,&dimtwo_chain.codomain.E1,length+2));
+    assert( test_point_order_twof_var(&FP.P2,&dimtwo_chain.codomain.E2,length+2));
+
+    ibz_finalize(&scal);
 
     return 1;
 }
@@ -351,7 +342,7 @@ int main() {
         printf("\nSome tests failed!\n");
     } 
     else {
-        printf("All tests passed!\n");
+        printf("\nAll tests passed!\n");
     }
     return(!res);
 }

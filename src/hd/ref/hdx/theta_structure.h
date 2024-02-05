@@ -66,7 +66,7 @@ void theta_precomputation(theta_structure_t *A);
  * /!\ assumes that no coordinates is zero and that the precomputation of A has been done
  *  
    */
-void double_point(theta_point_t *out,const theta_structure_t *A,const theta_point_t *in);
+void double_point(theta_point_t *out, theta_structure_t *A,const theta_point_t *in);
 
 /**
  * @brief Compute the iterated double of the theta point in on the theta struc A
@@ -80,7 +80,7 @@ void double_point(theta_point_t *out,const theta_structure_t *A,const theta_poin
  * /!\ assumes that no coordinates is zero and that the precomputation of A has been done
  *  
    */
-void double_iter(theta_point_t *out,const theta_structure_t *A,const theta_point_t *in, int exp);
+void double_iter(theta_point_t *out, theta_structure_t *A,const theta_point_t *in, int exp);
 
 /**
  * @brief Compute the differential addition of two theta points in the theta struc A

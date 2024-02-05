@@ -53,7 +53,9 @@ void double_couple_point_iter(theta_couple_point_t *out,int n,const theta_couple
  * out = (P1+Q1,P2+Q2)
  *  
    */
-void add_couple_point(theta_couple_point_t *out,const theta_couple_curve_t *A,const theta_couple_point_t *T1,const theta_couple_point_t *T2) {
-    // TODO : we need a lifting to use the addition ? 
+void add_couple_point(theta_couple_point_t *out,const theta_couple_curve_t *A,const theta_couple_point_t *T1,const theta_couple_point_t *T2) { 
+    
+    // perform the lifting
+    // TODETERMINE : do we care about signs or not ?
     assert(0);
 }

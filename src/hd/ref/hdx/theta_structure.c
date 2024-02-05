@@ -107,13 +107,16 @@ void theta_precomputation(theta_structure_t *A){
  * /!\ assumes that no coordinates is zero and that A has been precomputed
  *  
    */
-void double_point(theta_point_t *out,const theta_structure_t *A,const theta_point_t *in) {
+void double_point(theta_point_t *out,theta_structure_t *A,const theta_point_t *in) {
 
     to_squared_theta(out,in);
     fp2_sqr(&out->x,&out->x);
     fp2_sqr(&out->y,&out->y);
     fp2_sqr(&out->z,&out->z);
     fp2_sqr(&out->t,&out->t);
+    if (!A->precomputation) {
+        theta_precomputation(A);
+    }
     fp2_mul(&out->y,&out->y,&A->Y0);
     fp2_mul(&out->z,&out->z,&A->Z0);
     fp2_mul(&out->t,&out->t,&A->T0);
@@ -138,18 +141,20 @@ void double_point(theta_point_t *out,const theta_structure_t *A,const theta_poin
  * /!\ assumes that no coordinates is zero and that the precomputation of A has been done
  *  
    */
-void double_iter(theta_point_t *out,const theta_structure_t *A,const theta_point_t *in, int exp){
-
+void double_iter(theta_point_t *out,theta_structure_t *A,const theta_point_t *in, int exp){
     if (exp==0) {
         fp2_copy(&out->x,&in->x);
         fp2_copy(&out->y,&in->y);
         fp2_copy(&out->z,&in->z);
         fp2_copy(&out->t,&in->t);
     }
-    double_point(out,A,in);
-    for (int i=1;i<exp;i++){
-        double_point(out,A,out);
+    else {
+        double_point(out,A,in);
+        for (int i=1;i<exp;i++){
+            double_point(out,A,out);
+        }
     }
+    
 }
 
 /**
