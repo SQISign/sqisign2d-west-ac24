@@ -64,13 +64,18 @@ typedef struct theta_point {
 typedef struct theta_structure {
     theta_point_t null_point;
     int precomputation;
-    fp2_t y0;
-    fp2_t z0;
-    fp2_t t0;
-    fp2_t Y0;
-    fp2_t Z0;
-    fp2_t T0;
-    
+    // fp2_t y0;
+    // fp2_t z0;
+    // fp2_t t0;
+   
+    fp2_t XYZ0;
+    fp2_t YZT0;
+    fp2_t XZT0;
+    fp2_t XYT0;
+    fp2_t xyz0;
+    fp2_t yzt0;
+    fp2_t xzt0;
+    fp2_t xyt0;
 } theta_structure_t;
 
 

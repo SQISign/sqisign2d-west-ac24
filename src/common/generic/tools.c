@@ -1,8 +1,5 @@
-
 #include <stdio.h>
 #include <time.h> 
-
-#include "toolbox.h"
 
 static clock_t global_timer;
 
@@ -46,7 +43,4 @@ TOC(const clock_t t, const char *str)
     // #endif
     return ms;
 }
-
-
-
 

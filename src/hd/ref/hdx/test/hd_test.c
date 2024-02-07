@@ -4,6 +4,8 @@
 #include <fp.h>
 #include <stdio.h>
 #include <inttypes.h>
+#include <tools.h>
+
 
 
 
@@ -240,6 +242,18 @@ int hd_chain_test() {
     printf("\n");
 
 
+    // testing two_isogenies time 
+    ec_isog_even_t phi_two;
+    phi_two.length = TORSION_PLUS_EVEN_POWER;
+    phi_two.curve = E1;
+    phi_two.kernel = B0_two.P;
+    ec_curve_t F;
+    ec_point_t im;
+    clock_t t;
+    im = B0_two.Q;
+    t = tic();
+    ec_eval_even_nonzero(&F,&phi_two,&im,1);
+
     // setting the couples
     E01.E1=E0;
     E01.E2=E1;
@@ -302,8 +316,11 @@ int hd_chain_test() {
         assert(fp2_is_zero(&test2.z));
     #endif
 
+    t = tic();
+
     theta_chain_comput(&dimtwo_chain,length,&E01,&T1,&T2,&T1m2);
 
+    TOC(t,"chain computation");
     // computing dim_twochain(T1.P1,0)
 
     theta_couple_point_t FP,Help;
@@ -318,7 +335,9 @@ int hd_chain_test() {
     ec_mul(&Help.P1,&E0,scal_dig,&T1.P1);
     Help.P2=dimtwo_chain.first_step.K1_4.P2;
 
+    t = tic();
     theta_chain_eval(&FP,&dimtwo_chain,&FP,&Help);
+    TOC(t,"chain eval");
 
     assert( test_point_order_twof_var(&FP.P1,&dimtwo_chain.codomain.E1,length+2));
     assert( test_point_order_twof_var(&FP.P2,&dimtwo_chain.codomain.E2,length+2));

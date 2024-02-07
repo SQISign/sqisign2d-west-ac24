@@ -25,5 +25,6 @@ void fp2_sqrt(fp2_t* x);
 void fp2_tomont(fp2_t* x, const fp2_t* y);
 void fp2_frommont(fp2_t* x, const fp2_t* y);
 int fp2_cmp(fp2_t* x, fp2_t* y);
+void fp2_batched_inv(fp2_t *x,int len);
 
 #endif
