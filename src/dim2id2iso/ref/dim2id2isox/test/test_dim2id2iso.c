@@ -283,7 +283,7 @@ int dim2id2iso_test_dimid2iso() {
     ibz_init(&bu);ibz_init(&d1);ibz_init(&d2);
 
     // computation of lideal_small
-    generate_random_prime(&n1,1,180);
+    generate_random_prime(&n1,1,128);
     generate_random_prime(&n2,1,256);
     ibz_mul(&temp,&n1,&n2);
     found = found && represent_integer(&gen,&temp,&QUATALG_PINFTY);

@@ -37,10 +37,24 @@ toc(const clock_t t)
 float
 TOC(const clock_t t, const char *str)
 {
-    float ms = (1000. * (float) (clock() - t) / CLOCKS_PER_SEC);
-    // #ifndef NDEBUG
-    printf("%s [%d ms]\n", str, (int) ms);
-    // #endif
-    return ms;
+    // float ms = (1000. * (float) (clock() - t) / CLOCKS_PER_SEC);
+    // // #ifndef NDEBUG
+    // printf("%s [%d ms]\n", str, (int) ms);
+    // // #endif
+    // return ms;
+    printf("%s [%ld]\n",str,clock()-t);
+    return (float) (clock()-t);
 }
 
+
+clock_t dclock(const clock_t t) {
+    return (clock() - t);
+}
+
+float clock_to_time( const clock_t t, const char *str) {
+    // float ms = (1000. * (float) (t) / CLOCKS_PER_SEC);
+    // printf("%s [%d ms]\n", str, (int) ms);
+    // return ms;
+    printf("%s [%ld]\n",str,t);
+    return (float) (t);
+}
