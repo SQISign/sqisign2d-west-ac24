@@ -38,9 +38,7 @@ float
 TOC(const clock_t t, const char *str)
 {
     // float ms = (1000. * (float) (clock() - t) / CLOCKS_PER_SEC);
-    // // #ifndef NDEBUG
     // printf("%s [%d ms]\n", str, (int) ms);
-    // // #endif
     // return ms;
     printf("%s [%ld]\n",str,clock()-t);
     return (float) (clock()-t);

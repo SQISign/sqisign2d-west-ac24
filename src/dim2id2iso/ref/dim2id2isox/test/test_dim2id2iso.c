@@ -290,7 +290,9 @@ int dim2id2iso_test_dimid2iso() {
     assert(found);
     quat_lideal_create_from_primitive(&lideal_small,&gen,&n1,&STANDARD_EXTREMAL_ORDER.order,&QUATALG_PINFTY);
 
-    found = found && dim2id2iso_ideal_to_isogeny_clapotis(&Phi,&beta1,&beta2,&u,&v,&au,&bu,&phiv,&d1,&d2,&lideal_small,&QUATALG_PINFTY);
+    found = 1;
+
+    found = dim2id2iso_ideal_to_isogeny_clapotis(&Phi,&beta1,&beta2,&u,&v,&au,&bu,&phiv,&d1,&d2,&lideal_small,&QUATALG_PINFTY);
 
     ibq_finalize(&ibq_norm);
     ibz_finalize(&temp);ibz_finalize(&remainder);ibz_finalize(&n1);ibz_finalize(&n2);
@@ -306,7 +308,7 @@ int dim2id2iso_test_dimid2iso() {
     quat_alg_elem_finalize(&beta1);
     quat_alg_elem_finalize(&beta2);
 
-    return 1;
+    return found;
 }
 
 int main() {
