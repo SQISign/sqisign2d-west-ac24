@@ -96,6 +96,36 @@ void fp2_inv(fp2_t* x)
     fp_neg(x->im, x->im);
 }
 
+void fp2_batched_inv(fp2_t *x, int len) {
+
+    fp2_t t1[len],t2[len];
+    fp2_t inverse;
+
+    // x = x0,...,xn
+    // t1 = x0, x0*x1, ... ,x0 * x1 * ... * xn
+    fp2_copy(&t1[0],&x[0]);
+    for (int i=1;i<len;i++) {
+        fp2_mul(&t1[i],&t1[i-1],&x[i]);
+    }
+
+    // inverse = 1/ (x0 * x1 * ... * xn)
+    fp2_copy(&inverse,&t1[len-1]);
+    fp2_inv(&inverse);
+
+    fp2_copy(&t2[0],&inverse);
+    // t2 = 1/ (x0 * x1 * ... * xn), 1/ (x0 * x1 * ... * x(n-1)) , ... , 1/xO
+    for (int i=1;i<len;i++) {
+        fp2_mul(&t2[i],&t2[i-1],&x[len-i]);
+    }
+
+    fp2_copy(&x[0],&t2[len-1]);
+    
+    for (int i=1;i<len;i++){
+        fp2_mul(&x[i],&t1[i-1],&t2[len-i-1]);
+    }
+
+}
+
 bool fp2_is_square(const fp2_t* x)
 {
     fp_t t0, t1;

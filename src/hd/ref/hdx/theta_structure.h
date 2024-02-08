@@ -1,5 +1,6 @@
 #include <ec.h> 
 #include <fp2.h>
+#include <hd.h>
 
 /** @file
  * 
@@ -11,42 +12,12 @@
 #ifndef THETA_STRUCTURE_H
 #define THETA_STRUCTURE_H
 
-/** @brief Type for theta point * 
- * @typedef theta_point_t
- *
- * @struct theta_point
- * 
- * the  theta_point structure used  
-*/
-typedef struct theta_point {  
-    fp2_t x;
-    fp2_t y;
-    fp2_t z;
-    fp2_t t;
-} theta_point_t;
 
 
-/** @brief Type for theta structure * 
- * @typedef theta_structure_t
- *
- * @struct theta_structure
- * 
- * the  theta_structure structure used  
-*/
-typedef struct theta_structure {
-    theta_point_t null_point;
-    fp2_t y0;
-    fp2_t z0;
-    fp2_t t0;
-    fp2_t Y0;
-    fp2_t Z0;
-    fp2_t T0;
-    
-} theta_structure_t;
+
 
 
 /*************************** Functions *****************************/
-
 
 
 
@@ -95,7 +66,7 @@ void theta_precomputation(theta_structure_t *A);
  * /!\ assumes that no coordinates is zero and that the precomputation of A has been done
  *  
    */
-void double_point(theta_point_t *out,const theta_structure_t *A,const theta_point_t *in);
+void double_point(theta_point_t *out, theta_structure_t *A,const theta_point_t *in);
 
 /**
  * @brief Compute the iterated double of the theta point in on the theta struc A
@@ -109,7 +80,7 @@ void double_point(theta_point_t *out,const theta_structure_t *A,const theta_poin
  * /!\ assumes that no coordinates is zero and that the precomputation of A has been done
  *  
    */
-void double_iter(theta_point_t *out,const theta_structure_t *A,const theta_point_t *in, int exp);
+void double_iter(theta_point_t *out, theta_structure_t *A,const theta_point_t *in, int exp);
 
 /**
  * @brief Compute the differential addition of two theta points in the theta struc A
