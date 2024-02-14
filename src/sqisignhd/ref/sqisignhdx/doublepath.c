@@ -18,31 +18,6 @@ static inline void print_deg(ec_degree_odd_t deg) {
     printf("\n");
 }
 
-static int test_point_order_twof(const ec_point_t *P, const ec_curve_t *E) {
-    ec_point_t test;
-    copy_point(&test, P);
-    if (fp2_is_zero(&test.z)) return 0;
-    for (int i = 0;i<TORSION_PLUS_EVEN_POWER-1;i++) {
-        ec_dbl(&test,E,&test);
-    }
-    if (fp2_is_zero(&test.z)) return 0;
-    ec_dbl(&test,E,&test);
-    return (fp2_is_zero(&test.z));
-}
-
-static int test_point_order_threef(const ec_point_t *P, const ec_curve_t *E) {
-    ec_point_t test;
-    copy_point(&test, P);
-    digit_t three[NWORDS_ORDER] = {0};
-    three[0] = 3;
-    if (fp2_is_zero(&test.z)) return 0;
-    for (int i = 0;i<EXPONENT_THREE-1;i++) {
-        ec_mul(&test, E, three, &test);
-    }
-    if (fp2_is_zero(&test.z)) return 0;
-    ec_mul(&test, E, three, &test);
-    return (fp2_is_zero(&test.z));
-}
 
 static int test_point_order_odd_plus(const ec_point_t *P, const ec_curve_t *E) {
     ec_point_t test = *P;
@@ -86,7 +61,7 @@ void quat_to_isog_power_of_three(ec_isog_odd_t *isog, ibz_vec_2_t *ker_dlog, con
     assert(fp2_is_zero(&((isog->ker_minus).z)));
     assert(!fp2_is_zero(&((isog->ker_plus).z)));
     assert(test_point_order_odd_plus(&(isog->ker_plus), &CURVE_E0));
-    assert(test_point_order_threef(&(isog->ker_plus), &CURVE_E0));
+    assert(test_point_order_threef(&(isog->ker_plus), &CURVE_E0,TORSION_PLUS_ODD_POWERS[0]));
 
     quat_left_ideal_finalize(&ideal);
     return;
@@ -95,7 +70,7 @@ void quat_to_isog_power_of_three(ec_isog_odd_t *isog, ibz_vec_2_t *ker_dlog, con
 void isog_init_two(ec_isog_even_t *isog, const ec_curve_t *curve, const ec_point_t *ker, int length) {
     copy_curve(&(isog->curve), curve);
     copy_point(&(isog->kernel), ker);
-    assert(test_point_order_twof(ker, curve));
+    assert(test_point_order_twof(ker, curve,TORSION_PLUS_EVEN_POWER));
     isog->length = length;
     return;
 }
@@ -103,7 +78,7 @@ void isog_init_two(ec_isog_even_t *isog, const ec_curve_t *curve, const ec_point
 void isog_init_three(ec_isog_odd_t *isog, const ec_curve_t *curve, const ec_point_t *ker, int length) {
     copy_curve(&(isog->curve), curve);
     copy_point(&(isog->ker_plus), ker);
-    assert(test_point_order_threef(ker, curve));
+    assert(test_point_order_threef(ker, curve,TORSION_PLUS_ODD_POWERS[0]));
     ec_set_zero(&(isog->ker_minus));
 
     #define NUMPP (sizeof(TORSION_ODD_PRIMEPOWERS) / sizeof(*TORSION_ODD_PRIMEPOWERS))
@@ -248,9 +223,9 @@ void doublepath(quat_alg_elem_t *gamma, quat_left_ideal_t *lideal_even, quat_lef
 
     complete_two_basis(&ker_dual_two_pushed_dual, &dual_two_ker_dlog, &basis_two);
 
-    assert(test_point_order_twof(&ker_dual_two_pushed_dual, &F2));
+    assert(test_point_order_twof(&ker_dual_two_pushed_dual, &F2,TORSION_PLUS_EVEN_POWER));
     ec_eval_even(&E2, &dual_two_pushed, &ker_dual_two_pushed_dual, 1);
-    assert(test_point_order_twof(&ker_dual_two_pushed_dual, &E2));
+    assert(test_point_order_twof(&ker_dual_two_pushed_dual, &E2,TORSION_PLUS_EVEN_POWER));
 
     // FIRST HALF OF GAMMA AND FIRST HALF OF ITS DUAL HAVE ISOMORPHIC TARGETS    
     #ifndef NDEBUG 

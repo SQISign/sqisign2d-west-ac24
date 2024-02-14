@@ -7,6 +7,44 @@
 #include <bench.h>
 #include <curve_extras.h>
 #include <tools.h>
+#include <id2iso.h>
+
+//XXX FIXME stolen from src/ec/opt/generic/test/isog-test.c
+static void fp2_print(char *name, fp2_t const a){
+    fp_t b1,b2;
+    fp_frommont(b1,a.re);
+    fp_frommont(b2,a.im);
+    printf("%s = 0x", name);
+    for(int i = NWORDS_FIELD - 1; i >=0; i--)
+        printf("%016" PRIx64, b1[i]);
+    printf(" + i*0x");
+    for(int i = NWORDS_FIELD - 1; i >=0; i--)
+        printf("%016" PRIx64, b2[i]);
+    printf("\n");
+}
+
+static void point_print(char *name, ec_point_t P){
+    fp2_t a;
+    if(fp2_is_zero(&P.z)){
+        printf("%s = INF\n", name);
+    }
+    else{
+    fp2_copy(&a, &P.z);
+    fp2_inv(&a);
+    fp2_mul(&a, &a, &P.x);
+    fp2_print(name, a);
+    }
+}
+
+static void theta_print(char *name, theta_point_t P) {
+    fp2_t a;
+    assert(!fp2_is_zero(&P.x));
+    fp2_copy(&a,&P.x);
+    fp2_inv(&a);
+    fp2_mul(&a,&a,&P.y);
+    fp2_print(name,a);
+}
+
 
 
 void swap(ibz_t *a, ibz_t *b,ibz_vec_4_t *va,ibz_vec_4_t *vb) {
@@ -67,6 +105,112 @@ void quicksort(ibz_t arr[],ibz_vec_4_t varr[], int low, int high) {
     }
 }
 
+
+/**
+ * @brief Computes an arbitrary isogeny of fixed degree starting from E0
+ * 
+ * @param isog Output : a dim2 isogeny encoding an isogeny of degree u
+ * @param lideal Output : an ideal of norm u
+ * @param u : integer
+ * @returns a bit indicating if the computation succeeded  
+ * 
+ * F is an isogeny encoding an isogeny phi : E0 -> Eu of degree u
+*/
+int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *u) {
+
+    // var declaration
+    int found;
+    ibz_t two_pow,tmp;
+    quat_alg_elem_t theta;
+    ec_curve_t E0 = CURVE_E0; 
+
+    int length = TORSION_PLUS_EVEN_POWER-2;
+
+
+    // var init 
+    ibz_init(&two_pow);ibz_init(&tmp);
+    quat_alg_elem_init(&theta);
+    
+
+    ibz_pow(&two_pow,&ibz_const_two,length);
+
+    // check that u is not big 
+    if (ibz_cmp(&two_pow,u)<0) {
+        printf("too small \n");
+        assert(0);
+    }
+    // check that u is odd 
+    if (ibz_is_even(u)) {
+        printf("even \n");
+        assert(0);
+    }
+
+    // computing the endomorphism theta of norm u (2^(TORSION_PLUS_EVEN_POWER-2) -u)
+    ibz_sub(&two_pow,&two_pow,u);
+    ibz_mul(&two_pow,&two_pow,u);
+
+    found = represent_integer_non_diag(&theta,&two_pow,&QUATALG_PINFTY);
+
+
+    if (!found) {
+        printf("not found \n");
+        return 0;
+    }
+    quat_lideal_create_from_primitive(lideal,&theta,u,&STANDARD_EXTREMAL_ORDER.order,&QUATALG_PINFTY);
+
+
+    ec_basis_t B0_two;
+    // copying the basis
+    copy_point(&B0_two.P,&BASIS_EVEN.P);
+    copy_point(&B0_two.Q,&BASIS_EVEN.Q);
+    copy_point(&B0_two.PmQ,&BASIS_EVEN.PmQ);
+
+    assert(test_point_order_twof(&B0_two.P,&E0,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&B0_two.Q,&E0,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&B0_two.PmQ,&E0,TORSION_PLUS_EVEN_POWER));
+    
+
+    // applying theta
+    endomorphism_application_even_basis(&B0_two,&theta,TORSION_PLUS_EVEN_POWER);    
+
+    assert(test_point_order_twof(&B0_two.P,&E0,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&B0_two.Q,&E0,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&B0_two.PmQ,&E0,TORSION_PLUS_EVEN_POWER));
+
+    // now we set-up the kernel 
+    theta_couple_curve_t E01;
+    theta_couple_point_t T1;
+    theta_couple_point_t T2,T1m2;
+    E01.E1=E0;
+    E01.E2=E0;
+    T1.P2=B0_two.P;
+    T2.P2=B0_two.Q;
+    T1m2.P2=B0_two.PmQ; 
+      
+    // multiplication by u 
+    ec_biscalar_mul_ibz(&T1.P1,&E0,u,&ibz_const_zero,&BASIS_EVEN);
+    ec_biscalar_mul_ibz(&T2.P1,&E0,&ibz_const_zero,u,&BASIS_EVEN);
+    ibz_neg(&tmp,u);
+    ibz_pow(&two_pow,&ibz_const_two,TORSION_PLUS_EVEN_POWER);
+    ibz_mod(&tmp,&tmp,&two_pow);
+    ec_biscalar_mul_ibz(&T1m2.P1,&E0,u,&tmp,&BASIS_EVEN);
+
+    // computing the isogeny
+    theta_chain_comput(isog,length,&E01,&T1,&T2,&T1m2);
+
+    // checking that we get one point 
+
+    
+
+    // var finalize
+    ibz_finalize(&two_pow);ibz_finalize(&tmp);
+    quat_alg_elem_finalize(&theta);
+
+    return 1;
+    
+}
+
+
 /** 
  * @brief Find good equivalent ideals
  * 
@@ -91,6 +235,7 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_t *au, ibz_t *bu,quat_alg_elem_t *beta1,quat_a
 
     ibz_init(&n);
 
+    // TODO this could be much simpler (use ibz_set_str for a start)
     int prime_list_length; ibz_t prod_bad_primes; // TODO make this a precomputation
     short prime_list[12] = {2,5, 13, 17, 29, 37, 41, 53, 61, 73, 89, 97};
     prime_list_length = 12;  
@@ -126,25 +271,6 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_t *au, ibz_t *bu,quat_alg_elem_t *beta1,quat_a
     quat_lideal_reduce_basis(&reduced,&gram,lideal,Bpoo);
     TOC(t,"\nbasis reduction");
 
-    // adjusting the sign if needed 
-    // TODO : sometimes this fails
-    if (ibz_cmp(&reduced[0][0],&reduced[1][1])!=0) {
-        for (int i=0;i<4;i++) {
-            ibz_neg(&reduced[1][i],&reduced[1][i]);
-            ibz_neg(&gram[i][1],&gram[i][1]);
-            ibz_neg(&gram[1][i],&gram[1][i]);
-        }
-        assert(ibz_cmp(&reduced[0][0],&reduced[1][1])==0);
-    }
-    if (ibz_cmp(&reduced[2][0],&reduced[3][1])!=0) {
-        for (int i=0;i<4;i++) {
-            ibz_neg(&reduced[3][i],&reduced[3][i]);
-            ibz_neg(&gram[i][3],&gram[i][3]);
-            ibz_neg(&gram[3][i],&gram[3][i]);
-        }
-        assert(ibz_cmp(&reduced[2][0],&reduced[3][1])==0);
-    }
-
     for (int i=0;i<4;i++) {
         for (int j=0;j<4;j++) {
             ibz_div(&gram[i][j],&remain,&gram[i][j],&lideal->norm);
@@ -152,12 +278,49 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_t *au, ibz_t *bu,quat_alg_elem_t *beta1,quat_a
         }
     }
 
+    // reordering the basis if needed
+    if (ibz_cmp(&gram[0][0],&gram[2][2])==0) {
+        for (int i=0;i<4;i++) {
+            ibz_swap(&reduced[i][1],&reduced[i][2]);
+        }
+        ibz_swap(&gram[0][2],&gram[0][1]);
+        ibz_swap(&gram[2][0],&gram[1][0]);
+        ibz_swap(&gram[3][2],&gram[3][1]);
+        ibz_swap(&gram[2][3],&gram[1][3]);
+        ibz_swap(&gram[2][2],&gram[1][1]);
+    }
+    else if (ibz_cmp(&gram[0][0],&gram[3][3])==0) {
+        for (int i=0;i<4;i++) {
+            ibz_swap(&reduced[i][1],&reduced[i][3]);
+        }
+        ibz_swap(&gram[0][3],&gram[0][1]);
+        ibz_swap(&gram[3][0],&gram[1][0]);
+        ibz_swap(&gram[2][3],&gram[2][1]);
+        ibz_swap(&gram[3][2],&gram[1][2]);
+        ibz_swap(&gram[3][3],&gram[1][1]);
+    }
+    assert(ibz_cmp(&gram[0][0],&gram[1][1])==0);
+    // adjusting the sign if needed 
+    if (ibz_cmp(&reduced[0][0],&reduced[1][1])!=0) {
+        for (int i=0;i<4;i++) {
+            ibz_neg(&reduced[i][1],&reduced[i][1]);
+            ibz_neg(&gram[i][1],&gram[i][1]);
+            ibz_neg(&gram[1][i],&gram[1][i]);
+        }
+        assert(ibz_cmp(&reduced[0][0],&reduced[1][1])==0);
+    }
+    if (ibz_cmp(&reduced[0][2],&reduced[1][3])!=0) {
+        for (int i=0;i<4;i++) {
+            ibz_neg(&reduced[i][3],&reduced[i][3]);
+            ibz_neg(&gram[i][3],&gram[i][3]);
+            ibz_neg(&gram[3][i],&gram[3][i]);
+        }
+        assert(ibz_cmp(&reduced[0][2],&reduced[1][3])==0);
+    }
+
      // printing the size of the elements
     printf("p : %d n : %d adj_n : %d \n",ibz_bitsize(&QUATALG_PINFTY.p),ibz_bitsize(&lideal->norm),ibz_bitsize(&adjusted_norm));
-    printf("n1 : %d n2 : %d n3 :  %d n4 : %d \n",ibz_bitsize(&gram[0][0])-ibz_bitsize(&adjusted_norm),ibz_bitsize(&gram[1][1])-ibz_bitsize(&adjusted_norm),ibz_bitsize(&gram[2][2])-ibz_bitsize(&adjusted_norm),ibz_bitsize(&gram[3][3])-ibz_bitsize(&adjusted_norm));
-
-
-
+    printf("n1 : %d n2 : %d n3 :  %d n4 : %d \n",ibz_bitsize(&gram[0][0]),ibz_bitsize(&gram[1][1])-ibz_bitsize(&adjusted_norm),ibz_bitsize(&gram[2][2])-ibz_bitsize(&adjusted_norm),ibz_bitsize(&gram[3][3])-ibz_bitsize(&adjusted_norm));
 
 
     // we start by enumerating a set of small vectors 
@@ -383,7 +546,7 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     
     ibz_t target;
     ibz_init(&target);
-    int exp =2*TORSION_PLUS_EVEN_POWER;
+    int exp =TORSION_PLUS_EVEN_POWER;
     ibz_pow(&target,&ibz_const_two,exp);
 
     printf("looking for 2^%d \n",exp);

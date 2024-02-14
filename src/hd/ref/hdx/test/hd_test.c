@@ -5,50 +5,14 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include <tools.h>
+#include <ec.h>
 
 
 
+// p = 5 * 2^248  − 1 
+// 2^242 - 3^3 = 903829667792956162913972717352870559^2 + 2500096036301568120095447360260176186^2;
 
-// p = 13 * 2^126 * 3^78 − 1 
-// 2^122 - 3^7 = 2305140776455892706^2 + 56903285142314791^2;
 
-static int test_point_order_twof(const ec_point_t *P, const ec_curve_t *E) {
-    ec_point_t test;
-    copy_point(&test, P);
-    if (fp2_is_zero(&test.z)) return 0;
-    for (int i = 0;i<TORSION_PLUS_EVEN_POWER-1;i++) {
-        ec_dbl(&test,E,&test);
-    }
-    if (fp2_is_zero(&test.z)) return 0;
-    ec_dbl(&test,E,&test);
-    return (fp2_is_zero(&test.z));
-}
-
-static int test_point_order_twof_var(const ec_point_t *P, const ec_curve_t *E,int t) {
-    ec_point_t test;
-    copy_point(&test, P);
-    if (fp2_is_zero(&test.z)) return 0;
-    for (int i = 0;i<t-1;i++) {
-        ec_dbl(&test,E,&test);
-    }
-    if (fp2_is_zero(&test.z)) return 0;
-    ec_dbl(&test,E,&test);
-    return (fp2_is_zero(&test.z));
-}
-
-static int test_point_order_threef(const ec_point_t *P, const ec_curve_t *E) {
-    ec_point_t test;
-    copy_point(&test, P);
-    digit_t three[NWORDS_ORDER] = {0};
-    three[0] = 3;
-    if (fp2_is_zero(&test.z)) return 0;
-    for (int i = 0;i<TORSION_PLUS_ODD_POWERS[0]-1;i++) {
-        ec_mul(&test, E, three, &test);
-    }
-    if (fp2_is_zero(&test.z)) return 0;
-    ec_mul(&test, E, three, &test);
-    return (fp2_is_zero(&test.z));
-}
 
 void fp2_printt(char *name, fp2_t const a){
     fp_t b1,b2;
@@ -135,8 +99,12 @@ int hd_chain_test() {
     #endif
 
     // setting the coefficient 
-    ibz_set(&x,2305140776455892706);
-    ibz_set(&y,56903285142314791);
+    // ibz_set(&x,903829667792956162913972717352870559);
+    // ibz_set(&y,2500096036301568120095447360260176186);
+
+    ibz_set_from_str(&x,"903829667792956162913972717352870559",10);
+    ibz_set_from_str(&y,"2500096036301568120095447360260176186",10);
+
 
     // copying the basis
     copy_point(&B0_two.P,&BASIS_EVEN.P);
@@ -157,10 +125,10 @@ int hd_chain_test() {
 
 
     #ifndef NDEBUG
-        assert(test_point_order_twof(&B0_two.P,&E0));
-        assert(test_point_order_twof(&B0_two.Q,&E0));
-        assert(test_point_order_twof(&B0_two.PmQ,&E0));
-        assert(test_point_order_threef(&B0_three.P,&E0));        
+        assert(test_point_order_twof(&B0_two.P,&E0,TORSION_PLUS_EVEN_POWER));
+        assert(test_point_order_twof(&B0_two.Q,&E0,TORSION_PLUS_EVEN_POWER));
+        assert(test_point_order_twof(&B0_two.PmQ,&E0,TORSION_PLUS_EVEN_POWER));
+        assert(test_point_order_threef(&B0_three.P,&E0,TORSION_MINUS_ODD_POWERS[0]));        
     #endif
 
     ibz_set(&mat[0][0],0);ibz_set(&mat[0][1],0);ibz_set(&mat[1][0],0);ibz_set(&mat[1][1],0);
@@ -195,9 +163,9 @@ int hd_chain_test() {
 
     // point_print("x + y*iota(Q)",B1_two.Q);
 
-    assert(test_point_order_twof(&B1_two.P,&E0));
-    assert(test_point_order_twof(&B1_two.Q,&E0));
-    assert(test_point_order_twof(&B1_two.PmQ,&E0));
+    assert(test_point_order_twof(&B1_two.P,&E0,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&B1_two.Q,&E0,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&B1_two.PmQ,&E0,TORSION_PLUS_EVEN_POWER));
 
     printf("\n");
     point_print("Q1",B1_two.P);
@@ -207,17 +175,16 @@ int hd_chain_test() {
 
     // setting up the isogeny 
     phi.curve = E0;
-    uint8_t tab[3]= {7,0,0};
+    uint8_t tab[2]= {0,3};
     phi.degree[0]=tab[0];
     phi.degree[1]=tab[1];
-    phi.degree[2]=tab[2];
-    ec_set_zero(&phi.ker_minus);
+    ec_set_zero(&phi.ker_plus);
     // preparating the kernel of phi as a point of 3 torsion
     digit_t three[NWORDS_ORDER] = {0};
     three[0] = 3;
-    phi.ker_plus=B0_three.P;
-    for (int i=0;i<TORSION_ODD_POWERS[0]-7;i++) {
-        ec_mul(&phi.ker_plus,&E0,three,&phi.ker_plus);
+    phi.ker_minus=B0_three.P;
+    for (int i=0;i<TORSION_MINUS_ODD_POWERS[0]-3;i++) {
+        ec_mul(&phi.ker_minus,&E0,three,&phi.ker_minus);
     }
     ec_eval_odd_basis(&E1,&phi,&B0_two,1);
 
@@ -226,8 +193,8 @@ int hd_chain_test() {
     printf("\n");
     fp2_printt("j1",j1);
 
-    assert(test_point_order_twof(&B0_two.P,&E1));
-    assert(test_point_order_twof(&B0_two.Q,&E1));
+    assert(test_point_order_twof(&B0_two.P,&E1,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&B0_two.Q,&E1,TORSION_PLUS_EVEN_POWER));
 
     // ready to make the dim 2 computation
     theta_couple_curve_t E01;
@@ -242,17 +209,7 @@ int hd_chain_test() {
     printf("\n");
 
 
-    // testing two_isogenies time 
-    ec_isog_even_t phi_two;
-    phi_two.length = TORSION_PLUS_EVEN_POWER;
-    phi_two.curve = E1;
-    phi_two.kernel = B0_two.P;
-    ec_curve_t F;
-    ec_point_t im;
     clock_t t;
-    im = B0_two.Q;
-    t = tic();
-    ec_eval_even_nonzero(&F,&phi_two,&im,1);
 
     // setting the couples
     E01.E1=E0;
@@ -264,10 +221,10 @@ int hd_chain_test() {
     T1m2.P1=B1_two.PmQ;
     T1m2.P2=B0_two.PmQ; 
 
-    assert(test_point_order_twof(&T1.P1,&E01.E1));
-    assert(test_point_order_twof(&T1.P2,&E01.E2));
-    assert(test_point_order_twof(&T2.P1,&E01.E1));
-    assert(test_point_order_twof(&T2.P2,&E01.E2));
+    assert(test_point_order_twof(&T1.P1,&E01.E1,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&T1.P2,&E01.E2,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&T2.P1,&E01.E1,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&T2.P2,&E01.E2,TORSION_PLUS_EVEN_POWER));
 
     #ifndef NDEBUG
     theta_couple_point_t C1,C2;
@@ -282,14 +239,13 @@ int hd_chain_test() {
     #endif 
 
     // multiplying by 2
-    double_couple_point_iter(&T1,2,&E01,&T1);
-    double_couple_point_iter(&T2,2,&E01,&T2);
-    double_couple_point_iter(&T1m2,2,&E01,&T1m2);
+    double_couple_point_iter(&T1,4,&E01,&T1);
+    double_couple_point_iter(&T2,4,&E01,&T2);
+    double_couple_point_iter(&T1m2,4,&E01,&T1m2);
 
-    int length=122;
+    int length=242;
 
     #ifndef NDEBUG
-
         // checking that the points have the correct order 
         theta_couple_point_t P1,P2;
         P1=T1;
@@ -339,8 +295,8 @@ int hd_chain_test() {
     theta_chain_eval(&FP,&dimtwo_chain,&FP,&Help);
     TOC(t,"chain eval");
 
-    assert( test_point_order_twof_var(&FP.P1,&dimtwo_chain.codomain.E1,length+2));
-    assert( test_point_order_twof_var(&FP.P2,&dimtwo_chain.codomain.E2,length+2));
+    assert( test_point_order_twof(&FP.P1,&dimtwo_chain.codomain.E1,length+2));
+    assert( test_point_order_twof(&FP.P2,&dimtwo_chain.codomain.E2,length+2));
 
     ibz_finalize(&scal);
 

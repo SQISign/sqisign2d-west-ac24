@@ -892,6 +892,8 @@ void quat_connecting_ideal(quat_left_ideal_t *connecting_ideal, const quat_order
  */
 int quat_lattice_lll(ibz_mat_4x4_t *red, const quat_lattice_t *lattice, const ibz_t *q, int precision);
 
+void from_1ijk_to_O0basis(ibz_vec_4_t *vec, const quat_alg_elem_t *el);
+
 /** @}
 */
 

@@ -12,31 +12,7 @@ static __inline__ uint64_t rdtsc(void)
     return (uint64_t) cpucycles();
 }
 
-static int test_point_order_twof(const ec_point_t *P, const ec_curve_t *E) {
-    ec_point_t test;
-    copy_point(&test, P);
-    if (fp2_is_zero(&test.z)) return 0;
-    for (int i = 0;i<TORSION_PLUS_EVEN_POWER-1;i++) {
-        ec_dbl(&test,E,&test);
-    }
-    if (fp2_is_zero(&test.z)) return 0;
-    ec_dbl(&test,E,&test);
-    return (fp2_is_zero(&test.z));
-}
 
-static int test_point_order_threef(const ec_point_t *P, const ec_curve_t *E) {
-    ec_point_t test;
-    copy_point(&test, P);
-    digit_t three[NWORDS_ORDER] = {0};
-    three[0] = 3;
-    if (fp2_is_zero(&test.z)) return 0;
-    for (int i = 0;i<TORSION_PLUS_ODD_POWERS[0]-1;i++) {
-        ec_mul(&test, E, three, &test);
-    }
-    if (fp2_is_zero(&test.z)) return 0;
-    ec_mul(&test, E, three, &test);
-    return (fp2_is_zero(&test.z));
-}
 
 
 //XXX FIXME stolen from src/ec/opt/generic/test/isog-test.c
@@ -140,10 +116,10 @@ void endomorphism_evaluation(ibz_mat_2x2_t *action_matrix, const quat_left_ideal
 
     codomain_R = *domain;
     codomain_L = *domain;
-    assert(test_point_order_twof(&basis_R.Q,&codomain_R));
-    assert(test_point_order_twof(&basis_R.PmQ,&codomain_R));
-    assert(test_point_order_twof(&basis_R.P,&codomain_R));
-    assert(test_point_order_twof(&basis_L[0],&codomain_L));
+    assert(test_point_order_twof(&basis_R.Q,&codomain_R,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&basis_R.PmQ,&codomain_R,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&basis_R.P,&codomain_R,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&basis_L[0],&codomain_L,TORSION_PLUS_EVEN_POWER));
 
     // evaluation of the 2^f basis 
     // evaluating the right isogeny on the full basis
@@ -153,7 +129,7 @@ void endomorphism_evaluation(ibz_mat_2x2_t *action_matrix, const quat_left_ideal
     ec_eval_odd(&codomain_L,&isog_beta_L,basis_L,2);
 
     // checking that the points still have the correct order
-    assert(test_point_order_twof(&basis_L[0],&codomain_L));
+    assert(test_point_order_twof(&basis_L[0],&codomain_L,TORSION_PLUS_EVEN_POWER));
 
     // for debug, we check that the two codomains are isomorphic 
     #ifndef NDEBUG 
@@ -170,10 +146,10 @@ void endomorphism_evaluation(ibz_mat_2x2_t *action_matrix, const quat_left_ideal
     ec_iso_eval(&basis_L[0],&isom);
     ec_iso_eval(&basis_L[1],&isom);
 
-    assert(test_point_order_twof(&basis_L[1],&codomain_R));
-    assert(test_point_order_twof(&basis_R.P,&codomain_R));
-    assert(test_point_order_twof(&basis_R.Q,&codomain_R));
-    assert(test_point_order_twof(&basis_R.PmQ,&codomain_R));
+    assert(test_point_order_twof(&basis_L[1],&codomain_R,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&basis_R.P,&codomain_R,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&basis_R.Q,&codomain_R,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&basis_R.PmQ,&codomain_R,TORSION_PLUS_EVEN_POWER));
     assert(ec_is_on_curve(&codomain_R,&basis_R.P));
     assert(ec_is_on_curve(&codomain_R,&basis_R.Q));
     assert(ec_is_on_curve(&codomain_R,&basis_R.PmQ));
@@ -182,7 +158,7 @@ void endomorphism_evaluation(ibz_mat_2x2_t *action_matrix, const quat_left_ideal
     // DLP step
     // we do the DLP and get the result up to sign 
     // first DLP
-    assert(test_point_order_twof(&basis_L[0],&codomain_R));
+    assert(test_point_order_twof(&basis_L[0],&codomain_R,TORSION_PLUS_EVEN_POWER));
     ec_dlog_2(x1,x2,&basis_R,&basis_L[0],&codomain_R);
 
     // copying the digits
@@ -591,12 +567,12 @@ int id2iso_ideal_to_isogeny_two_long_power_of_2(id2iso_compressed_long_two_isog_
             }
 
             // completing the 2^f basis 
-            assert(test_point_order_twof(&temp_kernel_dual,&temp_domain));
+            assert(test_point_order_twof(&temp_kernel_dual,&temp_domain,TORSION_PLUS_EVEN_POWER));
             ec_complete_basis_2(&temp_two_basis,&temp_domain,&temp_kernel_dual);
             assert(ec_is_equal(&temp_kernel_dual,&temp_two_basis.P));
-            assert(test_point_order_twof(&temp_two_basis.P,&temp_domain));
-            assert(test_point_order_twof(&temp_two_basis.Q,&temp_domain));
-            assert(test_point_order_twof(&temp_two_basis.PmQ,&temp_domain));
+            assert(test_point_order_twof(&temp_two_basis.P,&temp_domain,TORSION_PLUS_EVEN_POWER));
+            assert(test_point_order_twof(&temp_two_basis.Q,&temp_domain,TORSION_PLUS_EVEN_POWER));
+            assert(test_point_order_twof(&temp_two_basis.PmQ,&temp_domain,TORSION_PLUS_EVEN_POWER));
             
             // for each step, we must evaluate the endomorphism, compute the next isogny, push the torsion and compute the compression
 
@@ -634,7 +610,7 @@ int id2iso_ideal_to_isogeny_two_long_power_of_2(id2iso_compressed_long_two_isog_
             isog.kernel = temp_two_basis.P;
 
             ec_biscalar_mul(&isog.kernel,&temp_domain,digit_a,digit_b,&temp_two_basis);
-            assert(test_point_order_twof(&isog.kernel,&temp_domain));
+            assert(test_point_order_twof(&isog.kernel,&temp_domain,TORSION_PLUS_EVEN_POWER));
 
             // setting the isogeny
             isog.curve = temp_domain;
@@ -698,7 +674,7 @@ int id2iso_ideal_to_isogeny_two_long_power_of_2(id2iso_compressed_long_two_isog_
 
             }
             
-            assert(test_point_order_twof(&temp_kernel_dual,&temp_domain));
+            assert(test_point_order_twof(&temp_kernel_dual,&temp_domain,TORSION_PLUS_EVEN_POWER));
             // evaluating the isogeny
             // TODECIDE : we may use a non-zero eval for this one
             pushed_points[0] = temp_odd_basis[0].P;
@@ -716,7 +692,7 @@ int id2iso_ideal_to_isogeny_two_long_power_of_2(id2iso_compressed_long_two_isog_
             temp_odd_basis[1].Q = pushed_points[4];
             temp_odd_basis[1].PmQ = pushed_points[5];
             temp_kernel_dual = pushed_points[6];
-            assert(test_point_order_twof(&temp_kernel_dual,&temp_domain)); 
+            assert(test_point_order_twof(&temp_kernel_dual,&temp_domain,TORSION_PLUS_EVEN_POWER)); 
             
         }
 
@@ -756,37 +732,6 @@ int id2iso_ideal_to_isogeny_two_long_power_of_2(id2iso_compressed_long_two_isog_
 }
 
 
-
-
-
-//TODO this should probably be in the quaternion module
-static void from_1ijk_to_O0basis(ibz_vec_4_t *vec, const quat_alg_elem_t *el)
-{
-    ibz_t tmp;
-    ibz_init(&tmp);
-    ibz_copy(&(*vec)[2], &el->coord[2]);
-    ibz_add(&(*vec)[2], &(*vec)[2], &(*vec)[2]); // double (not optimal if el->denom is even...)
-    ibz_copy(&(*vec)[3], &el->coord[3]); // double (not optimal if el->denom is even...)
-    ibz_add(&(*vec)[3], &(*vec)[3], &(*vec)[3]);
-    ibz_sub(&(*vec)[0], &el->coord[0], &el->coord[3]);
-    ibz_sub(&(*vec)[1], &el->coord[1], &el->coord[2]);
-
-    if (!ibz_is_one(&el->denom)) {
-        assert(ibz_divides(&(*vec)[0], &el->denom));
-        assert(ibz_divides(&(*vec)[1], &el->denom));
-        assert(ibz_divides(&(*vec)[2], &el->denom));
-        assert(ibz_divides(&(*vec)[3], &el->denom));
-
-        ibz_div(&(*vec)[0], &tmp, &(*vec)[0], &el->denom);
-        ibz_div(&(*vec)[1], &tmp, &(*vec)[1], &el->denom);
-        ibz_div(&(*vec)[2], &tmp, &(*vec)[2], &el->denom);
-        ibz_div(&(*vec)[3], &tmp, &(*vec)[3], &el->denom);
-
-        // ibz_div_2exp(&(*vec)[0], &(*vec)[0], 1);
-        // ibz_div_2exp(&(*vec)[1], &(*vec)[1], 1);
-    }
-    ibz_finalize(&tmp);
-}
 
 
 // untested
@@ -1008,6 +953,72 @@ void ec_biscalar_mul_ibz(ec_point_t* res, const ec_curve_t* curve,
     ec_biscalar_mul(res, curve, scalars[0], scalars[1], PQ);
 }
 
+
+// helper function to apply some endomorphism of E0 on the precomputed basis of E0[2^f]
+// works in place 
+void endomorphism_application_even_basis(ec_basis_t *bas,quat_alg_elem_t *theta,int f) {
+    ibz_t tmp;
+    ibz_init(&tmp);
+    ibz_vec_4_t coeffs;
+    ibz_vec_4_init(&coeffs);
+    ibz_mat_2x2_t mat;
+    ibz_mat_2x2_init(&mat);
+    ibz_t twopow;
+    ibz_init(&twopow);
+    ibz_pow(&twopow,&ibz_const_two,f);
+
+    digit_t scalars[2][NWORDS_ORDER] = {0};
+
+    ec_basis_t tmp_bas;
+    copy_point(&tmp_bas.P,&bas->P);
+    copy_point(&tmp_bas.Q,&bas->Q);
+    copy_point(&tmp_bas.PmQ,&bas->PmQ);
+
+
+    // decomposing theta on the basis 
+    from_1ijk_to_O0basis(&coeffs,theta);
+
+    ibz_set(&mat[0][0],0);ibz_set(&mat[0][1],0);ibz_set(&mat[1][0],0);ibz_set(&mat[1][1],0);
+
+    // computing the matrix
+    for (unsigned i = 0; i < 2; ++i) {
+            ibz_add(&mat[i][i], &mat[i][i], &coeffs[0]);
+            for (unsigned j = 0; j < 2; ++j) {
+                ibz_mul(&tmp, &ACTION_GEN2[i][j], &coeffs[1]);
+                ibz_add(&mat[i][j], &mat[i][j], &tmp);
+                ibz_mul(&tmp, &ACTION_GEN3[i][j], &coeffs[2]);
+                ibz_add(&mat[i][j], &mat[i][j], &tmp);
+                ibz_mul(&tmp, &ACTION_GEN4[i][j], &coeffs[3]);
+                ibz_add(&mat[i][j], &mat[i][j], &tmp);
+                ibz_mod(&mat[i][j],&mat[i][j],&twopow);
+            }
+    }
+
+    // and now we apply it
+     // first basis element
+    ibz_to_digit_array(scalars[0],&mat[0][0]);
+    // ibz_set(&mat[0][1],0);
+    ibz_to_digit_array(scalars[1],&mat[1][0]);
+    
+    ec_biscalar_mul(&bas->P,&CURVE_E0,scalars[0],scalars[1],&tmp_bas);
+    ibz_to_digit_array(scalars[0],&mat[0][1]);
+    ibz_to_digit_array(scalars[1],&mat[1][1]);
+    ec_biscalar_mul(&bas->Q,&CURVE_E0,scalars[0],scalars[1],&tmp_bas);
+
+    ibz_sub(&tmp,&mat[0][0],&mat[0][1]);
+    ibz_mod(&tmp,&tmp,&twopow);
+    ibz_to_digit_array(scalars[0],&tmp);
+    ibz_sub(&tmp,&mat[1][0],&mat[1][1]);
+    ibz_mod(&tmp,&tmp,&twopow);
+    ibz_to_digit_array(scalars[1],&tmp);
+    ec_biscalar_mul(&bas->PmQ,&CURVE_E0,scalars[0],scalars[1],&tmp_bas);
+
+    ibz_finalize(&tmp);
+    ibz_vec_4_finalize(&coeffs);
+    ibz_mat_2x2_finalize(&mat);
+    ibz_finalize(&twopow);
+    
+}
 
 void id2iso_ideal_to_kernel_dlogs_odd(ibz_vec_2_t *vec, ec_degree_odd_t *deg, const quat_left_ideal_t *lideal)
 {
@@ -1437,12 +1448,12 @@ void change_of_basis_matrix_two(ibz_mat_2x2_t *mat, const ec_basis_t *B1, const 
     ibz_t i1,i2,i3,i4,i5,i6;
     ibz_init(&i1);ibz_init(&i2);ibz_init(&i3);ibz_init(&i4);ibz_init(&i5);ibz_init(&i6);
 
-    assert(test_point_order_twof(&(B1->P),E));
-    assert(test_point_order_twof(&(B1->Q),E));
-    assert(test_point_order_twof(&(B1->PmQ),E));
-    assert(test_point_order_twof(&(B2->P),E));
-    assert(test_point_order_twof(&(B2->Q),E));
-    assert(test_point_order_twof(&(B2->PmQ),E));
+    assert(test_point_order_twof(&(B1->P),E,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&(B1->Q),E,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&(B1->PmQ),E,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&(B2->P),E,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&(B2->Q),E,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&(B2->PmQ),E,TORSION_PLUS_EVEN_POWER));
 
     ec_dlog_2(x1,x2,B2,&(B1->P),E);
     ec_dlog_2(x3,x4,B2,&(B1->Q),E);
@@ -1512,12 +1523,12 @@ void change_of_basis_matrix_three(ibz_mat_2x2_t *mat, const ec_basis_t *B1, cons
     ibz_t i1,i2,i3,i4,i5,i6;
     ibz_init(&i1);ibz_init(&i2);ibz_init(&i3);ibz_init(&i4);ibz_init(&i5);ibz_init(&i6);
 
-    assert(test_point_order_threef(&(B1->P),E));
-    assert(test_point_order_threef(&(B1->Q),E));
-    assert(test_point_order_threef(&(B1->PmQ),E));
-    assert(test_point_order_threef(&(B2->P),E));
-    assert(test_point_order_threef(&(B2->Q),E));
-    assert(test_point_order_threef(&(B2->PmQ),E));
+    assert(test_point_order_threef(&(B1->P),E,TORSION_PLUS_ODD_POWERS[0]));
+    assert(test_point_order_threef(&(B1->Q),E,TORSION_PLUS_ODD_POWERS[0]));
+    assert(test_point_order_threef(&(B1->PmQ),E,TORSION_PLUS_ODD_POWERS[0]));
+    assert(test_point_order_threef(&(B2->P),E,TORSION_PLUS_ODD_POWERS[0]));
+    assert(test_point_order_threef(&(B2->Q),E,TORSION_PLUS_ODD_POWERS[0]));
+    assert(test_point_order_threef(&(B2->PmQ),E,TORSION_PLUS_ODD_POWERS[0]));
 
     ec_dlog_3(x1,x2,B2,&(B1->P),E);
     ec_dlog_3(x3,x4,B2,&(B1->Q),E);

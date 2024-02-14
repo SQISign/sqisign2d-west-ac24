@@ -124,6 +124,10 @@ void ec_biscalar_mul_ibz(ec_point_t* res, const ec_curve_t* curve,
     const ibz_t* scalarP, const ibz_t* scalarQ,
     const ec_basis_t* PQ);
 
+// helper function to apply some endomorphism of E0 on a basis of E0[2^TORSION_PLUS_EVEN_POWER]
+// works in place 
+void endomorphism_application_even_basis(ec_basis_t *P,quat_alg_elem_t *theta,int f);
+
 
 /**
  * @brief Translating a kernel on the curve E0, represented as two vectors with respect to the precomputed 2^f- and 3^e-torsion bases, into the corresponding O0-ideal

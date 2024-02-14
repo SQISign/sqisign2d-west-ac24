@@ -406,6 +406,33 @@ static inline void ec_eval_odd_basis(ec_curve_t* image, const ec_isog_odd_t* phi
     ec_eval_odd(image, phi, (ec_point_t*)points, sizeof(ec_basis_t) / sizeof(ec_point_t) * length);
 }
 
+static int test_point_order_twof(const ec_point_t *P, const ec_curve_t *E,int t) {
+    ec_point_t test;
+    test = *P;
+    if (fp2_is_zero(&test.z)) return 0;
+    for (int i = 0;i<t-1;i++) {
+        ec_dbl(&test,E,&test);
+    }
+    if (fp2_is_zero(&test.z)) return 0;
+    ec_dbl(&test,E,&test);
+    return (fp2_is_zero(&test.z));
+}
+
+static int test_point_order_threef(const ec_point_t *P, const ec_curve_t *E,int t) {
+    ec_point_t test;
+    test = *P;
+    digit_t three[NWORDS_ORDER] = {0};
+    three[0] = 3;
+    if (fp2_is_zero(&test.z)) return 0;
+    for (int i = 0;i<t-1;i++) {
+        ec_mul(&test, E, three, &test);
+    }
+    if (fp2_is_zero(&test.z)) return 0;
+    ec_mul(&test, E, three, &test);
+    return (fp2_is_zero(&test.z));
+}
+
+
 /** @}
 */
 

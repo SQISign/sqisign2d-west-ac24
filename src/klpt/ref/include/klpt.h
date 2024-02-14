@@ -62,6 +62,20 @@ void quat_left_ideal_copy(quat_left_ideal_t *copy,const quat_left_ideal_t *copie
  */
 int represent_integer(quat_alg_elem_t *gamma, ibz_t *n_gamma, const quat_alg_t *Bpoo);
 
+
+/**
+ * @brief Representing an integer by the quadratic norm form of a maximal extremal order 
+ *
+ * @param gamma Output: a quaternion element    
+ * @param n_gamma Outut: norm of gamma (also part of the input, it is the target norm a multiple of the final norm)
+ * @param Bpoo the quaternion algebra
+ * @return 1 if the computation succeeded
+ *  
+ * This algorithm finds a primitive quaternion element gamma of n_gamma inside the standard maximal extremal order with a special property used in fixed degree isogeny
+ */
+int represent_integer_non_diag(quat_alg_elem_t *gamma, ibz_t *n_gamma, const quat_alg_t *Bpoo);
+
+
 /** @}
 */
 

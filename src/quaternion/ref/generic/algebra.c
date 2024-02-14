@@ -285,3 +285,33 @@ void quat_alg_elem_mul_by_scalar(quat_alg_elem_t *res, const ibz_t *scalar, cons
     }
     ibz_copy(&(res->denom),&(elem->denom));
 }
+
+//FIXME : only works when p=3 mod 4
+// transpose the 1,i,j,k basis of an element of O0 the special maximal order, to coefficients in the basis of O0 
+void from_1ijk_to_O0basis(ibz_vec_4_t *vec, const quat_alg_elem_t *el)
+{
+    ibz_t tmp;
+    ibz_init(&tmp);
+    ibz_copy(&(*vec)[2], &el->coord[2]);
+    ibz_add(&(*vec)[2], &(*vec)[2], &(*vec)[2]); // double (not optimal if el->denom is even...)
+    ibz_copy(&(*vec)[3], &el->coord[3]); // double (not optimal if el->denom is even...)
+    ibz_add(&(*vec)[3], &(*vec)[3], &(*vec)[3]);
+    ibz_sub(&(*vec)[0], &el->coord[0], &el->coord[3]);
+    ibz_sub(&(*vec)[1], &el->coord[1], &el->coord[2]);
+
+    if (!ibz_is_one(&el->denom)) {
+        assert(ibz_divides(&(*vec)[0], &el->denom));
+        assert(ibz_divides(&(*vec)[1], &el->denom));
+        assert(ibz_divides(&(*vec)[2], &el->denom));
+        assert(ibz_divides(&(*vec)[3], &el->denom));
+
+        ibz_div(&(*vec)[0], &tmp, &(*vec)[0], &el->denom);
+        ibz_div(&(*vec)[1], &tmp, &(*vec)[1], &el->denom);
+        ibz_div(&(*vec)[2], &tmp, &(*vec)[2], &el->denom);
+        ibz_div(&(*vec)[3], &tmp, &(*vec)[3], &el->denom);
+
+        // ibz_div_2exp(&(*vec)[0], &(*vec)[0], 1);
+        // ibz_div_2exp(&(*vec)[1], &(*vec)[1], 1);
+    }
+    ibz_finalize(&tmp);
+}

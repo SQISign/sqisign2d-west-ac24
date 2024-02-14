@@ -13,11 +13,23 @@
 #include <klpt.h>
 #include <ec.h>
 #include <hd.h>
+#include <id2iso.h>
 
 
 
 /*************************** Functions *****************************/
 
+/**
+ * @brief Computes an arbitrary isogeny of fixed degree starting from E0
+ * 
+ * @param isog Output : a dim2 isogeny encoding an isogeny of degree u
+ * @param lideal Output : an ideal of norm u
+ * @param u : integer
+ * @returns a bit indicating if the computation succeeded  
+ * 
+ * F is an isogeny encoding an isogeny phi : E0 -> Eu of degree u
+*/
+int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *u);
 
 
 
