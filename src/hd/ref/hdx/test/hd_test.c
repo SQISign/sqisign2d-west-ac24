@@ -225,6 +225,8 @@ int hd_chain_test() {
     assert(test_point_order_twof(&T1.P2,&E01.E2,TORSION_PLUS_EVEN_POWER));
     assert(test_point_order_twof(&T2.P1,&E01.E1,TORSION_PLUS_EVEN_POWER));
     assert(test_point_order_twof(&T2.P2,&E01.E2,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&T1m2.P1,&E01.E1,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&T1m2.P2,&E01.E2,TORSION_PLUS_EVEN_POWER));
 
     #ifndef NDEBUG
     theta_couple_point_t C1,C2;
@@ -274,7 +276,7 @@ int hd_chain_test() {
 
     t = tic();
 
-    theta_chain_comput(&dimtwo_chain,length,&E01,&T1,&T2,&T1m2);
+    theta_chain_comput_balanced(&dimtwo_chain,length,&E01,&T1,&T2,&T1m2);
 
     TOC(t,"chain computation");
     // computing dim_twochain(T1.P1,0)

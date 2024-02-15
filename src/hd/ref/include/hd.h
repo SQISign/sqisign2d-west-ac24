@@ -12,6 +12,7 @@
 #include <ec.h>
 #include <torsion_constants.h> 
 #include <stdio.h>
+#include <curve_extras.h>
 
 /** @brief Type for couple point * 
  * @typedef theta_couple_point_t
@@ -24,6 +25,12 @@ typedef struct theta_couple_point {
     ec_point_t P1;
     ec_point_t P2;
 } theta_couple_point_t;
+
+
+typedef struct theta_couple_jac_point {  
+    jac_point_t P1;
+    jac_point_t P2;
+} theta_couple_jac_point_t;
 
 /** @brief Type for couple curve * 
  * @typedef theta_couple_curve_t
@@ -90,6 +97,8 @@ typedef struct theta_gluing {
 
     theta_couple_point_t K1_4;
     theta_couple_point_t K2_4;
+    theta_couple_jac_point_t xyK1_4;
+    theta_couple_jac_point_t xyK2_4;
     theta_point_t T1_8;
     theta_point_t T2_8;
 
@@ -205,6 +214,23 @@ void double_couple_point_iter(theta_couple_point_t *out,int n,const theta_couple
 
 
 /**
+ * @brief Compute the iterated double of the theta couple jac point in on the elliptic product E12
+ *
+ * @param out Output: the theta_couple_jac_point 
+ * @param n : the number of iteration
+ * @param E12 an elliptic product
+ * @param in the theta couple jac point in the elliptic product   
+ * in = (P1,P2)
+ * out = [2^n] (P1,P2)
+ *  
+   */
+void double_couple_jac_point_iter(theta_couple_jac_point_t *out,int n,const theta_couple_curve_t *A,const theta_couple_jac_point_t *in);
+
+
+void couple_jac_to_xz(theta_couple_point_t *P,const theta_couple_jac_point_t *xyP);
+
+
+/**
  * @brief Compute the double of the theta couple point in on the elliptic product E12
  *
  * @param out Output: the theta_couple_point 
@@ -242,9 +268,10 @@ void add_couple_point(theta_couple_point_t *out,const theta_couple_curve_t *A,co
  * @param T1m2 a couple point on E12[2^(n+2)] equal to T1-T2
  *   
  * out : E1xE2 -> E3xE4 of kernel [4](T1,T2) 
+ * uses balanced strategy (without the gluing)
  * 
    */
-void theta_chain_comput(theta_chain_t *out,int n,const theta_couple_curve_t *E12,const theta_couple_point_t *T1,const theta_couple_point_t *T2, const theta_couple_point_t *T1m2);
+void theta_chain_comput_balanced(theta_chain_t *out,int n,theta_couple_curve_t *E12,const theta_couple_point_t *T1,const theta_couple_point_t *T2, const theta_couple_point_t *T1m2);
 
 /**
  * @brief Evaluate a (2,2) isogeny chain in dimension 2 between elliptic products in the theta_model
@@ -260,6 +287,6 @@ void theta_chain_comput(theta_chain_t *out,int n,const theta_couple_curve_t *E12
  * Help is equal to phi.first_step.K1_4 + P12
  *  
    */
-void theta_chain_eval(theta_couple_point_t *out,theta_chain_t *phi,const theta_couple_point_t *P12,const theta_couple_point_t *Help);
+void theta_chain_eval(theta_couple_point_t *out,theta_chain_t *phi,theta_couple_point_t *P12,const theta_couple_point_t *Help);
 
 #endif

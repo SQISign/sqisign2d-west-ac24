@@ -461,7 +461,13 @@ static bool is_jac_equal(const jac_point_t* P, const jac_point_t* Q)
     return fp2_is_zero(&t0) && fp2_is_zero(&t2);
 }
 
-static bool is_jac_xz_equal(const jac_point_t* P, const ec_point_t* Q)
+void jac_to_xz(ec_point_t *P,const jac_point_t *xyP) {
+    fp2_copy(&P->x,&xyP->x);
+    fp2_copy(&P->z,&xyP->z);
+    fp2_sqr(&P->z,&P->z);
+}
+
+bool is_jac_xz_equal(const jac_point_t* P, const ec_point_t* Q)
 { // Evaluate if point P in Jacobian coordinates is equal to Q in homogeneous projective coordinates (X:Z) 
   // Comparison is up to sign (only compares X and Z coordinates)
   // Returns 1 (true) if P=Q, 0 (false) otherwise
@@ -482,7 +488,7 @@ static void copy_jac_point(jac_point_t* P, jac_point_t const* Q)
     fp2_copy(&(P->z), &(Q->z));
 }
 
-static void jac_neg(jac_point_t* Q, jac_point_t const* P)
+void jac_neg(jac_point_t* Q, jac_point_t const* P)
 {
     fp2_copy(&Q->x, &P->x);
     fp2_neg(&Q->y, &P->y);
@@ -1460,6 +1466,71 @@ void ec_dlog_3(digit_t* scalarP, digit_t* scalarQ, const ec_basis_t* PQ3, const 
     }
 }
 
+void lift_point(jac_point_t *P, ec_point_t *Q, ec_curve_t *E) {
+    fp2_t inverses[2];
+    if (fp2_is_zero(&Q->z)) {
+        fp2_setone(&P->x);
+        fp2_setone(&P->y);
+        fp2_set(&P->z,0);
+    }
+    else {
+        fp2_copy(&inverses[0],&Q->z);
+        fp2_copy(&inverses[1],&E->C);
+        fp2_batched_inv(inverses,2);
+
+        fp2_setone(&Q->z);
+        fp2_setone(&E->C);
+
+        fp2_mul(&Q->x,&Q->x,&inverses[0]);
+        fp2_mul(&E->A,&E->A,&inverses[1]);
+
+        fp2_copy(&P->x,&Q->x);
+        fp2_setone(&P->z);
+        recover_y(&P->y,&P->x,E);   
+    }
+
+    
+
+}
+
+void lift_basis(jac_point_t *P, jac_point_t *Q, ec_basis_t *B, ec_curve_t *E) {
+    fp2_t inverses[3];
+    fp2_copy(&inverses[0],&B->P.z);
+    fp2_copy(&inverses[1],&B->Q.z);
+    fp2_copy(&inverses[2],&E->C);
+
+    fp2_batched_inv(inverses,3);
+
+    fp2_setone(&B->P.z);
+    fp2_setone(&B->Q.z);
+    fp2_setone(&E->C);
+
+    fp2_mul(&B->P.x,&B->P.x,&inverses[0]);
+    fp2_mul(&B->Q.x,&B->Q.x,&inverses[1]);
+    fp2_mul(&E->A,&E->A,&inverses[2]);
+
+    fp2_copy(&P->x,&B->P.x);
+    fp2_copy(&Q->x,&B->Q.x);
+    fp2_setone(&P->z);
+    fp2_setone(&Q->z);
+    recover_y(&P->y,&P->x,E);
+    recover_y(&Q->y,&Q->x,E);
+
+    jac_point_t check;
+
+    jac_neg(&check, Q);
+    ADD(&check, P, &check, E);
+    if (!is_jac_xz_equal(&check, &B->PmQ))
+        jac_neg(Q, Q);
+
+    #ifndef NDEBUG
+        jac_neg(&check,Q); 
+        ADD(&check,P,&check,E);
+        assert(is_jac_xz_equal(&check, &B->PmQ));
+    #endif
+
+
+}
 
 // WRAPPERS
 

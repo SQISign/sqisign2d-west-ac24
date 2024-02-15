@@ -126,6 +126,13 @@ void fp2_batched_inv(fp2_t *x, int len) {
 
 }
 
+// set the finite field element in fp2 to 1
+void fp2_setone(fp2_t *a) {
+    fp_set(a->im,0);
+    fp_mont_setone(a->re);
+}
+
+
 bool fp2_is_square(const fp2_t* x)
 {
     fp_t t0, t1;

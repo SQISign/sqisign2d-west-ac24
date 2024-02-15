@@ -196,7 +196,7 @@ int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *
     ec_biscalar_mul_ibz(&T1m2.P1,&E0,u,&tmp,&BASIS_EVEN);
 
     // computing the isogeny
-    theta_chain_comput(isog,length,&E01,&T1,&T2,&T1m2);
+    theta_chain_comput_balanced(isog,length,&E01,&T1,&T2,&T1m2);
 
     // checking that we get one point 
 

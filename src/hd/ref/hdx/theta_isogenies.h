@@ -35,7 +35,10 @@
  * out : E1xE2 -> A of kernel [4](K1_8,K2_8) 
  *  
    */
-void gluing_comput(theta_gluing_t *out,const theta_couple_curve_t *E12,const theta_couple_point_t *K1_8,const theta_couple_point_t *K2_8);
+void gluing_comput(theta_gluing_t *out, theta_couple_curve_t *E12,
+// const theta_couple_point_t *K1_8,const theta_couple_point_t *K2_8, const theta_couple_point_t *K1m2_8
+const theta_couple_jac_point_t *xyT1, const theta_couple_jac_point_t *xyT2
+);
 
 
 /**
@@ -55,7 +58,10 @@ void gluing_comput(theta_gluing_t *out,const theta_couple_curve_t *E12,const the
  * out : phi( P ), Phi (Q)  
  *  
    */
-void gluing_eval_basis(theta_point_t *image1, theta_point_t *image2, const theta_couple_point_t *P,const theta_couple_point_t *Q, const theta_couple_point_t *PmQ,const ibz_t *a, const ibz_t *b,const theta_couple_curve_t *E12, const theta_gluing_t *phi);
+void gluing_eval_basis(theta_point_t *image1, theta_point_t *image2,
+//  const theta_couple_point_t *P,const theta_couple_point_t *Q, const theta_couple_point_t *PmQ,const ibz_t *a, const ibz_t *b,
+const theta_couple_jac_point_t *xyT1,const theta_couple_jac_point_t *xyT2,
+theta_couple_curve_t *E12, const theta_gluing_t *phi);
 
 /**
  * @brief Compute  a (2,2) isogeny in dimension 2 in the theta_model

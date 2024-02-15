@@ -4,11 +4,7 @@
 #include "ec.h"
 #include "torsion_constants.h"
 
-typedef struct jac_point_t {
-    fp2_t x;
-    fp2_t y;
-    fp2_t z;
-} jac_point_t;
+
 
 bool ec_is_zero(ec_point_t const* P);
 void ec_set_zero(ec_point_t *P);

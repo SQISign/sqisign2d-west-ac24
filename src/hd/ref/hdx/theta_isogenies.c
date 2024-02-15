@@ -6,7 +6,7 @@
 
 
 //XXX FIXME stolen from src/ec/opt/generic/test/isog-test.c
-void fp2_print(char *name, fp2_t const a){
+static void fp2_print(char *name, fp2_t const a){
     fp_t b1,b2;
     fp_frommont(b1,a.re);
     fp_frommont(b2,a.im);
@@ -42,11 +42,6 @@ static void theta_print(char *name, theta_point_t P) {
 }
 
 
-// set the finite field element in fp2 to 1
-void fp2_setone(fp2_t *a) {
-    fp_set(a->im,0);
-    fp_mont_setone(a->re);
-}
 
 void fp2_sett(fp2_t *a,int t) {
     if (t==1) {
@@ -213,7 +208,10 @@ void base_change( theta_point_t *out, const theta_gluing_t *phi, const theta_cou
  * out : E1xE2 -> A of kernel [4](K1_8,K2_8) 
  *  
    */
-void gluing_comput(theta_gluing_t *out,const theta_couple_curve_t *E12,const theta_couple_point_t *K1_8,const theta_couple_point_t *K2_8) {
+void gluing_comput(theta_gluing_t *out,theta_couple_curve_t *E12,
+const theta_couple_jac_point_t *xyK1_8, const theta_couple_jac_point_t *xyK2_8 
+// const theta_couple_point_t *K1_8,const theta_couple_point_t *K2_8, const theta_couple_point_t *K1m2_8
+) {
 
     // var init
     fp2_t M1100;fp2_t M1101;fp2_t M1110;fp2_t M1111;
@@ -223,19 +221,33 @@ void gluing_comput(theta_gluing_t *out,const theta_couple_curve_t *E12,const the
     fp2_t t001,t101,t002,t102,temp;
     
     theta_point_t TT1,TT2;
+    theta_couple_point_t K1m2_4;
+    ec_basis_t B;
+    theta_couple_point_t K1_8,K2_8;
 
     // K1_4 = [2] K1_8  and K2_4 = [2] K2_8
-    double_couple_point(&out->K1_4,E12,K1_8);
-    double_couple_point(&out->K2_4,E12,K2_8);
+    // double_couple_point(&out->K1_4,E12,K1_8);
+    // double_couple_point(&out->K2_4,E12,K2_8);
+    // double_couple_point(&K1m2_4,E12,K1m2_8);
+    double_couple_jac_point_iter(&out->xyK1_4,1,E12,xyK1_8);
+    double_couple_jac_point_iter(&out->xyK2_4,1,E12,xyK2_8);    
 
+    // copy_point(&B.P,&out->K1_4.P1);
+    // copy_point(&B.Q,&out->K2_4.P1);
+    // copy_point(&B.PmQ,&K1m2_4.P1);
+    // lift_basis(&out->xyK1_4.P1,&out->xyK2_4.P1,&B,&E12->E1);
+
+    // // TODO this second SQRT could be avoided
+    // copy_point(&B.P,&out->K1_4.P2);
+    // copy_point(&B.Q,&out->K2_4.P2);
+    // copy_point(&B.PmQ,&K1m2_4.P2);
+    // lift_basis(&out->xyK1_4.P2,&out->xyK2_4.P2,&B,&E12->E2);
+    couple_jac_to_xz(&K1_8,xyK1_8);
+    couple_jac_to_xz(&K2_8,xyK2_8);
+    couple_jac_to_xz(&out->K1_4,&out->xyK1_4);
+    couple_jac_to_xz(&out->K2_4,&out->xyK2_4);
 
     // computing the base change matrix
-    // we start by computing the matrices for each points in the kernel
-    // get_matrix(&M1100,&M1101,&M1110,&M1111,&out->K1_4.P1,&E12->E1);
-    // get_matrix(&M1200,&M1201,&M1210,&M1211,&out->K1_4.P2,&E12->E2);
-    // get_matrix(&M2100,&M2101,&M2110,&M2111,&out->K2_4.P1,&E12->E1);
-    // get_matrix(&M2200,&M2201,&M2210,&M2211,&out->K2_4.P2,&E12->E2);
-
     ec_point_t P11,P12,P21,P22;
     fp2_t t[8];
     fp2_t temp_fp; 
@@ -415,8 +427,8 @@ void gluing_comput(theta_gluing_t *out,const theta_couple_curve_t *E12,const the
 
 
     // apply the base change 
-    base_change(&out->T1_8,out,K1_8);
-    base_change(&out->T2_8,out,K2_8);
+    base_change(&out->T1_8,out,&K1_8);
+    base_change(&out->T2_8,out,&K2_8);
 
     // computing the codomain 
     // computation of the zero index
@@ -560,56 +572,32 @@ void gluing_eval_point(theta_point_t *image1, const theta_couple_point_t *P, con
  * out : phi( P ), Phi (Q)  
  *  
    */
-void gluing_eval_basis(theta_point_t *image1, theta_point_t *image2, const theta_couple_point_t *P,const theta_couple_point_t *Q, const theta_couple_point_t *PmQ,const ibz_t *a, const ibz_t *b,const theta_couple_curve_t *E12, const theta_gluing_t *phi) {
+void gluing_eval_basis(theta_point_t *image1, theta_point_t *image2, 
+// const theta_couple_point_t *P,const theta_couple_point_t *Q, const theta_couple_point_t *PmQ,const ibz_t *a, const ibz_t *b,
+const theta_couple_jac_point_t *xyT1, const theta_couple_jac_point_t *xyT2,
+theta_couple_curve_t *E12, const theta_gluing_t *phi) {
     
-    theta_couple_point_t Pt;
-    
-    ec_basis_t bas1,bas2;
-    
-    digit_t scalars[2][NWORDS_ORDER] = {0};    
-    ibz_t ibz_temp;
-    ibz_init(&ibz_temp);
+    theta_couple_point_t P,Pt;
+    theta_couple_jac_point_t T;
 
+    // add the point to push with xyK1_4
+    ADD(&T.P1,&xyT1->P1,&phi->xyK1_4.P1,&E12->E1);
+    ADD(&T.P2,&xyT1->P2,&phi->xyK1_4.P2,&E12->E2);
 
-    // set-up the basis
-    bas1.P = P->P1;
-    bas1.Q = Q->P1;
-    bas1.PmQ = PmQ->P1;
-    bas2.P = P->P2;
-    bas2.Q = Q->P2;
-    bas2.PmQ = PmQ->P2;
+    couple_jac_to_xz(&Pt,&T);
+    couple_jac_to_xz(&P,xyT1);
 
-    // scalars = a+1,b
-    ibz_add(&ibz_temp,a,&ibz_const_one);
-    ibz_to_digit_array(scalars[0],&ibz_temp);
-    ibz_to_digit_array(scalars[1],b);
-
-    clock_t t = tic();
-    // First we translate the point by phi->K1_4
-    // add_couple_point(&Pt,E12,P,&phi->K1_4);
-    ec_biscalar_mul(&Pt.P1,&E12->E1,scalars[0],scalars[1],&bas1);
-    ec_biscalar_mul(&Pt.P2,&E12->E2,scalars[0],scalars[1],&bas2);
-    TOC(t,"double scalar mult");
     // then we evaluate the gluing
-    t = tic(); 
-    gluing_eval_point(image1,P,&Pt,phi);    
-    TOC(t,"real gluing eval");
-    // we do the same on the second point 
+    gluing_eval_point(image1,&P,&Pt,phi);    
 
-    //scalars = a,b+1
-    ibz_add(&ibz_temp,b,&ibz_const_one);
-    ibz_to_digit_array(scalars[0],a);
-    ibz_to_digit_array(scalars[1],&ibz_temp);
+    // then we do the same on the second point 
+    ADD(&T.P1,&xyT2->P1,&phi->xyK1_4.P1,&E12->E1);
+    ADD(&T.P2,&xyT2->P2,&phi->xyK1_4.P2,&E12->E2);
 
-    // First we translate the point by phi->K1_4
-    // add_couple_point(&Pt,E12,P,&phi->K1_4);
-    ec_biscalar_mul(&Pt.P1,&E12->E1,scalars[0],scalars[1],&bas1);
-    ec_biscalar_mul(&Pt.P2,&E12->E2,scalars[0],scalars[1],&bas2);
-
+    couple_jac_to_xz(&Pt,&T);
+    couple_jac_to_xz(&P,xyT2);
     // then we evaluate the gluing 
-    gluing_eval_point(image2,Q,&Pt,phi); 
-
-    ibz_finalize(&ibz_temp);
+    gluing_eval_point(image2,&P,&Pt,phi); 
 }
 
 
@@ -1163,7 +1151,7 @@ void theta_product_structure_to_elliptic_product(theta_couple_curve_t *E12, thet
  * out : E1xE2 -> E3xE4 of kernel [4](T1,T2) 
  *  
    */
-void theta_chain_comput_naive(theta_chain_t *out,int n,const theta_couple_curve_t *E12,const theta_couple_point_t *T1,const theta_couple_point_t *T2, const theta_couple_point_t *T1m2) {
+void theta_chain_comput_naive(theta_chain_t *out,int n, theta_couple_curve_t *E12,const theta_couple_point_t *T1,const theta_couple_point_t *T2, const theta_couple_point_t *T1m2) {
 
     theta_couple_point_t P1,P2,P1m2;
     theta_point_t Q1,Q2,R1,R2;
@@ -1220,10 +1208,12 @@ void theta_chain_comput_naive(theta_chain_t *out,int n,const theta_couple_curve_
         assert(fp2_is_zero(&test2.z));
     #endif
     
-    
+    // TODO : lift T1,T2,T1m2 to xy coordinates
+    theta_couple_jac_point_t xyT1,xyT2;
+    assert(0);
 
     // compute the gluing isogeny 
-    gluing_comput(&out->first_step,E12,&P1,&P2);
+    gluing_comput(&out->first_step,E12,&xyT1,&xyT2);
 
 
     // set-up the theta_structure for the first codomain 
@@ -1236,7 +1226,10 @@ void theta_chain_comput_naive(theta_chain_t *out,int n,const theta_couple_curve_
     // need to setup the input before
     ibz_pow(&a,&ibz_const_two,n);
     ibz_set(&b,0);
-    gluing_eval_basis(&Q1,&Q2,T1,T2,T1m2,&a,&b,E12,&out->first_step);
+    gluing_eval_basis(&Q1,&Q2,
+    // T1,T2,T1m2,&a,&b,
+    &xyT1,&xyT2,
+    E12,&out->first_step);
 
     for (int i=0;i<n-1;i++) {
 
@@ -1328,7 +1321,7 @@ void theta_chain_comput_rec(theta_chain_t *out, theta_structure_t *codomain,thet
     }
 }
 
-void theta_chain_comput(theta_chain_t *out,int n,const theta_couple_curve_t *E12,const theta_couple_point_t *T1,const theta_couple_point_t *T2, const theta_couple_point_t *T1m2) {
+void theta_chain_comput_balanced(theta_chain_t *out,int n, theta_couple_curve_t *E12,const theta_couple_point_t *T1,const theta_couple_point_t *T2, const theta_couple_point_t *T1m2) {
 
     theta_couple_point_t P1,P2,P1m2;
     theta_point_t Q1,Q2,R1,R2;
@@ -1349,61 +1342,52 @@ void theta_chain_comput(theta_chain_t *out,int n,const theta_couple_curve_t *E12
     out->steps=malloc((n-1)*sizeof(theta_isogeny_t));
 
     clock_t t = tic();
+    // lift the basis 
+    theta_couple_jac_point_t xyT1,xyT2,xyK1,xyK2;
+    ec_basis_t bas1,bas2;
+    copy_point(&bas1.P,&T1->P1);
+    copy_point(&bas1.Q,&T2->P1);
+    copy_point(&bas1.PmQ,&T1m2->P1);
 
-    // First, we compute the first step  
-    // multiply by 2^n-1
-    double_couple_point_iter(&P1,n-1,E12,T1);
-    double_couple_point_iter(&P2,n-1,E12,T2);
-    double_couple_point_iter(&P1m2,n-1,E12,T1m2);
-    TOC(t,"double");
-
-    #ifndef NDEBUG
-        // checking that the points have order 8 
-        ec_point_t test1,test2;
-        test1=P1.P1;
-        test2=P1.P2;
-        ec_dbl(&test1,&E12->E1,&test1);
-        ec_dbl(&test1,&E12->E1,&test1);
-        ec_dbl(&test2,&E12->E2,&test2);
-        ec_dbl(&test2,&E12->E2,&test2);
-        assert(!fp2_is_zero(&test1.z));
-        assert(!fp2_is_zero(&test2.z));
-        ec_dbl(&test1,&E12->E1,&test1);
-        ec_dbl(&test2,&E12->E2,&test2);
-        assert(fp2_is_zero(&test1.z));
-        assert(fp2_is_zero(&test2.z));
-        test1=P2.P1;
-        test2=P2.P2;
-        ec_dbl(&test1,&E12->E1,&test1);
-        ec_dbl(&test1,&E12->E1,&test1);
-        ec_dbl(&test2,&E12->E2,&test2);
-        ec_dbl(&test2,&E12->E2,&test2);
-        assert(!fp2_is_zero(&test1.z));
-        assert(!fp2_is_zero(&test2.z));
-        ec_dbl(&test1,&E12->E1,&test1);
-        ec_dbl(&test2,&E12->E2,&test2);
-        assert(fp2_is_zero(&test1.z));
-        assert(fp2_is_zero(&test2.z));
-    #endif
+    copy_point(&bas2.P,&T1->P2);
+    copy_point(&bas2.Q,&T2->P2);
+    copy_point(&bas2.PmQ,&T1m2->P2);
     
+    lift_basis(&xyT1.P1,&xyT2.P1,&bas1,&E12->E1);
+    lift_basis(&xyT1.P2,&xyT2.P2,&bas2,&E12->E2);
+    TOC_clock(t,"lifting the two basis");
+
+    t = tic();
+
+    // prepare the kernel of the first step
+    double_couple_jac_point_iter(&xyK1,n-1,E12,&xyT1);
+    double_couple_jac_point_iter(&xyK2,n-1,E12,&xyT2);
+    
+    TOC_clock(t,"4 xyz doubling");
+
+
     // compute the gluing isogeny 
-    gluing_comput(&out->first_step,E12,&P1,&P2);
+    t = tic();
+    gluing_comput(&out->first_step,E12,&xyK1,&xyK2);
+    TOC_clock(t,"gluing comput");
 
-    TOC(t,"gluing comput");
-
-    // set-up the theta_structure for the first codomain 
+    // set-up the theta_structure for the first codomain
+    t = tic(); 
     codomain.null_point=out->first_step.codomain;
     codomain.precomputation=0;
     theta_precomputation(&codomain);
-    TOC(t,"precom");
+    TOC_clock(t,"precomputation for the first codomain");
 
     // push the kernel through the gluing isogeny
     // need to setup the input before
     ibz_pow(&a,&ibz_const_two,n);
     ibz_set(&b,0);
     t = tic();
-    gluing_eval_basis(&Q1,&Q2,T1,T2,T1m2,&a,&b,E12,&out->first_step);
-    TOC(t,"gluing eval");
+    gluing_eval_basis(&Q1,&Q2,
+    // T1,T2,T1m2,&a,&b,
+    &xyT1,&xyT2,
+    E12,&out->first_step);
+    TOC_clock(t,"gluing eval");
     t = tic();
 
     // now we launch the evaluation of the n-3 with a strategy other steps
@@ -1421,7 +1405,7 @@ void theta_chain_comput(theta_chain_t *out,int n,const theta_couple_curve_t *E12
     Q1 = stack1[0];
     Q2 = stack2[0];
 
-    TOC(t,"middle steps");
+    TOC_clock(t,"middle steps");
     t = tic();
 
     // and now we do the remaining steps
@@ -1452,7 +1436,7 @@ void theta_chain_comput(theta_chain_t *out,int n,const theta_couple_curve_t *E12
 
     
     }
-    TOC(t,"last two steps");
+    TOC_clock(t,"last two steps");
 
     t = tic();
 
@@ -1462,16 +1446,11 @@ void theta_chain_comput(theta_chain_t *out,int n,const theta_couple_curve_t *E12
 
     // computing the curves of the codomain
     theta_product_structure_to_elliptic_product(&out->codomain,&out->last_step.B);
-    TOC(t,"splitting");
+    TOC_clock(t,"splitting");
 
     fp2_t j2,j3;
     ec_j_inv(&j2,&out->codomain.E1);
     ec_j_inv(&j3,&out->codomain.E2);
-
-    printf("\n");
-
-    fp2_print("j2",j2);
-    fp2_print("j3",j3);
 
     ibz_finalize(&a);
     ibz_finalize(&b);
@@ -1514,9 +1493,18 @@ void theta_point_to_montgomery_point(theta_couple_point_t *P12, const theta_poin
  * Help is equal to phi.first_step.K1_4 + P12
  *  
    */
-void theta_chain_eval(theta_couple_point_t *out,theta_chain_t *phi,const theta_couple_point_t *P12,const theta_couple_point_t *Help) {
+void theta_chain_eval(theta_couple_point_t *out,theta_chain_t *phi,theta_couple_point_t *P12,const theta_couple_point_t *Help) {
     
     theta_point_t temp;
+
+    theta_couple_jac_point_t jac_help;
+    lift_point(&jac_help.P1,&P12->P1,&phi->domain.E1);
+    lift_point(&jac_help.P2,&P12->P2,&phi->domain.E2);
+    ADD(&jac_help.P1,&jac_help.P1,&phi->first_step.xyK1_4.P1,&phi->domain.E1);
+    ADD(&jac_help.P2,&jac_help.P2,&phi->first_step.xyK1_4.P2,&phi->domain.E2);
+    // possibly it could be the difference of the two instead of the sum
+    assert(is_jac_xz_equal(&jac_help.P1,&Help->P1));
+    assert(is_jac_xz_equal(&jac_help.P2,&Help->P2));
 
     // first, we apply the gluing
     gluing_eval_point(&temp,P12,Help,&phi->first_step);

@@ -10,6 +10,7 @@
 
 #include <fp2.h>
 #include <ec_params.h>
+#include <tools.h>
 
 
 /** @defgroup ec Elliptic curves
@@ -32,6 +33,21 @@ typedef struct ec_point_t {
     fp2_t x;
     fp2_t z;
 } ec_point_t;
+
+
+/** @brief Projective point
+ *
+ * @typedef jac_point_t
+ *
+ * @struct jac_point_t
+ *
+ * A projective point in(X:Y:Z) coordinates
+*/
+typedef struct jac_point_t {
+    fp2_t x;
+    fp2_t y;
+    fp2_t z;
+} jac_point_t;
 
 /** @brief A basis of a torsion subgroup
  *
@@ -405,6 +421,15 @@ static inline void ec_eval_odd_basis(ec_curve_t* image, const ec_isog_odd_t* phi
     ec_basis_t* points, unsigned short length) {
     ec_eval_odd(image, phi, (ec_point_t*)points, sizeof(ec_basis_t) / sizeof(ec_point_t) * length);
 }
+
+void jac_neg(jac_point_t* Q, jac_point_t const* P);
+void jac_to_xz(ec_point_t *P,const jac_point_t *xyP);   
+bool is_jac_xz_equal(const jac_point_t* P, const ec_point_t* Q);
+void ADD(jac_point_t* R, jac_point_t const* P, jac_point_t const* Q, ec_curve_t const* AC);
+void DBL(jac_point_t* Q, jac_point_t const* P, ec_curve_t const* AC);
+void lift_point(jac_point_t *P, ec_point_t *Q, ec_curve_t *E);
+void lift_basis(jac_point_t *P, jac_point_t *Q, ec_basis_t *B, ec_curve_t *E);
+
 
 static int test_point_order_twof(const ec_point_t *P, const ec_curve_t *E,int t) {
     ec_point_t test;
