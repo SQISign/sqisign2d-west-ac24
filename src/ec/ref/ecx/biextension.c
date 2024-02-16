@@ -4,19 +4,19 @@
 #include <assert.h>
 
 /*
- * We implement the biextension arithmetic using the cubical torsor structure.
- * For now only implement the 2^e-ladder.
+ * We implement the biextension arithmetic by using the cubical torsor representation. For now only implement the 2^e-ladder.
  *
- * Warning: both biextDBL and biextADD are off by a factor x4 with respect
+ * Warning: both cubicalDBL and cubicalADD are off by a factor x4 with respect
  * to the cubical arithmetic. Since this factor is the same, this means
  * that when we do a ladder we are off by a factor 4^m, m the number of bits.
- * This factor disappear in the Weil pairing since we take a quotient,
+ * This factor thus disappear in the Weil pairing since we take a quotient,
  * and also in the Tate pairing due to the final exponentiation.
  */
 
 // this is exactly like xDBLv2
 // Warning: for now we need to assume that A24 is normalised, ie C24=1.
 // (maybe add an assert?)
+// Anyway, we won't use this function bu directly xDBLv2 and xADD
 void cubicalDBL(ec_point_t* Q, ec_point_t const* P, ec_point_t const* A24)
 {
     // A24 = (A+2C:4C)
@@ -34,7 +34,7 @@ void cubicalDBL(ec_point_t* Q, ec_point_t const* P, ec_point_t const* A24)
     fp2_mul(&Q->z, &t0, &t2);
 }
 
-// this would be exactly like xADDv2 if PQ was 'antinormalised' as (1,z)
+// this would be exactly like xADD if PQ was 'antinormalised' as (1,z)
 void cubicalADD(ec_point_t* R, ec_point_t const* P, ec_point_t const* Q, fp2_t const* ixPQ)
 {
     fp2_t t0, t1, t2, t3;
@@ -81,7 +81,7 @@ void ratio(fp2_t* r, ec_point_t const* PnQ, ec_point_t const* nQ, ec_point_t con
 {
     fp2_t t0;
     fp2_mul(r, &nQ->x, &P->x);
-    fp2_inv(&t, &PnQ->x);
+    fp2_inv(&t0, &PnQ->x);
     fp2_mul(r, r, &t);
 }
 
