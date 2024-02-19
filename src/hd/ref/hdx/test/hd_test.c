@@ -240,7 +240,7 @@ int hd_chain_test() {
         assert(fp2_is_zero(&C2.P2.z));
     #endif 
 
-    // multiplying by 2
+    // multiplying by 16
     double_couple_point_iter(&T1,4,&E01,&T1);
     double_couple_point_iter(&T2,4,&E01,&T2);
     double_couple_point_iter(&T1m2,4,&E01,&T1m2);
@@ -276,7 +276,10 @@ int hd_chain_test() {
 
     t = tic();
 
-    theta_chain_comput_balanced(&dimtwo_chain,length,&E01,&T1,&T2,&T1m2);
+    int strategy[241] = {89, 55, 34, 29, 21, 13, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 8, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1};
+
+
+    theta_chain_comput_strategy(&dimtwo_chain,length,&E01,&T1,&T2,&T1m2,strategy,0);
 
     TOC(t,"chain computation");
     // computing dim_twochain(T1.P1,0)
@@ -297,8 +300,8 @@ int hd_chain_test() {
     theta_chain_eval(&FP,&dimtwo_chain,&FP,&Help);
     TOC(t,"chain eval");
 
-    assert( test_point_order_twof(&FP.P1,&dimtwo_chain.codomain.E1,length+2));
-    assert( test_point_order_twof(&FP.P2,&dimtwo_chain.codomain.E2,length+2));
+    assert(test_point_order_twof(&FP.P1,&dimtwo_chain.codomain.E1,length+2));
+    assert(test_point_order_twof(&FP.P2,&dimtwo_chain.codomain.E2,length+2));
 
     ibz_finalize(&scal);
 

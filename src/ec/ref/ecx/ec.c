@@ -41,7 +41,7 @@ void xDBL(ec_point_t* Q, ec_point_t const* P, ec_point_t const* AC)
     fp2_sqr(&t0, &t0);
     fp2_sub(&t1, &P->x, &P->z);
     fp2_sqr(&t1, &t1);
-    fp2_sub(&t2, &t0, &t1);
+    fp2_sub(&t2, &t0, &t1); 
     fp2_add(&t3, &AC->z, &AC->z);  
     fp2_mul(&t1, &t1, &t3);
     fp2_add(&t1, &t1, &t1);
@@ -481,7 +481,7 @@ bool is_jac_xz_equal(const jac_point_t* P, const ec_point_t* Q)
     return fp2_is_zero(&t0);
 }
 
-static void copy_jac_point(jac_point_t* P, jac_point_t const* Q)
+void copy_jac_point(jac_point_t* P, jac_point_t const* Q)
 {
     fp2_copy(&(P->x), &(Q->x));
     fp2_copy(&(P->y), &(Q->y));
@@ -1494,40 +1494,94 @@ void lift_point(jac_point_t *P, ec_point_t *Q, ec_curve_t *E) {
 }
 
 void lift_basis(jac_point_t *P, jac_point_t *Q, ec_basis_t *B, ec_curve_t *E) {
-    fp2_t inverses[3];
+    fp2_t inverses[2];
     fp2_copy(&inverses[0],&B->P.z);
-    fp2_copy(&inverses[1],&B->Q.z);
-    fp2_copy(&inverses[2],&E->C);
+    // fp2_copy(&inverses[1],&B->Q.z);
+    fp2_copy(&inverses[1],&E->C);
 
-    fp2_batched_inv(inverses,3);
-
+    fp2_batched_inv(inverses,2);
     fp2_setone(&B->P.z);
-    fp2_setone(&B->Q.z);
     fp2_setone(&E->C);
 
     fp2_mul(&B->P.x,&B->P.x,&inverses[0]);
-    fp2_mul(&B->Q.x,&B->Q.x,&inverses[1]);
-    fp2_mul(&E->A,&E->A,&inverses[2]);
+    fp2_mul(&E->A,&E->A,&inverses[1]);
 
     fp2_copy(&P->x,&B->P.x);
     fp2_copy(&Q->x,&B->Q.x);
+    fp2_copy(&Q->z,&B->Q.z);
     fp2_setone(&P->z);
-    fp2_setone(&Q->z);
     recover_y(&P->y,&P->x,E);
-    recover_y(&Q->y,&Q->x,E);
 
-    jac_point_t check;
+    // Algorithm of Okeya-Sakurai to recover y.Q in the montgomery model
+    fp2_t v1,v2,v3,v4;
+    fp2_mul(&v1,&P->x,&Q->z);
+    fp2_add(&v2,&Q->x,&v1);
+    fp2_sub(&v3,&Q->x,&v1);
+    fp2_sqr(&v3,&v3);
+    fp2_mul(&v3,&v3,&B->PmQ.x);
+    fp2_add(&v1,&E->A,&E->A);
+    fp2_mul(&v1,&v1,&Q->z);
+    fp2_add(&v2,&v2,&v1);
+    fp2_mul(&v4,&P->x,&Q->x);
+    fp2_add(&v4,&v4,&Q->z);
+    fp2_mul(&v2,&v2,&v4);
+    fp2_mul(&v1,&v1,&Q->z);
+    fp2_sub(&v2,&v2,&v1);
+    fp2_mul(&v2,&v2,&B->PmQ.z);
+    fp2_sub(&Q->y,&v3,&v2);
+    fp2_add(&v1,&P->y,&P->y);
+    fp2_mul(&v1,&v1,&Q->z);
+    fp2_mul(&v1,&v1,&B->PmQ.z);
+    fp2_mul(&Q->x,&Q->x,&v1);
+    fp2_mul(&Q->z,&Q->z,&v1);
 
-    jac_neg(&check, Q);
-    ADD(&check, P, &check, E);
-    if (!is_jac_xz_equal(&check, &B->PmQ))
-        jac_neg(Q, Q);
+    // Transforming to a jacobian coordinate
+    fp2_sqr(&v1,&Q->z);
+    fp2_mul(&Q->y,&Q->y,&v1);
+    fp2_mul(&Q->x,&Q->x,&Q->z);
 
-    #ifndef NDEBUG
-        jac_neg(&check,Q); 
-        ADD(&check,P,&check,E);
-        assert(is_jac_xz_equal(&check, &B->PmQ));
-    #endif
+        // jac_point_t test;
+        // fp2_copy(&test.z,&Q->z);
+        // fp2_sqr(&v1,&Q->z);
+        // fp2_mul(&test.y,&Q->y,&v1);
+        // fp2_mul(&test.x,&Q->x,&Q->z);
+
+    // fp2_copy(&v1,&Q->z);
+    // fp2_inv(&v1);
+    // fp2_mul(&Q->y,&Q->y,&v1);
+    // fp2_mul(&Q->x,&Q->x,&v1);
+    // fp2_setone(&Q->z);
+
+    // assert(is_jac_equal(&test,Q));
+    // fp2_copy(&Q->z,&test.z);
+    // fp2_copy(&Q->y,&test.y);
+    // fp2_copy(&Q->x,&test.x);
+
+    // fp2_t test1,test2,test3;
+    // fp2_copy(&test1,&Q->z);
+    // fp2_inv(&test1);
+    // fp2_mul(&test3,&Q->x,&test1);
+    // fp2_mul(&test1,&test1,&Q->y);
+    // recover_y(&test2,&test3,E);
+    // assert(fp2_is_equal(&test2,&Q->y));
+
+
+
+    // TODO we can spare this cost by using some formula
+    // recover_y(&Q->y,&Q->x,E);
+
+    // jac_point_t check;
+
+    // jac_neg(&check, Q);
+    // ADD(&check, P, &check, E);
+    // if (!is_jac_xz_equal(&check, &B->PmQ))
+    //     jac_neg(Q, Q);
+
+    // #ifndef NDEBUG
+    //     jac_neg(&check,Q); 
+    //     ADD(&check,P,&check,E);
+    //     assert(is_jac_xz_equal(&check, &B->PmQ));
+    // #endif
 
 
 }

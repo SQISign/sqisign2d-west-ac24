@@ -34,10 +34,10 @@ static void point_print(char *name, ec_point_t P){
 
 static void theta_print(char *name, theta_point_t P) {
     fp2_t a;
-    assert(!fp2_is_zero(&P.x));
-    fp2_copy(&a,&P.x);
+    assert(!fp2_is_zero(&P.y));
+    fp2_copy(&a,&P.y);
     fp2_inv(&a);
-    fp2_mul(&a,&a,&P.y);
+    fp2_mul(&a,&a,&P.x);
     fp2_print(name,a);
 }
 
@@ -524,17 +524,28 @@ void gluing_eval_point(theta_point_t *image1, const theta_couple_point_t *P, con
     if (!fp2_is_zero(&z)) {
         fp2_copy(&x,&z);
         choose_index_theta_point(&temp,3^phi->zero_idx,&Tt);
-        fp2_inv(&temp);
-        fp2_mul(&x,&x,&temp);
+
+        fp2_mul(&y,&y,&temp);
+        fp2_mul(&z,&z,&temp);
+        fp2_mul(&t,&t,&temp);
+        // fp2_inv(&temp);
+        // fp2_mul(&x,&x,&temp);
     }
     else {
         choose_index_theta_point(&temp,2^phi->zero_idx,&Tt);
         choose_index_theta_point(&x,2^phi->zero_idx,&phi->precomputation);
         fp2_mul(&temp,&temp,&x);
-        fp2_inv(&temp);
         fp2_copy(&x,&t);
-        fp2_mul(&x,&x,&temp);
+
+
+        fp2_mul(&y,&y,&temp);
+        fp2_mul(&z,&z,&temp);
+        fp2_mul(&t,&t,&temp);
+        // fp2_inv(&temp);
+        // fp2_mul(&x,&x,&temp);
     }
+
+
 
     // recover x
     choose_index_theta_point(&temp,1^phi->zero_idx,&Tt);
@@ -604,7 +615,7 @@ theta_couple_curve_t *E12, const theta_gluing_t *phi) {
 /**
  * @brief Compute  a (2,2) isogeny in dimension 2 in the theta_model
  *
- * @param out Output: the theta_gluing 
+ * @param out Output: the theta_isogeny 
  * @param A a theta null point for the domain
  * @param T1_8 a point in A[8]
  * @param T2_8 a point in A[8]
@@ -626,10 +637,9 @@ void theta_isogeny_comput(theta_isogeny_t *out,const theta_structure_t *A, const
 
     theta_point_t TT1,TT2;
 
-    fp2_t xA_inv,zA_inv,tB_inv;
+    // fp2_t xA_inv,zA_inv,tB_inv;
 
     if (bool1) {
-        // TODO we do not need all the values of the results, so we may save some operations? 
         hadamard(&TT1,T1_8);
         to_squared_theta(&TT1,&TT1);
         hadamard(&TT2,T2_8);
@@ -641,9 +651,9 @@ void theta_isogeny_comput(theta_isogeny_t *out,const theta_structure_t *A, const
     }
 
     if (!bool1 && A->precomputation) {
-        xA_inv = TT1.x;
-        zA_inv = TT2.x;
-        tB_inv = TT2.y;
+        // xA_inv = TT1.x;
+        // zA_inv = TT2.x;
+        // tB_inv = TT2.y;
         // fp2_t invs[3];
         // fp2_copy(&invs[0],&xA_inv);
         // fp2_copy(&invs[1],&zA_inv);
@@ -689,13 +699,13 @@ void theta_isogeny_comput(theta_isogeny_t *out,const theta_structure_t *A, const
 
     }
     else {
-        fp2_t xB_inv,zC_inv,tD_inv;
-        xA_inv = TT1.x;
-        zA_inv = TT2.x;
-        tB_inv = TT2.y;
-        xB_inv=TT1.y;
-        zC_inv=TT2.z;
-        tD_inv=TT2.t;
+        // fp2_t xB_inv,zC_inv,tD_inv;
+        // xA_inv = TT1.x;
+        // zA_inv = TT2.x;
+        // tB_inv = TT2.y;
+        // xB_inv=TT1.y;
+        // zC_inv=TT2.z;
+        // tD_inv=TT2.t;
         // fp2_t invs[3];
 
         // fp2_copy(&invs[0],&xA_inv);
@@ -752,6 +762,150 @@ void theta_isogeny_comput(theta_isogeny_t *out,const theta_structure_t *A, const
 
 
 }
+
+/** 
+ * @brief Compute a (2,2) isogeny when only the 4 torsion above the kernel is known and not the 8 torsion
+ * 
+ * @param out Output: the theta_isogeny 
+ * @param A a theta null point for the domain
+ * @param T1_4 a point in A[4]
+ * @param T2_4 a point in A[4]
+ * @param bool1 a boolean
+ * @param boo2 a boolean
+ *   
+ * out : A -> B of kernel [2](T1_4,T2_4)
+ * bool1 controls if the domain is in standard or dual coordinates
+ * bool2 controls if the codomain is in standard or dual coordinates 
+ *  
+   */
+void theta_isogeny_comput4(theta_isogeny_t *out,const theta_structure_t *A, const theta_point_t *T1_4,const theta_point_t *T2_4,int bool1, int bool2) {
+
+    out->bool1=bool1;
+    out->bool2=bool2;
+    out->domain=*A;
+    out->T1_8=*T1_4;
+    out->T2_8=*T2_4;
+    out->codomain.precomputation=0;
+
+    theta_point_t TT1,TT2;
+    // we will compute:
+    // TT1 = (xAB, _ , xCD, _)
+    // TT2 = (AA,BB,CC,DD)
+
+    // fp2_t xA_inv,zA_inv,tB_inv;
+
+    if (bool1) {
+        
+        hadamard(&TT1,T1_4);
+        to_squared_theta(&TT1,&TT1);
+        
+        hadamard(&TT2,&A->null_point);
+        to_squared_theta(&TT2,&TT2);
+    } 
+    else {
+        to_squared_theta(&TT1,T1_4);
+        to_squared_theta(&TT2,&A->null_point);
+    }
+
+    
+
+    fp2_t sqaabb,sqaacc;
+    fp2_mul(&sqaabb,&TT2.x,&TT2.y);
+    fp2_mul(&sqaacc,&TT2.x,&TT2.z);
+    // sqaabb = sqrt(AA*BB)
+    fp2_sqrt(&sqaabb);
+    // sqaacc = sqrt(AA*CC)
+    fp2_sqrt(&sqaacc);
+
+    // we compute out->codomain.null_point = (xAB * sqaacc * AA, xAB *sqaabb *sqaacc, xCD*sqaabb * AA)
+    // out->precomputation = (xAB * BB * CC *DD , sqaabb * CC * DD * xAB , sqaacc * BB* DD * xAB , xCD * sqaabb *sqaacc * BB)
+
+    fp2_mul(&out->codomain.null_point.y,&sqaabb,&sqaacc);
+    fp2_mul(&out->precomputation.t,&out->codomain.null_point.y,&TT1.z); 
+    fp2_mul(&out->codomain.null_point.y,&out->codomain.null_point.y,&TT1.x); // done for out->codomain.null_point.y
+    
+    fp2_mul(&out->codomain.null_point.t,&TT1.z,&sqaabb);
+    fp2_mul(&out->codomain.null_point.t,&out->codomain.null_point.t,&TT2.x); // done for out->codomain.null_point.t
+
+    fp2_mul(&out->codomain.null_point.x,&TT1.x,&TT2.x);
+    fp2_mul(&out->codomain.null_point.z,&out->codomain.null_point.x,&TT2.z); // done for out->codomain.null_point.z
+    fp2_mul(&out->codomain.null_point.x,&out->codomain.null_point.x,&sqaacc); // done for out->codomain.null_point.x
+    
+
+    fp2_mul(&out->precomputation.x,&TT1.x,&TT2.t);
+    fp2_mul(&out->precomputation.z,&out->precomputation.x,&TT2.y);
+    fp2_mul(&out->precomputation.x,&out->precomputation.x,&TT2.z);
+    fp2_mul(&out->precomputation.y,&out->precomputation.x,&sqaabb); // done for out->precomputation.y
+    fp2_mul(&out->precomputation.x,&out->precomputation.x,&TT2.y); // done for out->precomputation.x
+    fp2_mul(&out->precomputation.z,&out->precomputation.z,&sqaacc); // done for out->precomputation.z 
+    fp2_mul(&out->precomputation.t,&out->precomputation.t,&TT2.t); // done for out->precomputation.t
+    
+    if (bool2) {
+        hadamard(&out->codomain.null_point,&out->codomain.null_point);
+    }
+
+}
+
+/** 
+ * @brief Compute a (2,2) isogeny when only the kernel is known and not the 8 or 4 torsion above
+ * 
+ * @param out Output: the theta_isogeny 
+ * @param A a theta null point for the domain
+ * @param T1_2 a point in A[2]
+ * @param T2_2 a point in A[2]
+ * @param bool1 a boolean
+ * @param boo2 a boolean
+ *   
+ * out : A -> B of kernel (T1_2,T2_2)
+ * bool1 controls if the domain is in standard or dual coordinates
+ * bool2 controls if the codomain is in standard or dual coordinates 
+ *  
+   */
+void theta_isogeny_comput2(theta_isogeny_t *out,const theta_structure_t *A, const theta_point_t *T1_2,const theta_point_t *T2_2,int bool1, int bool2) {
+
+    out->bool1=bool1;
+    out->bool2=bool2;
+    out->domain=*A;
+    out->T1_8=*T1_2;
+    out->T2_8=*T2_2;
+    out->codomain.precomputation=0;
+
+    theta_point_t TT2;
+    // we will compute:
+    // TT2 = (AA,BB,CC,DD)
+
+    if (bool1) {
+        hadamard(&TT2,&A->null_point);
+        to_squared_theta(&TT2,&TT2);
+    } 
+    else {
+        to_squared_theta(&TT2,&A->null_point);
+    }
+
+    // we compute out->codomain.null_point = (AA,sqaabb, sqaacc, sqaadd)
+    // out->precomputation = (  BB * CC *DD , sqaabb * CC * DD , sqaacc * BB* DD , sqaadd * BB * CC)
+    fp2_copy(&out->codomain.null_point.x,&TT2.x);
+    fp2_mul(&out->codomain.null_point.y,&TT2.x,&TT2.y);
+    fp2_mul(&out->codomain.null_point.z,&TT2.x,&TT2.z);
+    fp2_mul(&out->codomain.null_point.t,&TT2.x,&TT2.t);
+    fp2_sqrt(&out->codomain.null_point.y);
+    fp2_sqrt(&out->codomain.null_point.z);
+    fp2_sqrt(&out->codomain.null_point.t);
+
+    fp2_mul(&out->precomputation.x,&TT2.z,&TT2.t);
+    fp2_mul(&out->precomputation.y,&out->precomputation.x,&out->codomain.null_point.y); // done for out->precomputation.y
+    fp2_mul(&out->precomputation.x,&out->precomputation.x,&TT2.y); // done for out->precomputation.x
+    fp2_mul(&out->precomputation.z,&TT2.t,&out->codomain.null_point.z); 
+    fp2_mul(&out->precomputation.z,&out->precomputation.z,&TT2.y); // done for out->precomputation.z 
+    fp2_mul(&out->precomputation.t,&TT2.z,&out->codomain.null_point.t); 
+    fp2_mul(&out->precomputation.t,&out->precomputation.t,&TT2.y); // done for out->precomputation.t
+    
+    if (bool2) {
+        hadamard(&out->codomain.null_point,&out->codomain.null_point);
+    }
+
+}
+
 
 /**
  * @brief Evaluate a theta isogeny
@@ -1103,6 +1257,7 @@ int splitting_comput(theta_splitting_t *out, const theta_structure_t *A) {
 }
 
 
+
 void theta_product_structure_to_elliptic_product(theta_couple_curve_t *E12, theta_structure_t *A) {
     fp2_t xx,yy,temp1,temp2;
 
@@ -1311,9 +1466,12 @@ void theta_chain_comput_rec(theta_chain_t *out, theta_structure_t *codomain,thet
         long left = len - right;
         P1[stacklen] = *R1;
         P2[stacklen] = *R2;
+        clock_t t= tic();
         double_iter(R1,codomain,R1,left);
         double_iter(R2,codomain,R2,left);
-    
+        printf("theta_dbl of length %ld",left);
+        TOC_clock(t,"");
+
         theta_chain_comput_rec(out,codomain, R1,R2, right,index,advance, P1,P2,stacklen+1,total_length);
         R1[right*advance] = P1[stacklen];
         R2[right*advance] = P2[stacklen];
@@ -1454,6 +1612,170 @@ void theta_chain_comput_balanced(theta_chain_t *out,int n, theta_couple_curve_t 
 
     ibz_finalize(&a);
     ibz_finalize(&b);
+
+}
+
+
+void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t *E12,const theta_couple_point_t *T1,const theta_couple_point_t *T2, const theta_couple_point_t *T1m2,int *strategy, int eight_above) {
+
+    theta_couple_point_t P1,P2,P1m2;
+    theta_point_t R1,R2;
+    theta_isogeny_t steps[n-1];
+    theta_structure_t codomain;
+
+    // init of the isogeny chain
+    out->domain=*E12;
+    out->length=n;
+    out->T1=*T1;
+    out->T2=*T2;
+    out->steps=malloc((n-1)*sizeof(theta_isogeny_t));
+
+    clock_t t = tic();
+    // lift the basis 
+    theta_couple_jac_point_t xyT1,xyT2,xyK1,xyK2;
+    ec_basis_t bas1,bas2;
+    copy_point(&bas1.P,&T1->P1);
+    copy_point(&bas1.Q,&T2->P1);
+    copy_point(&bas1.PmQ,&T1m2->P1);
+
+    copy_point(&bas2.P,&T1->P2);
+    copy_point(&bas2.Q,&T2->P2);
+    copy_point(&bas2.PmQ,&T1m2->P2);
+    
+    lift_basis(&xyT1.P1,&xyT2.P1,&bas1,&E12->E1);
+    lift_basis(&xyT1.P2,&xyT2.P2,&bas2,&E12->E2);
+    TOC_clock(t,"lifting the two basis");
+
+    t = tic();
+
+    // prepare the points for the first step
+    // first we must compute the length of the list
+    int len_count=0;
+    int index=0;
+    while (len_count!=n-1) {
+        len_count = len_count + strategy[index];
+        index++;
+    }
+    int len_list = index + 1;
+
+    // TODO : compute more precisely the lenght that we will need
+    theta_couple_jac_point_t points1[n];
+    theta_couple_jac_point_t points2[n];
+    theta_point_t Q1[n];
+    theta_point_t Q2[n];
+    int level[n];
+
+
+    // the first point 
+    copy_jac_point(&points1[0].P1,&xyT1.P1);
+    copy_jac_point(&points1[0].P2,&xyT1.P2);
+    copy_jac_point(&points2[0].P1,&xyT2.P1);
+    copy_jac_point(&points2[0].P2,&xyT2.P2);
+    level[0]=0;
+    // and then the rest
+    for (int i=1;i<len_list;i++) {
+        double_couple_jac_point_iter(&points1[i],strategy[i-1],E12,&points1[i-1]);
+        double_couple_jac_point_iter(&points2[i],strategy[i-1],E12,&points2[i-1]);
+        level[i] = strategy[i-1];
+    }
+
+    // prepare the kernel of the first step
+    copy_jac_point(&xyK1.P1,&points1[len_list-1].P1);
+    copy_jac_point(&xyK1.P2,&points1[len_list-1].P2);
+    copy_jac_point(&xyK2.P1,&points2[len_list-1].P1);
+    copy_jac_point(&xyK2.P2,&points2[len_list-1].P2);
+    TOC_clock(t,"4 xyz doubling");
+
+
+    // compute the gluing isogeny 
+    t = tic();
+    gluing_comput(&out->first_step,E12,&xyK1,&xyK2);
+    TOC_clock(t,"gluing comput");
+
+    // set-up the theta_structure for the first codomain
+    t = tic(); 
+    codomain.null_point=out->first_step.codomain;
+    codomain.precomputation=0;
+    theta_precomputation(&codomain);
+    TOC_clock(t,"precomputation for the first codomain");
+
+    len_list--;
+
+    // push the kernel through the gluing isogeny
+    // need to setup the input before
+    t = tic();
+    for (int i=0;i<len_list;i++) {
+        gluing_eval_basis(&Q1[i],&Q2[i],&points1[i],&points2[i],E12,&out->first_step);
+    }
+    TOC_clock(t,"gluing eval");
+    t = tic();
+    // and now we do the remaining steps
+    for (int i=0;i<n-1;i++) {
+
+        len_count=0;
+        for (int j=0;j<len_list;j++) {
+            len_count=len_count+level[j];
+        }
+        while (len_count!=n-i-2) {
+            len_count = len_count + strategy[index];
+            double_iter(&Q1[len_list],&codomain,&Q1[len_list-1],strategy[index]);
+            double_iter(&Q2[len_list],&codomain,&Q2[len_list-1],strategy[index]);
+            level[len_list]=strategy[index];
+            index++;            
+            len_list++;
+        }
+
+
+        // computing the kernel of the next step
+        // double_iter(&R1,&codomain,&Q1,n-i-2);
+        // double_iter(&R2,&codomain,&Q2,n-i-2);
+        // TODO : proper copying here ? 
+        R1 = Q1[len_list-1];
+        R2 = Q2[len_list-1];
+    
+        // computing the next step
+        if (i==n-3) {
+            theta_isogeny_comput(&out->steps[i],&codomain,&R1,&R2,0,0);
+        }
+        else if (i==n-2) {
+            theta_isogeny_comput(&out->steps[i],&codomain,&R1,&R2,1,0);
+        }
+        else {
+            theta_isogeny_comput(&out->steps[i],&codomain,&R1,&R2,0,1);
+        }
+        // updating the codomain
+        codomain=out->steps[i].codomain;
+
+
+        len_list--;
+
+        // pushing the kernel
+        if (i< n-2) {
+            for (int j=0;j<len_list;j++) {
+                theta_isogeny_eval(&Q1[j],&out->steps[i],&Q1[j]);
+                theta_isogeny_eval(&Q2[j],&out->steps[i],&Q2[j]);
+            }
+            
+        }
+    
+    }
+    TOC_clock(t,"middle steps");
+
+    t = tic();
+
+    //final splitting step
+    int is_split = splitting_comput(&out->last_step,&out->steps[n-2].codomain);
+    assert(is_split);
+
+    // computing the curves of the codomain
+    theta_product_structure_to_elliptic_product(&out->codomain,&out->last_step.B);
+    TOC_clock(t,"splitting");
+
+    fp2_t j2,j3;
+    ec_j_inv(&j2,&out->codomain.E1);
+    ec_j_inv(&j3,&out->codomain.E2);
+    fp2_print("j2",j2);
+    fp2_print("j3",j3);
 
 }
 

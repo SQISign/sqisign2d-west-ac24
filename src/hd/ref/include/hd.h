@@ -274,6 +274,23 @@ void add_couple_point(theta_couple_point_t *out,const theta_couple_curve_t *A,co
 void theta_chain_comput_balanced(theta_chain_t *out,int n,theta_couple_curve_t *E12,const theta_couple_point_t *T1,const theta_couple_point_t *T2, const theta_couple_point_t *T1m2);
 
 /**
+ * @brief Compute  a (2,2) isogeny chain in dimension 2 between elliptic products in the theta_model
+ *
+ * @param out Output: the theta_chain
+ * @param n : the length of the isogeny chain
+ * @param E12 an elliptic curve product 
+ * @param T1 a couple point on E12[2^(n+2)]
+ * @param T2 a couple point on E12[2^(n+2)]
+ * @param T1m2 a couple point on E12[2^(n+2)] equal to T1-T2
+ * @param strategy a strategy
+ *   
+ * out : E1xE2 -> E3xE4 of kernel [4](T1,T2) 
+ * uses the strategy given in input
+ * 
+   */
+void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t *E12,const theta_couple_point_t *T1,const theta_couple_point_t *T2, const theta_couple_point_t *T1m2,int *strategy, int eight_above);
+
+/**
  * @brief Evaluate a (2,2) isogeny chain in dimension 2 between elliptic products in the theta_model
  *
  * @param out Output: the image point

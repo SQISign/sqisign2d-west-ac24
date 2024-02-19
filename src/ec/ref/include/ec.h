@@ -422,6 +422,8 @@ static inline void ec_eval_odd_basis(ec_curve_t* image, const ec_isog_odd_t* phi
     ec_eval_odd(image, phi, (ec_point_t*)points, sizeof(ec_basis_t) / sizeof(ec_point_t) * length);
 }
 
+
+void copy_jac_point(jac_point_t* P, jac_point_t const* Q);
 void jac_neg(jac_point_t* Q, jac_point_t const* P);
 void jac_to_xz(ec_point_t *P,const jac_point_t *xyP);   
 bool is_jac_xz_equal(const jac_point_t* P, const ec_point_t* Q);
