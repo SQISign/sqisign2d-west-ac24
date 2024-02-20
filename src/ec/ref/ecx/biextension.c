@@ -154,17 +154,29 @@ void to_cubical_3(ec_point_t* P, ec_point_t* Q, ec_point_t* A24, ec_point_t cons
 }
 
 // non reduced Tate pairing, PQ should be P+Q in (X:Z) coordinates
-void non_reduced_tate(fp2_t* r, int e, ec_point_t const* PQ, ec_point_t const* Q, ec_point_t const* P_, ec_point_t const* A24_) {
+// If the points are already normalized correctly, use 'monodromy'
+void non_reduced_tate(fp2_t* r, int e, ec_point_t const* P_, ec_point_t const* Q, ec_point_t const* PQ, ec_point_t const* A24_) {
     ec_point_t P, A24;
     to_cubical(&P, &A24, P_, A24_);
     monodromy(r, e, PQ, Q, &P, &A24);
 }
 
 // Weil pairing, PQ should be P+Q in (X:Z) coordinates
-void weil(fp2_t* r, int e, ec_point_t const* PQ, ec_point_t const* Q_, ec_point_t const* P_, ec_point_t const* A24_) {
+// We assume the points are normalised correctly
+void weil_n(fp2_t* r, int e, ec_point_t const* P, ec_point_t const* Q, ec_point_t const* PQ, ec_point_t const* A24) {
     fp2_t t0;
+    monodromy(&t0, e, PQ, Q, P, A24);
+    fp2_inv(&t0);
+    monodromy(r, e, PQ, P, Q, A24);
+    // TODO: check if that's the Weil pairing or its inverse
+    fp2_mul(r, r, &t0)
+}
+
+// Weil pairing, PQ should be P+Q in (X:Z) coordinates
+void weil(fp2_t* r, int e, ec_point_t const* P_, ec_point_t const* Q_, ec_point_t const* PQ, ec_point_t const* A24_) {
     ec_point_t P, Q, A24;
-    to_cubical_3(&P, Q, &A24, P_, Q_, A24_);
+    to_cubical_3(&P, &Q, &A24, P_, Q_, A24_);
+    weil_n(&r, &P, &Q,
     monodromy(&t0, e, PQ, &Q, &P, &A24);
     fp2_inv(&t0);
     monodromy(r, e, PQ, &P, &Q, &A24);
