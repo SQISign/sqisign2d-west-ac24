@@ -60,7 +60,7 @@ void cubicalADD(ec_point_t* R, ec_point_t const* P, ec_point_t const* Q, fp2_t c
     fp2_sub(&t3, &t0, &t1);
     fp2_sqr(&t2, &t2);
     fp2_sqr(&R->z, &t3);
-    fp2_mul(&R->x, &iXPQ, &t2);
+    fp2_mul(&R->x, ixPQ, &t2);
 }
 
 void ec_anti_normalize(ec_point_t* P){
@@ -83,8 +83,8 @@ void biext_ladder_2e(int e, ec_point_t* R, ec_point_t* S, ec_point_t const* PQ, 
 {
     copy_point(R, PQ);
     copy_point(S, Q);
-    for (int i=0, i<e, i++) {
-        biextDBL(R, S, R, S, P);
+    for (int i=0; i<e; i++) {
+        biextDBL(R, S, R, S, P, A24);
     }
 }
 
@@ -92,8 +92,9 @@ void ratio(fp2_t* r, ec_point_t const* PnQ, ec_point_t const* nQ, ec_point_t con
 {
     fp2_t t0;
     fp2_mul(r, &nQ->x, &P->x);
-    fp2_inv(&t0, &PnQ->x);
-    fp2_mul(r, r, &t);
+    fp2_copy(&t0, &PnQ->x);
+    fp2_inv(&t0);
+    fp2_mul(r, r, &t0);
 }
 
 void translate(ec_point_t* P, ec_point_t const* T)
@@ -123,7 +124,7 @@ void monodromy(fp2_t* r, int e, ec_point_t const* PQ, ec_point_t const* Q, ec_po
     biext_ladder_2e(e-1, &R0, &R1, PQ, Q, P, A24);
     translate(&R0, &R1);
     translate(&R1, &R1);
-    ratio(r, &R0, &R1, P)
+    ratio(r, &R0, &R1, P);
 }
 
 // TODO: use only one inversion
@@ -134,9 +135,8 @@ void inline_to_cubical(ec_point_t* P, ec_point_t* A24) {
 
 void to_cubical(ec_point_t* P, ec_point_t* A24, ec_point_t const* P_, ec_point_t const* A24_) {
     copy_point(P, P_);
-    copy_point(Q, Q_);
     copy_point(A24, A24_);
-    inline_to_cubical(P, Q, A24)
+    inline_to_cubical(P, A24);
 }
 
 // TODO: use only one inversion
@@ -150,7 +150,7 @@ void to_cubical_3(ec_point_t* P, ec_point_t* Q, ec_point_t* A24, ec_point_t cons
     copy_point(P, P_);
     copy_point(Q, Q_);
     copy_point(A24, A24_);
-    inline_to_cubical_3(P, Q, A24)
+    inline_to_cubical_3(P, Q, A24);
 }
 
 // non reduced Tate pairing, PQ should be P+Q in (X:Z) coordinates
@@ -169,17 +169,12 @@ void weil_n(fp2_t* r, int e, ec_point_t const* P, ec_point_t const* Q, ec_point_
     fp2_inv(&t0);
     monodromy(r, e, PQ, P, Q, A24);
     // TODO: check if that's the Weil pairing or its inverse
-    fp2_mul(r, r, &t0)
+    fp2_mul(r, r, &t0);
 }
 
 // Weil pairing, PQ should be P+Q in (X:Z) coordinates
 void weil(fp2_t* r, int e, ec_point_t const* P_, ec_point_t const* Q_, ec_point_t const* PQ, ec_point_t const* A24_) {
     ec_point_t P, Q, A24;
     to_cubical_3(&P, &Q, &A24, P_, Q_, A24_);
-    weil_n(&r, &P, &Q,
-    monodromy(&t0, e, PQ, &Q, &P, &A24);
-    fp2_inv(&t0);
-    monodromy(r, e, PQ, &P, &Q, &A24);
-    // TODO: check if that's the Weil pairing or its inverse
-    fp2_mul(r, r, &t0)
+    weil_n(r, e, &P, &Q, PQ, &A24);
 }
