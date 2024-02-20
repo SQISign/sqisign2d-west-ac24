@@ -7,16 +7,26 @@
  * We implement the biextension arithmetic by using the cubical torsor representation. For now only implement the 2^e-ladder.
  *
  * Warning: both cubicalDBL and cubicalADD are off by a factor x4 with respect
- * to the cubical arithmetic. Since this factor is the same, this means
- * that when we do a ladder we are off by a factor 4^m, m the number of bits.
+ * to the cubical arithmetic. 
+ * Since this factor is the same, this means that the biextension
+ * arithmetic is correct, so the pairings are ok (they only rely on the
+ * biextension arithmetic).
+ * In the special case where Q=P (self pairings), we use the cubical ladder
+ * rather than the biextension ladder because this is faster. In that case,
+ * when we do a ladder we are off by a factor 4^m, m the number of bits.
  * This factor thus disappear in the Weil pairing since we take a quotient,
- * and also in the Tate pairing due to the final exponentiation.
+ * and also in the Tate pairing due to the final exponentiation; so
+ * everything is ok too.
+ * (Note that when the curves are supersingular as in our case, the Tate
+ * self pairing is always trivial anyway because the Galois structure of the
+ * isogeneous curves are all the same, so the étale torsor representing the
+ * Tate pairing has to be trivial).
  */
 
 // this is exactly like xDBLv2
 // Warning: for now we need to assume that A24 is normalised, ie C24=1.
 // (maybe add an assert?)
-// Anyway, we won't use this function bu directly xDBLv2 and xADD
+// Anyway, we won't use this function but directly xDBLv2 and xADD
 void cubicalDBL(ec_point_t* Q, ec_point_t const* P, ec_point_t const* A24)
 {
     // A24 = (A+2C:4C)
@@ -35,6 +45,7 @@ void cubicalDBL(ec_point_t* Q, ec_point_t const* P, ec_point_t const* A24)
 }
 
 // this would be exactly like xADD if PQ was 'antinormalised' as (1,z)
+// Not used yet, we use xADD directly
 void cubicalADD(ec_point_t* R, ec_point_t const* P, ec_point_t const* Q, fp2_t const* ixPQ)
 {
     fp2_t t0, t1, t2, t3;
@@ -115,11 +126,20 @@ void monodromy(fp2_t* r, int e, ec_point_t const* PQ, ec_point_t const* Q, ec_po
     ratio(r, &R0, &R1, P)
 }
 
+// TODO: use only one inversion
 void inline_to_cubical(ec_point_t* P, ec_point_t* A24) {
     ec_normalize(A24);
     ec_anti_normalize(P);
 }
 
+void to_cubical(ec_point_t* P, ec_point_t* A24, ec_point_t const* P_, ec_point_t const* A24_) {
+    copy_point(P, P_);
+    copy_point(Q, Q_);
+    copy_point(A24, A24_);
+    inline_to_cubical(P, Q, A24)
+}
+
+// TODO: use only one inversion
 void inline_to_cubical_3(ec_point_t* P, ec_point_t* Q, ec_point_t* A24) {
     ec_normalize(A24);
     ec_anti_normalize(P);
