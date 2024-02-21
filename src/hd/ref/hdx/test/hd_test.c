@@ -6,8 +6,18 @@
 #include <inttypes.h>
 #include <tools.h>
 #include <ec.h>
+#include <id2iso.h>
 
 
+// static void ec_biscalar_mul_ibz(ec_point_t* res, const ec_curve_t* curve,
+//     const ibz_t* scalarP, const ibz_t* scalarQ,
+//     const ec_basis_t* PQ){
+
+//     digit_t scalars[2][NWORDS_FIELD];
+//     ibz_to_digit_array(scalars[0], scalarP);
+//     ibz_to_digit_array(scalars[1], scalarQ);
+//     ec_biscalar_mul(res, curve, scalars[0], scalars[1], PQ);
+// }
 
 // p = 5 * 2^248  − 1 
 // 2^242 - 3^3 = 903829667792956162913972717352870559^2 + 2500096036301568120095447360260176186^2;
@@ -279,13 +289,21 @@ int hd_chain_test() {
     int strategy[241] = {89, 55, 34, 29, 21, 13, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 8, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1};
 
 
-    theta_chain_comput_strategy(&dimtwo_chain,length,&E01,&T1,&T2,&T1m2,strategy,0);
+    theta_chain_comput_strategy(&dimtwo_chain,length,&E01,&T1,&T2,&T1m2,strategy,1); 
 
-    TOC(t,"chain computation");
-    // computing dim_twochain(T1.P1,0)
+    TOC(t,"chain computation with eight above");
+    t = tic();
+    theta_chain_t no_sq_chain;
+    theta_couple_point_t Ts1,Ts2,Ts1m2;
+    double_couple_point_iter(&Ts1,2,&E01,&T1);
+    double_couple_point_iter(&Ts2,2,&E01,&T2);
+    double_couple_point_iter(&Ts1m2,2,&E01,&T1m2);
+    int strategy_sq[239] = {89, 55, 34, 27, 21, 13, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 8, 6, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1};
+
+    theta_chain_comput_strategy(&no_sq_chain,length,&E01,&Ts1,&Ts2,&Ts1m2,strategy_sq,0); 
 
     theta_couple_point_t FP,Help;
-    FP.P1 = T1.P1;
+    copy_point(&FP.P1,&T1m2.P1);
     ec_set_zero(&FP.P2);
     ibz_t scal;
     ibz_init(&scal);
@@ -294,7 +312,11 @@ int hd_chain_test() {
     ibz_add(&scal,&ibz_const_one,&scal);
     ibz_to_digit_array(scal_dig,&scal);
     ec_mul(&Help.P1,&E0,scal_dig,&T1.P1);
-    Help.P2=dimtwo_chain.first_step.K1_4.P2;
+    copy_point(&Help.P2,&dimtwo_chain.first_step.K1_4.P2);
+    assert(ec_is_equal(&dimtwo_chain.first_step.K1_4.P2,&no_sq_chain.first_step.K1_4.P2));
+    assert(ec_is_equal(&dimtwo_chain.first_step.K1_4.P1,&no_sq_chain.first_step.K1_4.P1));
+    // assert(is_jac_equal(&dimtwo_chain.first_step.xyK1_4.P2,&no_sq_chain.first_step.xyK1_4.P2));
+    // assert(is_jac_equal(&dimtwo_chain.first_step.xyK1_4.P1,&no_sq_chain.first_step.xyK1_4.P1));
 
     t = tic();
     theta_chain_eval(&FP,&dimtwo_chain,&FP,&Help);
@@ -302,9 +324,77 @@ int hd_chain_test() {
 
     assert(test_point_order_twof(&FP.P1,&dimtwo_chain.codomain.E1,length+2));
     assert(test_point_order_twof(&FP.P2,&dimtwo_chain.codomain.E2,length+2));
+    
+
+    
+    theta_couple_point_t FP_no_sq;
+    theta_couple_curve_t E12_no_sq;
+    copy_point(&FP_no_sq.P1,&T1m2.P1);
+    ec_set_zero(&FP_no_sq.P2);
+    ec_mul(&Help.P1,&E0,scal_dig,&T1.P1);
+    Help.P2=no_sq_chain.first_step.K1_4.P2;
+
+    theta_chain_eval(&FP_no_sq,&no_sq_chain,&FP_no_sq,&Help);
+
+    assert(test_point_order_twof(&FP_no_sq.P1,&no_sq_chain.codomain.E1,length+2));
+    assert(test_point_order_twof(&FP_no_sq.P2,&no_sq_chain.codomain.E2,length+2));
+
+    printf("\n \n");
+    point_print("FP.P1",FP.P1);
+    point_print("FP.P2",FP.P2);
+    point_print("FP_nosq.P1",FP_no_sq.P1);
+    point_print("FP_nosq.P2",FP_no_sq.P2);
+    // fp2_neg(&FP_no_sq.P1.x,&FP_no_sq.P1.x);
+    // point_print("FP_nosq.P1",FP_no_sq.P1);
+
+    curve_print("E1",dimtwo_chain.codomain.E1);
+    curve_print("E2",dimtwo_chain.codomain.E2);
+    curve_print("E1_no_sq",no_sq_chain.codomain.E1);
+    curve_print("E2_no_sq",no_sq_chain.codomain.E2);
+
+    digit_t a[NWORDS_ORDER]={0,0,0,0};
+    digit_t b[NWORDS_ORDER]={0,0,0,0}; 
+    ibz_t scala,scalb;
+    ibz_init(&scala);
+    ibz_init(&scalb);
+    
+
+    ec_basis_t bas,bas_no_sq;
+    // bas =BASIS_EVEN;
+    // bas_no_sq= BASIS_EVEN;
+    copy_point(&bas.P,&BASIS_EVEN.P);
+    copy_point(&bas.Q,&BASIS_EVEN.Q);
+    copy_point(&bas.PmQ,&BASIS_EVEN.PmQ);
+    copy_point(&bas_no_sq.P,&BASIS_EVEN.P);
+    copy_point(&bas_no_sq.Q,&BASIS_EVEN.Q);
+    copy_point(&bas_no_sq.PmQ,&BASIS_EVEN.PmQ);
+    ec_isom_t isom,isom_no_sq;
+    ec_curve_t E,E_no_sq;
+    E = dimtwo_chain.codomain.E2;
+    E_no_sq = no_sq_chain.codomain.E1;
+    ec_isomorphism(&isom,&E0,&E);
+    ec_isomorphism(&isom_no_sq,&E0,&E_no_sq);
+    ec_iso_eval(&bas.P,&isom);
+    ec_iso_eval(&bas.Q,&isom);
+    ec_iso_eval(&bas.PmQ,&isom);
+    ec_iso_eval(&bas_no_sq.P,&isom_no_sq);
+    ec_iso_eval(&bas_no_sq.Q,&isom_no_sq);
+    ec_iso_eval(&bas_no_sq.PmQ,&isom_no_sq);
+
+    ec_isomorphism(&isom,&dimtwo_chain.codomain.E1,&no_sq_chain.codomain.E2);
+    ec_iso_eval(&FP.P1,&isom);
+    assert(ec_is_equal(&FP.P1,&FP_no_sq.P2));
+    ec_isomorphism(&isom,&dimtwo_chain.codomain.E2,&no_sq_chain.codomain.E1);
+    ec_iso_eval(&FP.P2,&isom);
+    // assert(ec_is_equal(&FP.P2,&FP_no_sq.P1));
+
+
+    // assert(ec_is_equal(&FP.P1,&FP_no_sq.P1) || ec_is_equal(&FP.P1,&FP_no_sq.P2));
+    // assert(ec_is_equal(&FP.P2,&FP_no_sq.P2) || ec_is_equal(&FP.P2,&FP_no_sq.P1) );
 
     ibz_finalize(&scal);
-
+    ibz_finalize(&scala);
+    ibz_finalize(&scalb);
     return 1;
 }
 

@@ -14,7 +14,7 @@ int dim2id2iso_test_fixed_degree_isogeny() {
     ibz_mul(&u,&u,&ibz_const_three);
 
     theta_chain_t F;
-    fixed_degree_isogeny(&F,&lideal,&u);
+    fixed_degree_isogeny(&F,&lideal,&u,1);
 
     ibz_finalize(&u);
     quat_left_ideal_finalize(&lideal);
@@ -34,6 +34,7 @@ int dim2id2iso_test_dimid2iso() {
     quat_left_ideal_t lideal_small;
     quat_order_t right_order;
     ibz_mat_4x4_t reduced,gram;
+    ibz_vec_4_t coeffs;
     quat_alg_elem_t beta1,beta2;
     ibz_t u,v,au,bu,d1,d2;
 
@@ -48,14 +49,14 @@ int dim2id2iso_test_dimid2iso() {
     quat_left_ideal_init(&lideal_small);
     quat_order_init(&right_order);
     ibz_mat_4x4_init(&reduced);ibz_mat_4x4_init(&gram);
+    ibz_vec_4_init(&coeffs);
 
     quat_alg_elem_init(&beta1);
     quat_alg_elem_init(&beta2);
 
     ibz_init(&u);
     ibz_init(&v);
-    ibz_init(&au);
-    ibz_init(&bu);ibz_init(&d1);ibz_init(&d2);
+    ibz_init(&d1);ibz_init(&d2);
 
     // computation of lideal_small
     generate_random_prime(&n1,1,128);
@@ -65,7 +66,7 @@ int dim2id2iso_test_dimid2iso() {
     assert(found);
     quat_lideal_create_from_primitive(&lideal_small,&gen,&n1,&STANDARD_EXTREMAL_ORDER.order,&QUATALG_PINFTY);
 
-    found = dim2id2iso_ideal_to_isogeny_clapotis(&Phi,&beta1,&beta2,&u,&v,&au,&bu,&phiv,&d1,&d2,&lideal_small,&QUATALG_PINFTY);
+    found = dim2id2iso_ideal_to_isogeny_clapotis(&Phi,&beta1,&beta2,&u,&v,&coeffs,&phiv,&d1,&d2,&lideal_small,&QUATALG_PINFTY);
 
     ibq_finalize(&ibq_norm);
     ibz_finalize(&temp);ibz_finalize(&remainder);ibz_finalize(&n1);ibz_finalize(&n2);
@@ -75,8 +76,8 @@ int dim2id2iso_test_dimid2iso() {
     ibz_mat_4x4_finalize(&reduced);ibz_mat_4x4_finalize(&gram);
     ibz_finalize(&u);
     ibz_finalize(&v);
-    ibz_finalize(&au);
-    ibz_finalize(&bu);ibz_finalize(&d1);ibz_finalize(&d2);
+    ibz_finalize(&d1);ibz_finalize(&d2);
+    ibz_vec_4_finalize(&coeffs);
 
     quat_alg_elem_finalize(&beta1);
     quat_alg_elem_finalize(&beta2);

@@ -2,6 +2,7 @@
 #include "tedwards.h"
 #include <ec_params.h>
 #include <assert.h>
+#include <stdio.h>
 
 
 bool ec_is_zero(ec_point_t const* P)
@@ -441,7 +442,7 @@ static void jac_init(jac_point_t* P)
     fp_tomont(P->y.re, one);
 }
 
-static bool is_jac_equal(const jac_point_t* P, const jac_point_t* Q)
+bool is_jac_equal(const jac_point_t* P, const jac_point_t* Q)
 { // Evaluate if two points in Jacobian coordinates (X:Y:Z) are equal
   // Returns 1 (true) if P=Q, 0 (false) otherwise
     fp2_t t0, t1, t2, t3;
@@ -665,7 +666,7 @@ void DBLMUL(jac_point_t* R, const jac_point_t* P, const digit_t k, const jac_poi
     }
 }
 
-#define SCALAR_BITS 128  //// TODO: this could be defined by level
+#define SCALAR_BITS 256  //// TODO: this could be defined by level
 
 void DBLMUL2(jac_point_t* R, const jac_point_t* P, const digit_t* k, const jac_point_t* Q, const digit_t* l, const ec_curve_t* curve)
 {  // Double-scalar multiplication R <- k*P + l*Q, fixed for 128-bit scalars
@@ -853,7 +854,7 @@ void ec_dlog_2(digit_t* scalarP, digit_t* scalarQ, const ec_basis_t* PQ2, const 
     ec_point_t Rnorm;    
     ec_curve_t curvenorm;
     ec_basis_t PQ2norm;
-
+    
     f = POWER_OF_2;
     memset(scalarP, 0, NWORDS_ORDER*RADIX/8);
     memset(scalarQ, 0, NWORDS_ORDER*RADIX/8);
@@ -1009,7 +1010,6 @@ void ec_dlog_2(digit_t* scalarP, digit_t* scalarQ, const ec_basis_t* PQ2, const 
     }
     mp_add(scalarP, &xx[0], &ww[0], NWORDS_ORDER);
     mp_add(scalarQ, &yy[0], &zz[0], NWORDS_ORDER);
-
     fp_copy(fp2, TWOpFm1);   // 2^(f-1)
 
     // If scalarP > 2^(f-1) or (scalarQ > 2^(f-1) and (scalarP = 0 or scalarP = 2^(f-1))) then output -scalarP mod 2^f, -scalarQ mod 2^f

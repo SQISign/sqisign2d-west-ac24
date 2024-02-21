@@ -6,8 +6,8 @@
 #define POWER_OF_2 248
 #define POWER_OF_3 4
 
-static digit_t TWOpF[NWORDS_ORDER] = { 0x0000000000000000, 0x4000000000000000, 0x0000000000000000, 0x0000000000000000 }; // Fp representation for the power of 2
-static digit_t TWOpFm1[NWORDS_ORDER] = { 0x0000000000000000, 0x2000000000000000, 0x0000000000000000, 0x0000000000000000 }; // Fp representation for half the power of 2
+static digit_t TWOpF[NWORDS_ORDER] = { 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0100000000000000 }; // Fp representation for the power of 2
+static digit_t TWOpFm1[NWORDS_ORDER] = { 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0080000000000000 }; // Fp representation for half the power of 2
 static digit_t THREEpE[NWORDS_ORDER] = { 0x383d9170b85ff80b, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000 }; // Approximate squareroot of the power of 3
 static digit_t THREEpF[NWORDS_ORDER] = { 0x94fd9829d87f5079, 0x0c5afe6ff302bcbf, 0x0000000000000000, 0x0000000000000000 }; // Fp representation for the power of 3
 static digit_t THREEpFdiv2[NWORDS_ORDER] = { 0xca7ecc14ec3fa83c, 0x062d7f37f9815e5f, 0x0000000000000000, 0x0000000000000000 }; // Floor of half the power of 3

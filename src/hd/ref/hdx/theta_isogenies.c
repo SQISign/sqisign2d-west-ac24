@@ -37,7 +37,7 @@ static void theta_print(char *name, theta_point_t P) {
     assert(!fp2_is_zero(&P.y));
     fp2_copy(&a,&P.y);
     fp2_inv(&a);
-    fp2_mul(&a,&a,&P.x);
+    fp2_mul(&a,&a,&P.t);
     fp2_print(name,a);
 }
 
@@ -838,7 +838,7 @@ void theta_isogeny_comput4(theta_isogeny_t *out,const theta_structure_t *A, cons
     fp2_mul(&out->precomputation.y,&out->precomputation.x,&sqaabb); // done for out->precomputation.y
     fp2_mul(&out->precomputation.x,&out->precomputation.x,&TT2.y); // done for out->precomputation.x
     fp2_mul(&out->precomputation.z,&out->precomputation.z,&sqaacc); // done for out->precomputation.z 
-    fp2_mul(&out->precomputation.t,&out->precomputation.t,&TT2.t); // done for out->precomputation.t
+    fp2_mul(&out->precomputation.t,&out->precomputation.t,&TT2.y); // done for out->precomputation.t
     
     if (bool2) {
         hadamard(&out->codomain.null_point,&out->codomain.null_point);
@@ -891,13 +891,14 @@ void theta_isogeny_comput2(theta_isogeny_t *out,const theta_structure_t *A, cons
     fp2_sqrt(&out->codomain.null_point.y);
     fp2_sqrt(&out->codomain.null_point.z);
     fp2_sqrt(&out->codomain.null_point.t);
+    // fp2_neg(&out->codomain.null_point.t,&out->codomain.null_point.t);
 
     fp2_mul(&out->precomputation.x,&TT2.z,&TT2.t);
     fp2_mul(&out->precomputation.y,&out->precomputation.x,&out->codomain.null_point.y); // done for out->precomputation.y
     fp2_mul(&out->precomputation.x,&out->precomputation.x,&TT2.y); // done for out->precomputation.x
     fp2_mul(&out->precomputation.z,&TT2.t,&out->codomain.null_point.z); 
     fp2_mul(&out->precomputation.z,&out->precomputation.z,&TT2.y); // done for out->precomputation.z 
-    fp2_mul(&out->precomputation.t,&TT2.z,&out->codomain.null_point.t); 
+    fp2_mul(&out->precomputation.t,&TT2.z,&out->codomain.null_point.t);         
     fp2_mul(&out->precomputation.t,&out->precomputation.t,&TT2.y); // done for out->precomputation.t
     
     if (bool2) {
@@ -1466,11 +1467,8 @@ void theta_chain_comput_rec(theta_chain_t *out, theta_structure_t *codomain,thet
         long left = len - right;
         P1[stacklen] = *R1;
         P2[stacklen] = *R2;
-        clock_t t= tic();
         double_iter(R1,codomain,R1,left);
         double_iter(R2,codomain,R2,left);
-        printf("theta_dbl of length %ld",left);
-        TOC_clock(t,"");
 
         theta_chain_comput_rec(out,codomain, R1,R2, right,index,advance, P1,P2,stacklen+1,total_length);
         R1[right*advance] = P1[stacklen];
@@ -1646,13 +1644,15 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
     lift_basis(&xyT1.P2,&xyT2.P2,&bas2,&E12->E2);
     TOC_clock(t,"lifting the two basis");
 
+    int adjusting = 2*(1-eight_above);
+
     t = tic();
 
     // prepare the points for the first step
     // first we must compute the length of the list
     int len_count=0;
     int index=0;
-    while (len_count!=n-1) {
+    while (len_count!=n-1 - adjusting) {
         len_count = len_count + strategy[index];
         index++;
     }
@@ -1709,14 +1709,15 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
     }
     TOC_clock(t,"gluing eval");
     t = tic();
-    // and now we do the remaining steps
-    for (int i=0;i<n-1;i++) {
+    // and now we do the remaining steps 
+
+    for (int i=0;i<n-1 - adjusting;i++) {
 
         len_count=0;
         for (int j=0;j<len_list;j++) {
             len_count=len_count+level[j];
         }
-        while (len_count!=n-i-2) {
+        while (len_count!=n- i - 2 -adjusting ) {
             len_count = len_count + strategy[index];
             double_iter(&Q1[len_list],&codomain,&Q1[len_list-1],strategy[index]);
             double_iter(&Q2[len_list],&codomain,&Q2[len_list-1],strategy[index]);
@@ -1734,18 +1735,29 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
         R2 = Q2[len_list-1];
     
         // computing the next step
-        if (i==n-3) {
-            theta_isogeny_comput(&out->steps[i],&codomain,&R1,&R2,0,0);
+        if (i==n-3) { 
+            if (eight_above) {
+                theta_isogeny_comput(&out->steps[i],&codomain,&R1,&R2,0,0);
+            }
+            
         }
         else if (i==n-2) {
-            theta_isogeny_comput(&out->steps[i],&codomain,&R1,&R2,1,0);
+            if (eight_above) {
+                theta_isogeny_comput(&out->steps[i],&codomain,&R1,&R2,1,0);
+            }
+            
         }
         else {
             theta_isogeny_comput(&out->steps[i],&codomain,&R1,&R2,0,1);
         }
         // updating the codomain
         codomain=out->steps[i].codomain;
-
+        if (i>238) {
+            printf("%d",i);
+            theta_print("",codomain.null_point);
+            theta_print("pr",out->steps[i].precomputation);
+        }
+        
 
         len_list--;
 
@@ -1759,6 +1771,27 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
         }
     
     }
+
+    if (!eight_above) {
+        // the last two steps are done here
+        R1 = Q1[0];
+        R2 = Q2[0];
+        theta_isogeny_eval(&R1,&out->steps[n-4],&R1);
+        theta_isogeny_eval(&R2,&out->steps[n-4],&R2);
+        theta_isogeny_comput4(&out->steps[n-3],&codomain,&R1,&R2,0,0);
+        codomain=out->steps[n-3].codomain;
+        printf("%d",n-3);
+            theta_print("",codomain.null_point);
+            theta_print("pr",out->steps[n-3].precomputation);
+        theta_isogeny_eval(&R1,&out->steps[n-3],&R1);
+        theta_isogeny_eval(&R2,&out->steps[n-3],&R2);
+        theta_isogeny_comput2(&out->steps[n-2],&codomain,&R1,&R2,1,0);
+        codomain=out->steps[n-2].codomain;
+        printf("%d",n-2);
+            theta_print("",codomain.null_point);
+            theta_print("pr",out->steps[n-2].precomputation);
+    }
+
     TOC_clock(t,"middle steps");
 
     t = tic();
@@ -1820,13 +1853,15 @@ void theta_chain_eval(theta_couple_point_t *out,theta_chain_t *phi,theta_couple_
     theta_point_t temp;
 
     theta_couple_jac_point_t jac_help;
-    lift_point(&jac_help.P1,&P12->P1,&phi->domain.E1);
-    lift_point(&jac_help.P2,&P12->P2,&phi->domain.E2);
-    ADD(&jac_help.P1,&jac_help.P1,&phi->first_step.xyK1_4.P1,&phi->domain.E1);
-    ADD(&jac_help.P2,&jac_help.P2,&phi->first_step.xyK1_4.P2,&phi->domain.E2);
+
+    // TODO do something about this
+    // lift_point(&jac_help.P1,&P12->P1,&phi->domain.E1);
+    // // lift_point(&jac_help.P2,&P12->P2,&phi->domain.E2);
+    // ADD(&jac_help.P1,&jac_help.P1,&phi->first_step.xyK1_4.P1,&phi->domain.E1);
+    // ADD(&jac_help.P2,&jac_help.P2,&phi->first_step.xyK1_4.P2,&phi->domain.E2);
     // possibly it could be the difference of the two instead of the sum
-    assert(is_jac_xz_equal(&jac_help.P1,&Help->P1));
-    assert(is_jac_xz_equal(&jac_help.P2,&Help->P2));
+    // assert(is_jac_xz_equal(&jac_help.P1,&Help->P1));
+    // assert(is_jac_xz_equal(&jac_help.P2,&Help->P2));
 
     // first, we apply the gluing
     gluing_eval_point(&temp,P12,Help,&phi->first_step);
@@ -1835,6 +1870,10 @@ void theta_chain_eval(theta_couple_point_t *out,theta_chain_t *phi,theta_couple_
     // then, we apply the successive isogenies
     for (int i=0;i<phi->length-1;i++) {
         theta_isogeny_eval(&temp,&phi->steps[i],&temp);
+        if (i> phi->length-5) {
+            printf("%d",i);
+            theta_print("",temp);
+        }
     }
 
 

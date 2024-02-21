@@ -283,6 +283,7 @@ void theta_chain_comput_balanced(theta_chain_t *out,int n,theta_couple_curve_t *
  * @param T2 a couple point on E12[2^(n+2)]
  * @param T1m2 a couple point on E12[2^(n+2)] equal to T1-T2
  * @param strategy a strategy
+ * @param eight_above, 0 or 1, indicating if we give the points in E12[2^n] or E12[2^(n+2)] 
  *   
  * out : E1xE2 -> E3xE4 of kernel [4](T1,T2) 
  * uses the strategy given in input
