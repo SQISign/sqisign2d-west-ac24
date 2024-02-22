@@ -119,14 +119,14 @@ void translate(ec_point_t* P, ec_point_t const* T)
 // Warning: to get meaningful result when using the monodromy to compute
 // pairings, we need P, Q, PQ, A24 to be normalised
 // (this is not strictly necessary, but care need to be taken when they are not normalised. Only handle the normalised case for now)
-void monodromy(fp2_t* r, int e, ec_point_t const* PQ, ec_point_t const* Q, ec_point_t const* P, , ec_point_t const* A24)
+void monodromy(fp2_t* r, int e, ec_point_t const* PQ, ec_point_t const* Q, ec_point_t const* P, ec_point_t const* A24)
 {
     fp2_t ixP;
     ec_point_t R0, R1;
     fp2_copy(&ixP, &P->x);
     // TODO: save an inversion by computing this at the same time as 'to_cubical'
     fp2_inv(&ixP);
-    biext_ladder_2e(e-1, &R0, &R1, PQ, Q, ixP, A24);
+    biext_ladder_2e(e-1, &R0, &R1, PQ, Q, &ixP, A24);
     translate(&R0, &R1);
     translate(&R1, &R1);
     ratio(r, &R0, &R1, P);
@@ -151,7 +151,7 @@ void to_cubical_c(ec_point_t* P, ec_point_t* A24, ec_point_t const* P_, ec_point
 // non reduced Tate pairing, PQ should be P+Q in (X:Z) coordinates
 // If the points are already normalized correctly, use 'monodromy'
 // Do we need a non_reduced_tate_c version where we don't modify the points in place?
-void non_reduced_tate(fp2_t* r, int e, ec_point_t* P, ec_point_t* Q, ec_point_t PQ, ec_point_t A24_) {
+void non_reduced_tate(fp2_t* r, int e, ec_point_t* P, ec_point_t* Q, ec_point_t* PQ, ec_point_t* A24) {
     to_cubical(PQ, Q, P, A24);
     monodromy(r, e, PQ, Q, P, A24);
 }
