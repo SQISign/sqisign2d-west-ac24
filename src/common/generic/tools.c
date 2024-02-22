@@ -68,3 +68,15 @@ float clock_print(const clock_t t,const char *str) {
     printf("%s [%ld]\n",str,t);
     return (float) (t);
 }
+
+int two_adic_valuation(int n) {
+    if (n == 0)
+        return 0; // 2-adic valuation of 0 is 0
+
+    int count = 0;
+    while ((n & 1) == 0) {
+        n >>= 1; // Right shift by 1 is equivalent to division by 2
+        count++;
+    }
+    return count;
+}

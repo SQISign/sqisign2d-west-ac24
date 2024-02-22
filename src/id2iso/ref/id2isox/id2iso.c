@@ -967,6 +967,9 @@ void endomorphism_application_even_basis(ec_basis_t *bas,quat_alg_elem_t *theta,
     ibz_init(&twopow);
     ibz_pow(&twopow,&ibz_const_two,f);
 
+    ibz_t content;
+    ibz_init(&content);
+
     digit_t scalars[2][NWORDS_ORDER] = {0};
 
     ec_basis_t tmp_bas;
@@ -975,8 +978,9 @@ void endomorphism_application_even_basis(ec_basis_t *bas,quat_alg_elem_t *theta,
     copy_point(&tmp_bas.PmQ,&bas->PmQ);
 
 
-    // decomposing theta on the basis 
-    from_1ijk_to_O0basis(&coeffs,theta);
+    // // decomposing theta on the basis 
+    quat_alg_make_primitive(&coeffs,&content,theta,&MAXORD_O0,&QUATALG_PINFTY);
+    assert(ibz_get(&content)%2==1);
 
     ibz_set(&mat[0][0],0);ibz_set(&mat[0][1],0);ibz_set(&mat[1][0],0);ibz_set(&mat[1][1],0);
 
@@ -1017,6 +1021,7 @@ void endomorphism_application_even_basis(ec_basis_t *bas,quat_alg_elem_t *theta,
     ibz_vec_4_finalize(&coeffs);
     ibz_mat_2x2_finalize(&mat);
     ibz_finalize(&twopow);
+    ibz_finalize(&content);
     
 }
 

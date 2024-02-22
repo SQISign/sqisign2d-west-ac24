@@ -3,6 +3,9 @@
 #define TOOLS_H
 
 #include <time.h> 
+int two_adic_valuation(int n);
+
+
 
 clock_t tic();
 float tac(); /* time in ms since last tic */

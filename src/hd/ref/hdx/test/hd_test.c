@@ -7,6 +7,7 @@
 #include <tools.h>
 #include <ec.h>
 #include <id2iso.h>
+#include <ec_params.h>
 
 
 // static void ec_biscalar_mul_ibz(ec_point_t* res, const ec_curve_t* curve,
@@ -285,11 +286,7 @@ int hd_chain_test() {
     #endif
 
     t = tic();
-
-    int strategy[241] = {89, 55, 34, 29, 21, 13, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 8, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1};
-
-
-    theta_chain_comput_strategy(&dimtwo_chain,length,&E01,&T1,&T2,&T1m2,strategy,1); 
+    theta_chain_comput_strategy(&dimtwo_chain,length,&E01,&T1,&T2,&T1m2,strategies[TORSION_PLUS_EVEN_POWER-length],1); 
 
     TOC(t,"chain computation with eight above");
     t = tic();
@@ -298,9 +295,8 @@ int hd_chain_test() {
     double_couple_point_iter(&Ts1,2,&E01,&T1);
     double_couple_point_iter(&Ts2,2,&E01,&T2);
     double_couple_point_iter(&Ts1m2,2,&E01,&T1m2);
-    int strategy_sq[239] = {89, 55, 34, 27, 21, 13, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 8, 6, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1};
 
-    theta_chain_comput_strategy(&no_sq_chain,length,&E01,&Ts1,&Ts2,&Ts1m2,strategy_sq,0); 
+    theta_chain_comput_strategy(&no_sq_chain,length,&E01,&Ts1,&Ts2,&Ts1m2,strategies[TORSION_PLUS_EVEN_POWER-length+2],0); 
 
     theta_couple_point_t FP,Help;
     copy_point(&FP.P1,&T1m2.P1);

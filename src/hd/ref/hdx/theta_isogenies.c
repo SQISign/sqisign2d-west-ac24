@@ -1752,11 +1752,6 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
         }
         // updating the codomain
         codomain=out->steps[i].codomain;
-        if (i>238) {
-            printf("%d",i);
-            theta_print("",codomain.null_point);
-            theta_print("pr",out->steps[i].precomputation);
-        }
         
 
         len_list--;
@@ -1780,16 +1775,10 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
         theta_isogeny_eval(&R2,&out->steps[n-4],&R2);
         theta_isogeny_comput4(&out->steps[n-3],&codomain,&R1,&R2,0,0);
         codomain=out->steps[n-3].codomain;
-        printf("%d",n-3);
-            theta_print("",codomain.null_point);
-            theta_print("pr",out->steps[n-3].precomputation);
         theta_isogeny_eval(&R1,&out->steps[n-3],&R1);
         theta_isogeny_eval(&R2,&out->steps[n-3],&R2);
         theta_isogeny_comput2(&out->steps[n-2],&codomain,&R1,&R2,1,0);
         codomain=out->steps[n-2].codomain;
-        printf("%d",n-2);
-            theta_print("",codomain.null_point);
-            theta_print("pr",out->steps[n-2].precomputation);
     }
 
     TOC_clock(t,"middle steps");
@@ -1870,10 +1859,6 @@ void theta_chain_eval(theta_couple_point_t *out,theta_chain_t *phi,theta_couple_
     // then, we apply the successive isogenies
     for (int i=0;i<phi->length-1;i++) {
         theta_isogeny_eval(&temp,&phi->steps[i],&temp);
-        if (i> phi->length-5) {
-            printf("%d",i);
-            theta_print("",temp);
-        }
     }
 
 
