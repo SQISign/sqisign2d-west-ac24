@@ -16,6 +16,22 @@ void fp2_exp_2e(fp2_t* r, uint64_t e, fp2_t const* x)
     }
 }
 
+void dbl_2e(ec_point_t* R, uint64_t e, ec_point_t const* P, ec_point_t const* A24)
+{
+    copy_point(R, P);
+    for (uint64_t i=0; i<e; i++) {
+        xDBL(R, R, A24);
+    }
+}
+
+void cubical_2e(ec_point_t* R, uint64_t e, ec_point_t const* P, ec_point_t const* A24)
+{
+    copy_point(R, P);
+    for (uint64_t i=0; i<e; i++) {
+        cubicalDBL(R, R, A24);
+    }
+}
+
 int biextension_test() 
 {
     ec_curve_t E0 = CURVE_E0; 
@@ -24,6 +40,7 @@ int biextension_test()
     fp2_t one, r1, rr1, r2, r3;
     ec_point_t P, Q, PmQ, A24;
     ec_point_t PQ, PP, QQ, PPQ, PQQ;
+    ec_point_t Pe, Qe, PmQe;
 
     // ibz_init(&two_pow); ibz_init(&tmp);
     // ibz_pow(&two_pow,&ibz_const_two,length);
@@ -35,12 +52,24 @@ int biextension_test()
     copy_point(&Q, &BASIS_EVEN.Q);
     copy_point(&PmQ, &BASIS_EVEN.PmQ);
 
+    printf("Testing order of points\n");
+    dbl_2e(&Pe, e, &P, &A24);
+    dbl_2e(&Qe, e, &Q, &A24);
+    dbl_2e(&PmQe, e, &PmQ, &A24);
+    assert(ec_is_zero(&Pe));
+    assert(ec_is_zero(&Qe));
+    assert(ec_is_zero(&PmQe));
+    cubical_2e(&Pe, e, &P, &A24);
+    assert(ec_is_zero(&Pe));
+
+    printf("Testing order of Weil pairing\n");
     xADD(&PQ, &P, &Q, &PmQ);
     weil(&r1, e, &P, &Q, &PQ, &A24);
     fp2_setone(&one);
     fp2_exp_2e(&r2, e, &r1);
     assert(fp2_is_equal(&r2, &one));
 
+    printf("Bilinearity tests\n");
     xDBLv2(&PP, &P, &A24);
     xDBLv2(&QQ, &Q, &A24);
     xADD(&PPQ, &PQ, &P, &Q);

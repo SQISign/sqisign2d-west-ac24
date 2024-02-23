@@ -71,28 +71,33 @@ void ec_anti_normalize(ec_point_t* P){
 */
 
 // given cubical reps of P+Q, Q, P, return P+2Q, 2Q
-void biextDBL(ec_point_t* R, ec_point_t* S, ec_point_t const* PQ, ec_point_t const* Q, fp2_t const* ixP, ec_point_t const* A24)
+void biextDBL(ec_point_t* PQQ, ec_point_t* QQ, ec_point_t const* PQ, ec_point_t const* Q, fp2_t const* ixP, ec_point_t const* A24)
 {
-    cubicalADD(R, PQ, Q, ixP);
-    cubicalDBL(S, Q, A24);
+    cubicalADD(PQQ, PQ, Q, ixP);
+    cubicalDBL(QQ, Q, A24);
 }
 
-void biext_ladder_2e(uint64_t e, ec_point_t* R, ec_point_t* S, ec_point_t const* PQ, ec_point_t const* Q, fp2_t const* ixP, ec_point_t const* A24)
+void biext_ladder_2e(uint64_t e, ec_point_t* PnQ, ec_point_t* nQ, ec_point_t const* PQ, ec_point_t const* Q, fp2_t const* ixP, ec_point_t const* A24)
 {
-    copy_point(R, PQ);
-    copy_point(S, Q);
+    copy_point(PnQ, PQ);
+    copy_point(nQ, Q);
     for (uint64_t i=0; i<e; i++) {
-        biextDBL(R, S, R, S, ixP, A24);
+        biextDBL(PnQ, nQ, PnQ, nQ, ixP, A24);
     }
 }
 
 void ratio(fp2_t* r, ec_point_t const* PnQ, ec_point_t const* nQ, ec_point_t const* P) 
 {
-    fp2_t t0;
+    // Sanity tests
+    fp2_t t0, t1;
+    assert(fp2_is_zero(&nQ->z));
+    fp2_mul(&t0, &PnQ->x, &P->z);
+    fp2_mul(&t1, &PnQ->z, &P->x);
+    assert(fp2_is_equal(&t0, &t1));
+
     fp2_mul(r, &nQ->x, &P->x);
-    fp2_copy(&t0, &PnQ->x);
-    fp2_inv(&t0);
-    fp2_mul(r, r, &t0);
+    fp2_inv(r);
+    fp2_mul(r, r, &PnQ->x);
 }
 
 void translate(ec_point_t* P, ec_point_t const* T)
@@ -123,14 +128,17 @@ void translate(ec_point_t* P, ec_point_t const* T)
 void monodromy(fp2_t* r, uint64_t e, ec_point_t const* PQ, ec_point_t const* Q, ec_point_t const* P, ec_point_t const* A24)
 {
     fp2_t ixP;
-    ec_point_t R0, R1;
+    ec_point_t PnQ, nQ;
     fp2_copy(&ixP, &P->x);
     // TODO: save an inversion by computing this at the same time as 'to_cubical'
     fp2_inv(&ixP);
+    /*
     biext_ladder_2e(e-1, &R0, &R1, PQ, Q, &ixP, A24);
     translate(&R0, &R1);
     translate(&R1, &R1);
-    ratio(r, &R0, &R1, P);
+    */
+    biext_ladder_2e(e, &PnQ, &nQ, PQ, Q, &ixP, A24);
+    ratio(r, &PnQ, &nQ, P);
 }
 
 // TODO: use only one inversion
