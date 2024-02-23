@@ -56,7 +56,7 @@ int biextension_test()
     printf("Testing order of points\n");
     t = tic();
     dbl_2e(&tmp, e, &P, &A24);
-    TOC_clock(t,"doublings");
+    TOC_clock(t,"Doublings");
     assert(ec_is_zero(&tmp));
     dbl_2e(&tmp, e, &Q, &A24);
     assert(ec_is_zero(&tmp));

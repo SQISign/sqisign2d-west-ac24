@@ -106,6 +106,23 @@ void ratio(fp2_t* r, ec_point_t const* PnQ, ec_point_t const* nQ, ec_point_t con
     fp2_mul(r, r, &PnQ->x);
 }
 
+// Compute the ratio X/Z as a (X:Z) point to avoid a division
+void point_ratio(ec_point_t* R, ec_point_t const* PnQ, ec_point_t const* nQ, ec_point_t const* P) 
+{
+    // Sanity tests
+    assert(ec_is_zero(nQ));
+    assert(is_point_equal(PnQ, P));
+
+    fp2_mul(&R->x, &nQ->x, &P->x);
+    fp2_copy(&R->z, &PnQ->x);
+}
+
+void x_coord(fp2_t* r, ec_point_t const* P) {
+    fp2_copy(r, &P->z);
+    fp2_inv(r);
+    fp2_mul(r, r, &P->x);
+}
+
 void translate(ec_point_t* P, ec_point_t const* T)
 {
     fp2_t t0, t1, t2;
@@ -131,16 +148,16 @@ void translate(ec_point_t* P, ec_point_t const* T)
 // Warning: to get meaningful result when using the monodromy to compute
 // pairings, we need P, Q, PQ, A24 to be normalised
 // (this is not strictly necessary, but care need to be taken when they are not normalised. Only handle the normalised case for now)
-void monodromy_i(fp2_t* r, uint64_t e, ec_point_t const* PQ, ec_point_t const* Q, ec_point_t const* P, fp2_t const* ixP, ec_point_t const* A24)
+void monodromy_i(ec_point_t* r, uint64_t e, ec_point_t const* PQ, ec_point_t const* Q, ec_point_t const* P, fp2_t const* ixP, ec_point_t const* A24)
 {
     ec_point_t PnQ, nQ;
     biext_ladder_2e(e-1, &PnQ, &nQ, PQ, Q, ixP, A24);
     translate(&PnQ, &nQ);
     translate(&nQ, &nQ);
-    ratio(r, &PnQ, &nQ, P);
+    point_ratio(r, &PnQ, &nQ, P);
 }
 
-void monodromy(fp2_t* r, uint64_t e, ec_point_t const* PQ, ec_point_t const* Q, ec_point_t const* P, ec_point_t const* A24)
+void monodromy(ec_point_t* r, uint64_t e, ec_point_t const* PQ, ec_point_t const* Q, ec_point_t const* P, ec_point_t const* A24)
 {
     fp2_t ixP;
     fp2_copy(&ixP, &P->x);
@@ -169,6 +186,18 @@ void to_cubical(ec_point_t* PQ, ec_point_t* Q, ec_point_t* P) {
     ec_normalize(PQ);
 }
 
+// Normalize the points and also store 1/x(P), 1/x(Q)
+void to_cubical_i(ec_point_t* PQ, ec_point_t* Q, ec_point_t* P, fp2_t* ixP, fp2_t* ixQ) {
+    //ec_normalize(A24);
+    ec_normalize(P);
+    ec_normalize(Q);
+    ec_normalize(PQ);
+    fp2_copy(ixP, &P->x);
+    fp2_inv(ixP);
+    fp2_copy(ixQ, &Q->x);
+    fp2_inv(ixQ);
+}
+
 /* (Do we need this?)
 void to_cubical_c(ec_point_t* P, ec_point_t* A24, ec_point_t const* P_, ec_point_t const* A24_) {
     copy_point(P, P_);
@@ -178,28 +207,35 @@ void to_cubical_c(ec_point_t* P, ec_point_t* A24, ec_point_t const* P_, ec_point
 */
 
 // non reduced Tate pairing, PQ should be P+Q in (X:Z) coordinates
-// If the points are already normalized correctly, use 'monodromy'
-// Do we need a non_reduced_tate_c version where we don't modify the points in place?
+void non_reduced_tate_n(fp2_t* r, uint64_t e, ec_point_t* P, ec_point_t* Q, ec_point_t* PQ, ec_point_t* A24) {
+    ec_point_t R;
+    monodromy(&R, e, PQ, Q, P, A24);
+    x_coord(r, &R);
+}
+
 void non_reduced_tate(fp2_t* r, uint64_t e, ec_point_t* P, ec_point_t* Q, ec_point_t* PQ, ec_point_t* A24) {
     to_cubical(PQ, Q, P);
-    monodromy(r, e, PQ, Q, P, A24);
+    non_reduced_tate_n(r, e, PQ, Q, P, A24);
 }
 
 // Weil pairing, PQ should be P+Q in (X:Z) coordinates
 // We assume the points are normalised correctly
 // Do we need a weil_c version?
-void weil_n(fp2_t* r, uint64_t e, ec_point_t const* P, ec_point_t const* Q, ec_point_t const* PQ, ec_point_t const* A24) {
-    fp2_t t0;
-    monodromy(&t0, e, PQ, Q, P, A24);
-    fp2_inv(&t0);
-    monodromy(r, e, PQ, P, Q, A24);
+void weil_n(fp2_t* r, uint64_t e, ec_point_t const* P, ec_point_t const* Q, ec_point_t const* PQ, fp2_t const* ixP, fp2_t const* ixQ, ec_point_t const* A24) {
+    ec_point_t R0, R1;
+    monodromy_i(&R0, e, PQ, Q, P, ixP, A24);
+    monodromy_i(&R1, e, PQ, P, Q, ixQ, A24);
     // TODO: check if that's the Weil pairing or its inverse
-    fp2_mul(r, r, &t0);
+    fp2_mul(r, &R0.x, &R1.z);
+    fp2_inv(r);
+    fp2_mul(r, r, &R0.z);
+    fp2_mul(r, r, &R1.x);
 }
 
 // Weil pairing, PQ should be P+Q in (X:Z) coordinates
 // The code will crash (division by 0) if either P or Q is (0:1)
 void weil(fp2_t* r, uint64_t e, ec_point_t* P, ec_point_t* Q, ec_point_t* PQ, ec_point_t* A24) {
-    to_cubical(PQ, Q, P);
-    weil_n(r, e, P, Q, PQ, A24);
+    fp2_t ixP, ixQ;
+    to_cubical_i(PQ, Q, P, &ixP, &ixQ);
+    weil_n(r, e, P, Q, PQ, &ixP, &ixQ, A24);
 }
