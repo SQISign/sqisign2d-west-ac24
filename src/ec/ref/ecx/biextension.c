@@ -40,12 +40,13 @@ void cubicalDBL(ec_point_t* Q, ec_point_t const* P, ec_point_t const* A24)
     // A24 = (A+2C:4C)
     fp2_t t0, t1, t2;
 
+    assert(fp2_is_one(&A24->z));
     fp2_add(&t0, &P->x, &P->z);
     fp2_sqr(&t0, &t0);
     fp2_sub(&t1, &P->x, &P->z);
     fp2_sqr(&t1, &t1);
     fp2_sub(&t2, &t0, &t1);
-    fp2_mul(&t1, &t1, &A24->z);
+    // fp2_mul(&t1, &t1, &A24->z);
     fp2_mul(&Q->x, &t0, &t1);
     fp2_mul(&t0, &t2, &A24->x);
     fp2_add(&t0, &t0, &t1);
@@ -208,10 +209,8 @@ void to_cubical_i(ec_point_t* Q, ec_point_t* P, fp2_t* ixP, fp2_t* ixQ) {
     fp2_mul(ixQ, &Q->z, &t[2]);
     fp2_mul(&P->x, &P->x, &t[1]);
     fp2_mul(&Q->x, &Q->x, &t[3]);
-    fp_mont_setone(P->z.re);
-    fp_set(P->z.im, 0);
-    fp_mont_setone(Q->z.re);
-    fp_set(Q->z.im, 0);
+    fp2_setone(&P->z);
+    fp2_setone(&Q->z);
 }
 
 /* (Do we need this?)
@@ -223,15 +222,17 @@ void to_cubical_c(ec_point_t* P, ec_point_t* A24, ec_point_t const* P_, ec_point
 */
 
 // non reduced Tate pairing, PQ should be P+Q in (X:Z) coordinates
-void non_reduced_tate_n(fp2_t* r, uint64_t e, ec_point_t* P, ec_point_t* Q, ec_point_t* PQ, ec_point_t* A24) {
+void non_reduced_tate_n(fp2_t* r, uint64_t e, ec_point_t* P, ec_point_t* Q, ec_point_t* PQ, fp2_t const* ixP, ec_point_t* A24) {
     ec_point_t R;
-    monodromy(&R, e, PQ, Q, P, A24);
+    monodromy_i(&R, e, PQ, Q, P, ixP, A24);
     x_coord(r, &R);
 }
 
 void non_reduced_tate(fp2_t* r, uint64_t e, ec_point_t* P, ec_point_t* Q, ec_point_t* PQ, ec_point_t* A24) {
-    to_cubical(Q, P);
-    non_reduced_tate_n(r, e, PQ, Q, P, A24);
+    // to_cubical(Q, P);
+    fp2_t ixP, ixQ;
+    to_cubical_i(Q, P, &ixP, &ixQ); //TODO: ixQ not used
+    non_reduced_tate_n(r, e, PQ, Q, P, &ixP, A24);
 }
 
 // Weil pairing, PQ should be P+Q in (X:Z) coordinates

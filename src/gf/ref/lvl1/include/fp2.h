@@ -9,8 +9,10 @@ typedef struct fp2_t {
 } fp2_t;
 
 void fp2_set(fp2_t* x, const digit_t val);
+void fp2_set_one(fp2_t* x);
 bool fp2_is_zero(const fp2_t* a);
 bool fp2_is_equal(const fp2_t* a, const fp2_t* b);
+bool fp2_is_one(const fp2_t* a);
 void fp2_copy(fp2_t* x, const fp2_t* y);
 fp2_t fp2_non_residue();
 void fp2_add(fp2_t* x, const fp2_t* y, const fp2_t* z);
