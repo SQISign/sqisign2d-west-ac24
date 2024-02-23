@@ -56,8 +56,8 @@ void cubicalADD(ec_point_t* R, ec_point_t const* P, ec_point_t const* Q, fp2_t c
     fp2_mul(&t1, &t1, &t2);
     fp2_add(&t2, &t0, &t1);
     fp2_sub(&t3, &t0, &t1);
-    fp2_sqr(&t2, &t2);
     fp2_sqr(&R->z, &t3);
+    fp2_sqr(&t2, &t2);
     fp2_mul(&R->x, ixPQ, &t2);
 }
 
@@ -77,11 +77,11 @@ void biextDBL(ec_point_t* R, ec_point_t* S, ec_point_t const* PQ, ec_point_t con
     cubicalDBL(S, Q, A24);
 }
 
-void biext_ladder_2e(int e, ec_point_t* R, ec_point_t* S, ec_point_t const* PQ, ec_point_t const* Q, fp2_t const* ixP, ec_point_t const* A24)
+void biext_ladder_2e(uint64_t e, ec_point_t* R, ec_point_t* S, ec_point_t const* PQ, ec_point_t const* Q, fp2_t const* ixP, ec_point_t const* A24)
 {
     copy_point(R, PQ);
     copy_point(S, Q);
-    for (int i=0; i<e; i++) {
+    for (uint64_t i=0; i<e; i++) {
         biextDBL(R, S, R, S, ixP, A24);
     }
 }
@@ -97,7 +97,7 @@ void ratio(fp2_t* r, ec_point_t const* PnQ, ec_point_t const* nQ, ec_point_t con
 
 void translate(ec_point_t* P, ec_point_t const* T)
 {
-    fp2_t t0, t1;
+    fp2_t t0, t1, t2;
     if (fp2_is_zero(&T->z)) {
         // do nothing
     }
@@ -109,17 +109,18 @@ void translate(ec_point_t* P, ec_point_t const* T)
     else {
         fp2_mul(&t0, &T->x, &P->x);
         fp2_mul(&t1, &T->z, &P->z);
-        fp2_sub(&P->x, &t0, &t1);
+        fp2_sub(&t2, &t0, &t1);
         fp2_mul(&t0, &T->z, &P->x);
         fp2_mul(&t1, &T->x, &P->z);
         fp2_sub(&P->z, &t0, &t1);
+        fp2_copy(&P->x, &t2);
     }
 }
 
 // Warning: to get meaningful result when using the monodromy to compute
 // pairings, we need P, Q, PQ, A24 to be normalised
 // (this is not strictly necessary, but care need to be taken when they are not normalised. Only handle the normalised case for now)
-void monodromy(fp2_t* r, int e, ec_point_t const* PQ, ec_point_t const* Q, ec_point_t const* P, ec_point_t const* A24)
+void monodromy(fp2_t* r, uint64_t e, ec_point_t const* PQ, ec_point_t const* Q, ec_point_t const* P, ec_point_t const* A24)
 {
     fp2_t ixP;
     ec_point_t R0, R1;
@@ -151,7 +152,7 @@ void to_cubical_c(ec_point_t* P, ec_point_t* A24, ec_point_t const* P_, ec_point
 // non reduced Tate pairing, PQ should be P+Q in (X:Z) coordinates
 // If the points are already normalized correctly, use 'monodromy'
 // Do we need a non_reduced_tate_c version where we don't modify the points in place?
-void non_reduced_tate(fp2_t* r, int e, ec_point_t* P, ec_point_t* Q, ec_point_t* PQ, ec_point_t* A24) {
+void non_reduced_tate(fp2_t* r, uint64_t e, ec_point_t* P, ec_point_t* Q, ec_point_t* PQ, ec_point_t* A24) {
     to_cubical(PQ, Q, P, A24);
     monodromy(r, e, PQ, Q, P, A24);
 }
@@ -159,7 +160,7 @@ void non_reduced_tate(fp2_t* r, int e, ec_point_t* P, ec_point_t* Q, ec_point_t*
 // Weil pairing, PQ should be P+Q in (X:Z) coordinates
 // We assume the points are normalised correctly
 // Do we need a weil_c version?
-void weil_n(fp2_t* r, int e, ec_point_t const* P, ec_point_t const* Q, ec_point_t const* PQ, ec_point_t const* A24) {
+void weil_n(fp2_t* r, uint64_t e, ec_point_t const* P, ec_point_t const* Q, ec_point_t const* PQ, ec_point_t const* A24) {
     fp2_t t0;
     monodromy(&t0, e, PQ, Q, P, A24);
     fp2_inv(&t0);
@@ -169,7 +170,7 @@ void weil_n(fp2_t* r, int e, ec_point_t const* P, ec_point_t const* Q, ec_point_
 }
 
 // Weil pairing, PQ should be P+Q in (X:Z) coordinates
-void weil(fp2_t* r, int e, ec_point_t* P, ec_point_t* Q, ec_point_t* PQ, ec_point_t* A24) {
+void weil(fp2_t* r, uint64_t e, ec_point_t* P, ec_point_t* Q, ec_point_t* PQ, ec_point_t* A24) {
     to_cubical(PQ, Q, P, A24);
     weil_n(r, e, P, Q, PQ, A24);
 }
