@@ -188,6 +188,7 @@ void to_cubical(ec_point_t* Q, ec_point_t* P) {
 
 // Normalize the points and also store 1/x(P), 1/x(Q)
 void to_cubical_i(ec_point_t* Q, ec_point_t* P, fp2_t* ixP, fp2_t* ixQ) {
+    /*
     //ec_normalize(A24);
     ec_normalize(P);
     ec_normalize(Q);
@@ -196,6 +197,21 @@ void to_cubical_i(ec_point_t* Q, ec_point_t* P, fp2_t* ixP, fp2_t* ixQ) {
     fp2_inv(ixP);
     fp2_copy(ixQ, &Q->x);
     fp2_inv(ixQ);
+    */
+    fp2_t t[4];
+    fp2_copy(&t[0], &P->x);
+    fp2_copy(&t[1], &P->z);
+    fp2_copy(&t[2], &Q->x);
+    fp2_copy(&t[3], &Q->z);
+    fp2_batched_inv(t,4);
+    fp2_mul(ixP, &P->z, &t[0]);
+    fp2_mul(ixQ, &Q->z, &t[2]);
+    fp2_mul(&P->x, &P->x, &t[1]);
+    fp2_mul(&Q->x, &Q->x, &t[3]);
+    fp_mont_setone(P->z.re);
+    fp_set(P->z.im, 0);
+    fp_mont_setone(Q->z.re);
+    fp_set(Q->z.im, 0);
 }
 
 /* (Do we need this?)
