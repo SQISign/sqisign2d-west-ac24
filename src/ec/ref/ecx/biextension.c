@@ -169,7 +169,7 @@ void to_cubical_c(ec_point_t* P, ec_point_t* A24, ec_point_t const* P_, ec_point
 // If the points are already normalized correctly, use 'monodromy'
 // Do we need a non_reduced_tate_c version where we don't modify the points in place?
 void non_reduced_tate(fp2_t* r, uint64_t e, ec_point_t* P, ec_point_t* Q, ec_point_t* PQ, ec_point_t* A24) {
-    to_cubical(PQ, Q, P, A24);
+    to_cubical(PQ, Q, P);
     monodromy(r, e, PQ, Q, P, A24);
 }
 
@@ -187,6 +187,6 @@ void weil_n(fp2_t* r, uint64_t e, ec_point_t const* P, ec_point_t const* Q, ec_p
 
 // Weil pairing, PQ should be P+Q in (X:Z) coordinates
 void weil(fp2_t* r, uint64_t e, ec_point_t* P, ec_point_t* Q, ec_point_t* PQ, ec_point_t* A24) {
-    to_cubical(PQ, Q, P, A24);
+    to_cubical(PQ, Q, P);
     weil_n(r, e, P, Q, PQ, A24);
 }
