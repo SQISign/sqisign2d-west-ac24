@@ -131,17 +131,21 @@ void translate(ec_point_t* P, ec_point_t const* T)
 // Warning: to get meaningful result when using the monodromy to compute
 // pairings, we need P, Q, PQ, A24 to be normalised
 // (this is not strictly necessary, but care need to be taken when they are not normalised. Only handle the normalised case for now)
-void monodromy(fp2_t* r, uint64_t e, ec_point_t const* PQ, ec_point_t const* Q, ec_point_t const* P, ec_point_t const* A24)
+void monodromy_i(fp2_t* r, uint64_t e, ec_point_t const* PQ, ec_point_t const* Q, ec_point_t const* P, fp2_t const* ixP, ec_point_t const* A24)
 {
-    fp2_t ixP;
     ec_point_t PnQ, nQ;
-    fp2_copy(&ixP, &P->x);
-    // TODO: save an inversion by computing this at the same time as 'to_cubical'
-    fp2_inv(&ixP);
-    biext_ladder_2e(e-1, &PnQ, &nQ, PQ, Q, &ixP, A24);
+    biext_ladder_2e(e-1, &PnQ, &nQ, PQ, Q, ixP, A24);
     translate(&PnQ, &nQ);
     translate(&nQ, &nQ);
     ratio(r, &PnQ, &nQ, P);
+}
+
+void monodromy(fp2_t* r, uint64_t e, ec_point_t const* PQ, ec_point_t const* Q, ec_point_t const* P, ec_point_t const* A24)
+{
+    fp2_t ixP;
+    fp2_copy(&ixP, &P->x);
+    fp2_inv(&ixP);
+    monodromy_i(r, e, PQ, Q, P, &ixP, A24);
 }
 
 // This version computes the monodromy with respect to the biextension

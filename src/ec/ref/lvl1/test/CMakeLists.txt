@@ -28,7 +28,7 @@ add_executable(isog.test_${SVARIANT_LOWER} ${ECX_DIR}/test/isog-test.c)
 
 add_executable(biextension.test_${SVARIANT_LOWER} ${ECX_DIR}/test/biextension-test.c)
 	target_include_directories(biextension.test_${SVARIANT_LOWER} PUBLIC ${INC_GF_${SVARIANT_UPPER}} ${INC_INTBIG} ${INC_PRECOMP_${SVARIANT_UPPER}} ${PROJECT_SOURCE_DIR}/include  ../include ${INC_EC} ${INC_COMMON} ${INC_QUATERNION} .)
-	target_link_libraries(biextension.test_${SVARIANT_LOWER} ${LIB_PRECOMP_${SVARIANT_UPPER}} ${LIB_INTBIG} ${LIB_GF_${SVARIANT_UPPER}} ${LIB_EC_${SVARIANT_UPPER}} ${LIB_QUATERNION})
+	target_link_libraries(biextension.test_${SVARIANT_LOWER} ${LIB_PRECOMP_${SVARIANT_UPPER}} ${LIB_INTBIG} ${LIB_GF_${SVARIANT_UPPER}} ${LIB_EC_${SVARIANT_UPPER}} ${LIB_QUATERNION} ${LIB_COMMON})
 
 
 add_test(ec_fp2.test_${SVARIANT_LOWER} fp2.test_${SVARIANT_LOWER} ${SQISIGN_TEST_REPS})

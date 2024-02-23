@@ -6,6 +6,7 @@
 #include "curve_extras.h"
 #include <endomorphism_action.h>
 #include <torsion_constants.h>
+#include <tools.h>
 
 void fp2_exp_2e(fp2_t* r, uint64_t e, fp2_t const* x)
 {
@@ -35,7 +36,8 @@ void cubical_2e(ec_point_t* R, uint64_t e, ec_point_t const* P, ec_point_t const
 
 int biextension_test() 
 {
-    ec_curve_t E0 = CURVE_E0; 
+    clock_t t;
+    ec_curve_t E0 = CURVE_E0;
     uint64_t e = TORSION_PLUS_EVEN_POWER;
     // ibz_t two_pow, tmp;
     fp2_t one, r1, rr1, rrr1, r2, r3;
@@ -52,17 +54,22 @@ int biextension_test()
     copy_point(&PmQ, &BASIS_EVEN.PmQ);
 
     printf("Testing order of points\n");
+    t = tic();
     dbl_2e(&tmp, e, &P, &A24);
+    TOC(t,"doublings");
     assert(ec_is_zero(&tmp));
     dbl_2e(&tmp, e, &Q, &A24);
     assert(ec_is_zero(&tmp));
     dbl_2e(&tmp, e, &PmQ, &A24);
     assert(ec_is_zero(&tmp));
 
-    printf("Testing order of Weil pairing\n");
+    printf("Computing Weil pairing\n");
     xADD(&PQ, &P, &Q, &PmQ);
+    t = tic();
     weil(&r1, e, &P, &Q, &PQ, &A24);
+    TOC(t,"Weil pairing");
 
+    printf("Testing order of Weil pairing\n");
     fp2_setone(&one);
     fp2_exp_2e(&r2, e-1, &r1);
     assert(!fp2_is_equal(&r2, &one));
