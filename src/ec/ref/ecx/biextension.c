@@ -23,6 +23,16 @@
  * Tate pairing has to be trivial).
  */
 
+/* return the *normalised* point (A+2C)/4C */
+void A24_from_AC(ec_point_t* A24, ec_point_t const* AC)
+{
+    fp2_dbl(&A24->z, &AC->z);
+    fp2_add(&A24->x, &AC->x, &A24->z);
+    fp2_dbl(&A24->z, &A24->z); //(A+2C: 4C)
+    fp2_inv(&A24->z);
+    ec_normalize(&A24);
+}
+
 // this is exactly like xDBLv2
 // Warning: for now we need to assume that A24 is normalised, ie C24=1.
 // (maybe add an assert?)
@@ -89,11 +99,8 @@ void biext_ladder_2e(uint64_t e, ec_point_t* PnQ, ec_point_t* nQ, ec_point_t con
 void ratio(fp2_t* r, ec_point_t const* PnQ, ec_point_t const* nQ, ec_point_t const* P) 
 {
     // Sanity tests
-    fp2_t t0, t1;
-    assert(fp2_is_zero(&nQ->z));
-    fp2_mul(&t0, &PnQ->x, &P->z);
-    fp2_mul(&t1, &PnQ->z, &P->x);
-    assert(fp2_is_equal(&t0, &t1));
+    assert(ec_is_zero(nQ));
+    assert(is_point_equal(PnQ, P));
 
     fp2_mul(r, &nQ->x, &P->x);
     fp2_inv(r);
@@ -142,8 +149,9 @@ void monodromy(fp2_t* r, uint64_t e, ec_point_t const* PQ, ec_point_t const* Q, 
 }
 
 // TODO: use only one inversion
-void to_cubical(ec_point_t* PQ, ec_point_t* Q, ec_point_t* P, ec_point_t* A24) {
-    ec_normalize(A24);
+// And normalize A24 at the same time (if needed), to save another inversion
+void to_cubical(ec_point_t* PQ, ec_point_t* Q, ec_point_t* P) {
+    //ec_normalize(A24);
     ec_normalize(P);
     ec_normalize(Q);
     ec_normalize(PQ);

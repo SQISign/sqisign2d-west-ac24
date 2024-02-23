@@ -2,7 +2,6 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include "ec.h"
 #include "biextension.h"
 #include "curve_extras.h"
 #include <endomorphism_action.h>
@@ -20,7 +19,7 @@ void dbl_2e(ec_point_t* R, uint64_t e, ec_point_t const* P, ec_point_t const* A2
 {
     copy_point(R, P);
     for (uint64_t i=0; i<e; i++) {
-        xDBL(R, R, A24);
+        xDBLv2(R, R, A24);
     }
 }
 
@@ -38,16 +37,15 @@ int biextension_test()
     uint64_t e = TORSION_PLUS_EVEN_POWER;
     // ibz_t two_pow, tmp;
     fp2_t one, r1, rr1, r2, r3;
-    ec_point_t P, Q, PmQ, A24;
+    ec_point_t P, Q, PmQ, A24, AC;
     ec_point_t PQ, PP, QQ, PPQ, PQQ;
     ec_point_t Pe, Qe, PmQe;
 
     // ibz_init(&two_pow); ibz_init(&tmp);
     // ibz_pow(&two_pow,&ibz_const_two,length);
 
-    E0=CURVE_E0;
-    A24=CURVE_E0_A24;
-    copy_point(&A24, &CURVE_E0_A24);
+    copy_point(&AC, &CURVE_E0_A24); //Warning, this is AC, not A24!
+    A24_from_AC(&A24, &AC);
     copy_point(&P, &BASIS_EVEN.P);
     copy_point(&Q, &BASIS_EVEN.Q);
     copy_point(&PmQ, &BASIS_EVEN.PmQ);
@@ -59,6 +57,12 @@ int biextension_test()
     assert(ec_is_zero(&Pe));
     assert(ec_is_zero(&Qe));
     assert(ec_is_zero(&PmQe));
+
+    for (uint64_t i=0; i<e; i++) {
+      dbl_2e(&Pe, i, &P, &A24);
+      cubical_2e(&Qe, i, &P, &A24);
+      printf("i=%d: r=%d\n", i, is_point_equal(&Pe, &Qe));
+    }
     cubical_2e(&Pe, e, &P, &A24);
     assert(ec_is_zero(&Pe));
 
