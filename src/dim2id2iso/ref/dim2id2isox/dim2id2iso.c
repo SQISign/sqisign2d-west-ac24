@@ -6,7 +6,6 @@
 #include <locale.h> 
 #include <bench.h>
 #include <curve_extras.h>
-#include <tools.h>
 #include <id2iso.h>
 
 //XXX FIXME stolen from src/ec/opt/generic/test/isog-test.c
