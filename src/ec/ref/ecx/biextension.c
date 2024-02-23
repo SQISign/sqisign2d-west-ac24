@@ -140,7 +140,7 @@ void monodromy(fp2_t* r, uint64_t e, ec_point_t const* PQ, ec_point_t const* Q, 
     fp2_inv(&ixP);
     biext_ladder_2e(e-1, &PnQ, &nQ, PQ, Q, &ixP, A24);
     translate(&PnQ, &nQ);
-    translate(&PnQ, &nQ);
+    translate(&nQ, &nQ);
     ratio(r, &PnQ, &nQ, P);
 }
 
@@ -186,9 +186,9 @@ void non_reduced_tate(fp2_t* r, uint64_t e, ec_point_t* P, ec_point_t* Q, ec_poi
 // Do we need a weil_c version?
 void weil_n(fp2_t* r, uint64_t e, ec_point_t const* P, ec_point_t const* Q, ec_point_t const* PQ, ec_point_t const* A24) {
     fp2_t t0;
-    monodromy2(&t0, e, PQ, Q, P, A24);
+    monodromy(&t0, e, PQ, Q, P, A24);
     fp2_inv(&t0);
-    monodromy2(r, e, PQ, P, Q, A24);
+    monodromy(r, e, PQ, P, Q, A24);
     // TODO: check if that's the Weil pairing or its inverse
     fp2_mul(r, r, &t0);
 }

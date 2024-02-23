@@ -64,6 +64,8 @@ int biextension_test()
     weil(&r1, e, &P, &Q, &PQ, &A24);
 
     fp2_setone(&one);
+    fp2_exp_2e(&r2, e-1, &r1);
+    assert(!fp2_is_equal(&r2, &one));
     fp2_exp_2e(&r2, e, &r1);
     assert(fp2_is_equal(&r2, &one));
 
