@@ -56,7 +56,7 @@ int biextension_test()
     printf("Testing order of points\n");
     t = tic();
     dbl_2e(&tmp, e, &P, &A24);
-    TOC(t,"doublings");
+    TOC_clock(t,"doublings");
     assert(ec_is_zero(&tmp));
     dbl_2e(&tmp, e, &Q, &A24);
     assert(ec_is_zero(&tmp));
@@ -67,7 +67,7 @@ int biextension_test()
     xADD(&PQ, &P, &Q, &PmQ);
     t = tic();
     weil(&r1, e, &P, &Q, &PQ, &A24);
-    TOC(t,"Weil pairing");
+    TOC_clock(t,"Weil pairing");
 
     printf("Testing order of Weil pairing\n");
     fp2_setone(&one);
