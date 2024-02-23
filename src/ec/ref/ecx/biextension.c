@@ -179,19 +179,19 @@ void monodromy2(fp2_t* r, uint64_t e, ec_point_t const* PQ, ec_point_t const* Q,
 
 // TODO: use only one inversion
 // And normalize A24 at the same time (if needed), to save another inversion
-void to_cubical(ec_point_t* PQ, ec_point_t* Q, ec_point_t* P) {
+void to_cubical(ec_point_t* Q, ec_point_t* P) {
     //ec_normalize(A24);
     ec_normalize(P);
     ec_normalize(Q);
-    ec_normalize(PQ);
+    //ec_normalize(PQ);
 }
 
 // Normalize the points and also store 1/x(P), 1/x(Q)
-void to_cubical_i(ec_point_t* PQ, ec_point_t* Q, ec_point_t* P, fp2_t* ixP, fp2_t* ixQ) {
+void to_cubical_i(ec_point_t* Q, ec_point_t* P, fp2_t* ixP, fp2_t* ixQ) {
     //ec_normalize(A24);
     ec_normalize(P);
     ec_normalize(Q);
-    ec_normalize(PQ);
+    //ec_normalize(PQ);
     fp2_copy(ixP, &P->x);
     fp2_inv(ixP);
     fp2_copy(ixQ, &Q->x);
@@ -214,7 +214,7 @@ void non_reduced_tate_n(fp2_t* r, uint64_t e, ec_point_t* P, ec_point_t* Q, ec_p
 }
 
 void non_reduced_tate(fp2_t* r, uint64_t e, ec_point_t* P, ec_point_t* Q, ec_point_t* PQ, ec_point_t* A24) {
-    to_cubical(PQ, Q, P);
+    to_cubical(Q, P);
     non_reduced_tate_n(r, e, PQ, Q, P, A24);
 }
 
@@ -236,6 +236,6 @@ void weil_n(fp2_t* r, uint64_t e, ec_point_t const* P, ec_point_t const* Q, ec_p
 // The code will crash (division by 0) if either P or Q is (0:1)
 void weil(fp2_t* r, uint64_t e, ec_point_t* P, ec_point_t* Q, ec_point_t* PQ, ec_point_t* A24) {
     fp2_t ixP, ixQ;
-    to_cubical_i(PQ, Q, P, &ixP, &ixQ);
+    to_cubical_i(Q, P, &ixP, &ixQ);
     weil_n(r, e, P, Q, PQ, &ixP, &ixQ, A24);
 }
