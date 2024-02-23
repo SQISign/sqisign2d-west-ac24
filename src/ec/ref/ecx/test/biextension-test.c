@@ -85,7 +85,7 @@ int biextension_test()
     fp2_sqr(&rr1, &r1);
     assert(fp2_is_equal(&rr1, &r2));
 
-    return 0;
+    return 1;
 }
 
 int main() 
