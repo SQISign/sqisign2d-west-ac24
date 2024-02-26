@@ -8,6 +8,13 @@ void fp2_set(fp2_t* x, const digit_t val)
     fp_set(x->im, 0);
 }
 
+void fp2_set_one(fp2_t* x)
+{
+
+    fp_mont_setone(x->re);
+    fp_set(x->im, 0);
+}
+
 bool fp2_is_zero(const fp2_t* a)
 { // Is a GF(p^2) element zero?
   // Returns 1 (true) if a=0, 0 (false) otherwise
@@ -20,6 +27,15 @@ bool fp2_is_equal(const fp2_t* a, const fp2_t* b)
   // Returns 1 (true) if a=b, 0 (false) otherwise
 
     return fp_is_equal(a->re, b->re) & fp_is_equal(a->im, b->im);
+}
+
+bool fp2_is_one(const fp2_t* a)
+{ // Is a GF(p^2) element one?
+  // Returns 1 (true) if a=0, 0 (false) otherwise
+
+    fp2_t t;
+    fp2_set_one(&t);
+    return fp2_is_equal(&t, a);
 }
 
 void fp2_copy(fp2_t* x, const fp2_t* y)

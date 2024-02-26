@@ -26,6 +26,10 @@ add_executable(isog.test_${SVARIANT_LOWER} ${ECX_DIR}/test/isog-test.c)
 	target_include_directories(isog.test_${SVARIANT_LOWER} PUBLIC ${INC_GF_${SVARIANT_UPPER}} ${INC_INTBIG} ${INC_PRECOMP_${SVARIANT_UPPER}} ${PROJECT_SOURCE_DIR}/include  ../include ${INC_EC} ${INC_COMMON} .)
 	target_link_libraries(isog.test_${SVARIANT_LOWER} ${LIB_PRECOMP_${SVARIANT_UPPER}} ${LIB_INTBIG} ${LIB_GF_${SVARIANT_UPPER}} ${LIB_EC_${SVARIANT_UPPER}})
 
+add_executable(biextension.test_${SVARIANT_LOWER} ${ECX_DIR}/test/biextension-test.c)
+	target_include_directories(biextension.test_${SVARIANT_LOWER} PUBLIC ${INC_GF_${SVARIANT_UPPER}} ${INC_INTBIG} ${INC_PRECOMP_${SVARIANT_UPPER}} ${PROJECT_SOURCE_DIR}/include  ../include ${INC_EC} ${INC_COMMON} ${INC_QUATERNION} .)
+	target_link_libraries(biextension.test_${SVARIANT_LOWER} ${LIB_PRECOMP_${SVARIANT_UPPER}} ${LIB_INTBIG} ${LIB_GF_${SVARIANT_UPPER}} ${LIB_EC_${SVARIANT_UPPER}} ${LIB_QUATERNION} sqisign_common_sys)
+
 
 add_test(ec_fp2.test_${SVARIANT_LOWER} fp2.test_${SVARIANT_LOWER} ${SQISIGN_TEST_REPS})
 add_test(ec_poly-mul.test_${SVARIANT_LOWER} poly-mul.test_${SVARIANT_LOWER} ${SQISIGN_TEST_REPS})
@@ -34,3 +38,4 @@ add_test(ec_mont.test_${SVARIANT_LOWER} mont.test_${SVARIANT_LOWER} ${SQISIGN_TE
 add_test(ec_ec.test_${SVARIANT_LOWER} ec.test_${SVARIANT_LOWER} test ${SQISIGN_TEST_REPS})
 add_test(ec_velu.test_${SVARIANT_LOWER} velu.test_${SVARIANT_LOWER} ${SQISIGN_TEST_REPS})
 add_test(ec_isog.test_${SVARIANT_LOWER} isog.test_${SVARIANT_LOWER} ${SQISIGN_TEST_REPS})
+add_test(ec_biextension.test_${SVARIANT_LOWER} biextension.test_${SVARIANT_LOWER} ${SQISIGN_TEST_REPS})
