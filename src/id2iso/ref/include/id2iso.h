@@ -126,7 +126,8 @@ void ec_biscalar_mul_ibz(ec_point_t* res, const ec_curve_t* curve,
 
 // helper function to apply some endomorphism of E0 on a basis of E0[2^TORSION_PLUS_EVEN_POWER]
 // works in place 
-void endomorphism_application_even_basis(ec_basis_t *P,quat_alg_elem_t *theta,int f);
+void endomorphism_application_even_basis(ec_basis_t *P,const ec_curve_t *E,quat_alg_elem_t *theta,int f);
+void endomorphism_application_even_jac_basis(jac_point_t *P,jac_point_t *Q,quat_alg_elem_t *theta,int f);
 
 
 /**

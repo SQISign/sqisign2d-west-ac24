@@ -303,7 +303,6 @@ int solve_combi_eichler(ibz_vec_2_t *C, const quat_p_extremal_maximal_order_t *o
         ibz_copy(&system[3][2],&bas2.coord[3]);
         ibz_copy(&system[3][3],&bas3.coord[3]);
     
-        // ibz_mat_4x4_print(&system);
 
         // resolution of the system
         found = ibz_4x4_right_ker_mod_prime(&ker,&system,&lideal->norm);
@@ -579,10 +578,6 @@ int represent_integer_non_diag(quat_alg_elem_t *gamma, ibz_t *n_gamma, const qua
         ibz_copy(&gamma->coord[2],&coeffs[2]);
         ibz_copy(&gamma->coord[3],&coeffs[3]);
         ibz_copy(&gamma->denom,&STANDARD_EXTREMAL_ORDER.order.denom);
-
-
-        ibz_printf("%Zd %Zd \n",gamma->coord[0],gamma->denom);  
-        ibz_printf("%Zd %Zd \n",gamma->coord[1],gamma->denom);  
 
         // adjust the norm of gamma by dividing by the scalar temp²
         ibz_mul(&temp,&temp,&temp);

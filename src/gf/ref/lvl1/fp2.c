@@ -241,3 +241,30 @@ int fp2_cmp(fp2_t* x, fp2_t* y){
     }
     return 0;
 }
+
+
+// exponentiation 
+// TODO could be improved
+void fp2_pow(fp2_t *out,const fp2_t * x,const digit_t *exp,const int size) {
+
+    fp2_t acc;
+    digit_t exp_tmp[size];
+    digit_t bit;
+
+    memcpy((digit_t*)exp_tmp, (digit_t*)exp, size*RADIX/8);
+    memcpy((digit_t*)acc.re, (digit_t*)x->re, NWORDS_FIELD*RADIX/8);
+    memcpy((digit_t*)acc.im, (digit_t*)x->im, NWORDS_FIELD*RADIX/8);
+    fp_set(out->re, 1);
+    fp_tomont(out->re, out->re);
+    fp_set(out->im,0);
+
+    for (int i = 0; i < NWORDS_FIELD*RADIX; i++) {
+        bit = exp_tmp[0] & 1;
+        mp_shiftr(exp_tmp, 1, NWORDS_FIELD);
+        if (bit == 1) {
+            fp2_mul(out, out, &acc);
+        }
+        fp2_sqr(&acc, &acc);
+    }
+
+}

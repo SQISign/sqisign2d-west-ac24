@@ -114,7 +114,8 @@ void quicksort(ibz_t arr[],ibz_vec_4_t varr[], int low, int high) {
  * @param extra_info : bit indicating if we want to use some the torsion with extra information
  * @returns a bit indicating if the computation succeeded  
  * 
- * F is an isogeny encoding an isogeny phi : E0 -> Eu of degree u
+ * F is an isogeny encoding an isogeny phi : E0 -> Eu of degree u 
+ * note that the codomain of F can be either Eu x Eu' or Eu' x Eu for some curve Eu'  
 */
 int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *u, int extra_info) {
 
@@ -136,12 +137,10 @@ int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *
 
     // check that u is not big 
     if (ibz_cmp(&two_pow,u)<0) {
-        printf("too small \n");
         assert(0);
     }
     // check that u is odd 
     if (ibz_is_even(u)) {
-        printf("even \n");
         assert(0);
     }
 
@@ -151,10 +150,9 @@ int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *
     ibz_mul(&two_pow,&two_pow,u);
 
     found = represent_integer_non_diag(&theta,&two_pow,&QUATALG_PINFTY);
-
+    
 
     if (!found) {
-        printf("not found \n");
         return 0;
     }
     quat_lideal_create_from_primitive(lideal,&theta,u,&STANDARD_EXTREMAL_ORDER.order,&QUATALG_PINFTY);
@@ -172,7 +170,7 @@ int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *
     
 
     // applying theta
-    endomorphism_application_even_basis(&B0_two,&theta,TORSION_PLUS_EVEN_POWER);    
+    endomorphism_application_even_basis(&B0_two,&E0,&theta,TORSION_PLUS_EVEN_POWER);    
 
     assert(test_point_order_twof(&B0_two.P,&E0,TORSION_PLUS_EVEN_POWER));
     assert(test_point_order_twof(&B0_two.Q,&E0,TORSION_PLUS_EVEN_POWER));
@@ -203,9 +201,6 @@ int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *
         theta_chain_comput_strategy(isog,length,&E01,&T1,&T2,&T1m2,strategies[TORSION_PLUS_EVEN_POWER-length],extra_info);
     }
     else {
-        
-        // TODO change 
-        int strategy[243] = {89, 55, 34, 31, 21, 13, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 10, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 3, 2, 2, 1, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1};
         double_couple_point_iter(&T1,2,&E01,&T1);
         double_couple_point_iter(&T2,2,&E01,&T2);
         double_couple_point_iter(&T1m2,2,&E01,&T1m2);
@@ -277,7 +272,7 @@ int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *
 
         }
     #endif
-    
+
 
     // var finalize
     ibz_finalize(&two_pow);ibz_finalize(&tmp);
@@ -351,7 +346,7 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
     // computing a reduced basis
     clock_t t = tic();
     quat_lideal_reduce_basis(&reduced,&gram,lideal,Bpoo);
-    TOC(t,"\nbasis reduction");
+    // TOC(t,"\nbasis reduction");
 
     for (int i=0;i<4;i++) {
         for (int j=0;j<4;j++) {
@@ -401,13 +396,13 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
     }
 
      // printing the size of the elements
-    printf("p : %d n : %d adj_n : %d \n",ibz_bitsize(&QUATALG_PINFTY.p),ibz_bitsize(&lideal->norm),ibz_bitsize(&adjusted_norm));
-    printf("n1 : %d n2 : %d n3 :  %d n4 : %d \n",ibz_bitsize(&gram[0][0]),ibz_bitsize(&gram[1][1])-ibz_bitsize(&adjusted_norm),ibz_bitsize(&gram[2][2])-ibz_bitsize(&adjusted_norm),ibz_bitsize(&gram[3][3])-ibz_bitsize(&adjusted_norm));
+    // printf("p : %d n : %d adj_n : %d \n",ibz_bitsize(&QUATALG_PINFTY.p),ibz_bitsize(&lideal->norm),ibz_bitsize(&adjusted_norm));
+    // printf("n1 : %d n2 : %d n3 :  %d n4 : %d \n",ibz_bitsize(&gram[0][0]),ibz_bitsize(&gram[1][1])-ibz_bitsize(&adjusted_norm),ibz_bitsize(&gram[2][2])-ibz_bitsize(&adjusted_norm),ibz_bitsize(&gram[3][3])-ibz_bitsize(&adjusted_norm));
 
 
     // we start by enumerating a set of small vectors 
     // global parameters for the enumerate
-    // TODO may be overshot
+    // TODO may be overshot and we may improve this by sampling inside an hyperball instead 
     int m = 2+2*number_sum_square;
     int m4 = (2*m+1)*(2*m+1)*(2*m+1)*(2*m+1)-1;
     int m3 = (2*m+1)*(2*m+1)*(2*m+1);
@@ -463,13 +458,13 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
         }
     }
     index--;
-    printf("number of elements = %d / %d (value of m=%d) \n",index,m4,m);
-    TOC(t,"\nenum");
+    // printf("number of elements = %d / %d (value of m=%d) \n",index,m4,m);
+    // TOC(t,"\nenum");
     
     
     // sorting the list
     quicksort(small_norms,small_vecs,0,index);
-    TOC(t,"sorting + enum");
+    // TOC(t,"sorting + enum");
 
    
     int found=0;
@@ -477,7 +472,6 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
     // starting to try solutions
 
     // TODO try to go through d1,d2 by increasing size of the products d1*d2
-    printf("\n");
     t= tic();
     clock_t tot_spec =0;
     clock_t tot_cor = 0;
@@ -497,7 +491,7 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
     for (int i=0;i<index;i++) {
         ibz_div(&quotients[i],&remain,&n,&small_norms[i]);
     }
-    TOC(t,"list of quotients"); 
+    // TOC(t,"list of quotients"); 
     tot_spec= tot_spec + dclock(t_loc);
 
     int cmp;
@@ -514,6 +508,7 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
             }
             // u = target / d1 mod d2
             t_loc2=tic();
+            // TODO we could use batched inversion to speed-up this part 
             if (!ibz_invmod(&remain,&small_norms[i2],&small_norms[i1])) {
                 continue;
             }
@@ -526,7 +521,7 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
             tot_ops = tot_ops + dclock(t_loc);
             while (!found && cmp<0) {
 
-                // testing if we have
+                // testing if we could have found a solution with a smaller power of two. 
                 ibz_t tt;
                 ibz_init(&tt);
                 ibz_mul(&tt,v,&ibz_const_two);
@@ -606,10 +601,8 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
                 ibz_copy(&((*coeffs)[1]),&bu);
                 ibz_copy(&((*coeffs)[2]),&av);
                 ibz_copy(&((*coeffs)[3]),&bv);
-                ibz_printf("%Zd %Zd %Zd %Zd \n",au,bu,av,bv);
-                ibz_vec_4_print(coeffs);
 
-                printf("Found after %d attempts and %d deg one hit out of %d \n",i1*index + i2,count,index*(index-1)/2);
+                // printf("Found after %d attempts and %d deg one hit out of %d \n",i1*index + i2,count,index*(index-1)/2);
                 break;
             }
 
@@ -619,15 +612,15 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
         }
     }
     if (!found) {
-        printf("NOT Found after %d attempts and %d deg one hit out of %d \n",index*(index-1)/2,count,index*(index-1)/2);
+        // printf("NOT Found after %d attempts and %d deg one hit out of %d \n",index*(index-1)/2,count,index*(index-1)/2);
     }
-    printf("Number of missed deg 1 : hit %d \n ",cnt_missed);
-    clock_to_time(tot_cor,"cornacchias :");
-    clock_to_time(tot_ops,"all other ops :");
-    clock_to_time(tot_inv,"among which modular inversions :");
-    clock_to_time(tot_spec,"among which cmp");
-    TOC(t,"total time searching for u,v");
-    clock_to_time(dclock(t)-(tot_ops+tot_cor),"difference between total and recorded ");
+    // printf("Number of missed deg 1 : hit %d \n ",cnt_missed);
+    // clock_to_time(tot_cor,"cornacchias :");
+    // clock_to_time(tot_ops,"all other ops :");
+    // clock_to_time(tot_inv,"among which modular inversions :");
+    // clock_to_time(tot_spec,"among which cmp");
+    // TOC(t,"total time searching for u,v");
+    // clock_to_time(dclock(t)-(tot_ops+tot_cor),"difference between total and recorded ");
 
     // var finalize
     ibz_mat_4x4_finalize(&gram);
@@ -678,19 +671,20 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
  * F is a dim2 2^e - isogeny between E0 x Ev -> E_I x E 
  * that encodes an isogeny E0 -> E_I corresponding to the ideal lideal
  */
-int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *beta1, quat_alg_elem_t *beta2, ibz_t *u, ibz_t *v, ibz_vec_4_t *coeffs, theta_chain_t *phiv,ibz_t *d1,ibz_t *d2, const quat_left_ideal_t *lideal, const quat_alg_t *Bpoo) {
+int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *beta1, quat_alg_elem_t *beta2, ibz_t *u, ibz_t *v, ibz_vec_4_t *coeffs, theta_chain_t 
+*phiu, theta_chain_t *phiv,ibz_t *d1,ibz_t *d2, const quat_left_ideal_t *lideal, const quat_alg_t *Bpoo) {
     
     ibz_t target,tmp,two_pow;
     quat_alg_elem_t theta;
     quat_alg_elem_t quat_tmp;
     quat_alg_elem_t quat_gcd_remove;
+    
 
     ibq_t norm;
     ibq_init(&norm);
     ibz_t test1,test2;
     ibz_init(&test1);
     ibz_init(&test2);
-
 
     ibz_init(&target);ibz_init(&tmp);ibz_init(&two_pow);
     // TODECIDE allow for a smaller exponent ?
@@ -699,16 +693,16 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     quat_alg_elem_init(&theta);
     quat_alg_elem_init(&quat_tmp);
     quat_alg_elem_init(&quat_gcd_remove);
+    
 
-    int number_sum_square=2;
+    int number_sum_square=0;
     clock_t t = tic();
     // first, we find u,v,d1,d2,beta1,beta2
     int found = find_uv(u,v,coeffs,beta1,beta2,d1,d2,&target,number_sum_square,lideal,Bpoo);
     if (!found) {
         return 0;
     }
-    TOC(t,"\n \ntotal time to find u,v");
-    ibz_printf("u = %Zd  v= %Zd d1=%Zd d2=%Zd \n",*u,*v,*d1,*d2);
+    // TOC(t,"\n \ntotal time to find u,v");
 
     // TODO the following works only when d1,d2 are odd
     assert(ibz_get(d1)%2==1 && ibz_get(d2)%2==1); 
@@ -726,30 +720,31 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     // setting-up the element to remove the power of two from phiu, phiv
     // quat_gcd_remove = (i+1)^(exp_gcd)
     ibz_set(&quat_gcd_remove.denom,1);
+    ibz_set(&quat_tmp.denom,1);
     if (exp_gcd >0) {
-        ibz_set(&quat_gcd_remove.coord[1],1);
-        printf("exp sup %d \n",exp_gcd);
+        ibz_set(&quat_tmp.coord[1],1);
     }
     else {
-        printf("exp 0 \n");
-        ibz_set(&quat_gcd_remove.coord[1],0);
+        ibz_set(&quat_tmp.coord[1],0);
     }
+    ibz_set(&quat_tmp.coord[0],1);
+    ibz_set(&quat_tmp.coord[2],0);
+    ibz_set(&quat_tmp.coord[3],0);
     ibz_set(&quat_gcd_remove.coord[0],1);
+    ibz_set(&quat_gcd_remove.coord[1],0);
     ibz_set(&quat_gcd_remove.coord[2],0);
     ibz_set(&quat_gcd_remove.coord[3],0);
-    for (int i=0;i<exp_gcd-1;i++) {
-        quat_alg_mul(&quat_gcd_remove,&quat_gcd_remove,&quat_gcd_remove,&QUATALG_PINFTY);
+    for (int i=0;i<exp_gcd;i++) {
+        quat_alg_mul(&quat_gcd_remove,&quat_gcd_remove,&quat_tmp,&QUATALG_PINFTY);
     }
     ibz_pow(&quat_gcd_remove.denom,&ibz_const_two,exp_gcd);
 
     #ifndef NDEBUG 
-    
             quat_alg_norm(&norm,&quat_gcd_remove,&QUATALG_PINFTY);
             ibq_denom(&test1,&norm);
-            ibz_printf("%Zd %Zd \n",test1,quat_gcd_remove.denom);
             assert(ibz_cmp(&test1,&quat_gcd_remove.denom)==0);
 
-        #endif
+    #endif
 
     // now we compute the dimension 2 isogeny 
     // F : Eu x Ev -> E x E' 
@@ -767,8 +762,7 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     theta_couple_curve_t E01;
     theta_couple_point_t T1;
     theta_couple_point_t T2,T1m2;
-    E01.E1=E0;
-    E01.E2=E0;
+    
 
 
     copy_point(&bas.P,&BASIS_EVEN.P);
@@ -782,30 +776,178 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     }
 
 
-    // compute the first point of the basis by scalar multiplication by u * d1 
-    ibz_mul(&target,u,d1);
-    ec_biscalar_mul_ibz(&T1.P1,&E0,&target,&ibz_const_zero,&bas);
-    ec_biscalar_mul_ibz(&T2.P1,&E0,&ibz_const_zero,&target,&bas);
-    ibz_neg(&tmp,&target);
-    ibz_pow(&two_pow,&ibz_const_two,exp);
-    ibz_mod(&tmp,&tmp,&two_pow);
-    ec_biscalar_mul_ibz(&T1m2.P1,&E0,&target,&tmp,&bas);
+    // we start by computing theta = beta2 \hat{beta1}/n  
+    ibz_set(&theta.denom,1);
+    quat_alg_conj(&theta,beta1);
+    quat_alg_mul(&theta,beta2,&theta,&QUATALG_PINFTY);
+    ibz_mul(&theta.denom,&theta.denom,&lideal->norm);
 
+    // now we perform the actual computation
     if (number_sum_square==0) {
+        quat_left_ideal_t idealu,idealv;
+        quat_left_ideal_init(&idealu);
+        quat_left_ideal_init(&idealv);
+        theta_chain_t Fu,Fv;
+        theta_couple_point_t V1,V2,V1m2; 
+        theta_couple_curve_t E00;
+        E00.E1=E0;
+        E00.E2 = E0;
 
+        // we perform the computation of phiu with a fixed degree isogeny 
+        fixed_degree_isogeny(&Fu,&idealu,u,1);
+
+        // pushing the torsion points through Fu
+        // first we lift the basis 
+        theta_couple_jac_point_t xyP,xyQ,xyPmQ;
+        jac_point_t temp;
+        lift_basis(&xyP.P1,&xyQ.P1,&bas,&E0);
+        // TODO we can do better, the addition has been computed inside lift_basis
+        jac_neg(&temp,&xyQ.P1);
+        ADD(&xyPmQ.P1,&xyP.P1,&temp,&E0);
+        fp2_set(&xyP.P2.x,0);
+        fp2_set(&xyP.P2.y,1);
+        fp2_set(&xyP.P2.z,0);
+        fp2_set(&xyQ.P2.x,0);
+        fp2_set(&xyQ.P2.y,1);
+        fp2_set(&xyQ.P2.z,0);
+        fp2_set(&xyPmQ.P2.x,0);
+        fp2_set(&xyPmQ.P2.y,1);
+        fp2_set(&xyPmQ.P2.z,0);
+        theta_chain_eval_no_help(&V1,&Fu,&xyP,&E00);
+        theta_chain_eval_no_help(&V2,&Fu,&xyQ,&E00);
+        theta_chain_eval_no_help(&V1m2,&Fu,&xyPmQ,&E00);
+
+        assert(test_point_order_twof(&V1.P1,&Fu.codomain.E1,exp));
+        assert(test_point_order_twof(&V1.P2,&Fu.codomain.E2,exp));
+
+        #ifndef NDEBUG 
+            // presumably the correct curve is the the second one, we check this
+            ibz_t two_pow;
+            ibz_init(&two_pow); 
+            fp2_t w0,w1,w2;
+            ec_point_t AC,A24;
+            copy_point(&AC, &CURVE_E0_A24); //Warning, this is AC, not A24!
+            A24_from_AC(&A24, &AC);
+            weil(&w0,exp,&bas.P,&bas.Q,&bas.PmQ,&A24);
+            // Changing the AC
+            fp2_copy(&AC.x,&Fu.codomain.E1.A);
+            fp2_copy(&AC.z,&Fu.codomain.E1.C);
+            A24_from_AC(&A24, &AC);
+            weil(&w1,exp,&V1.P1,&V2.P1,&V1m2.P1,&A24);
+            fp2_copy(&AC.x,&Fu.codomain.E2.A);
+            fp2_copy(&AC.z,&Fu.codomain.E2.C);
+            A24_from_AC(&A24, &AC);
+            weil(&w2,exp,&V1.P2,&V2.P2,&V1m2.P2,&A24);
+            ibz_pow(&two_pow,&ibz_const_two,Fu.length);
+            ibz_sub(&two_pow,&two_pow,u);
+            // now we are checking that one of the two is equal to the correct value 
+            digit_t digit_u[NWORDS_ORDER]={0};
+            ibz_to_digit_array(digit_u,u);
+            fp2_t test_pow;
+            fp2_pow(&test_pow,&w0,digit_u,NWORDS_ORDER);
+             
+            assert(fp2_is_equal(&test_pow,&w2));
+            ibz_to_digit_array(digit_u,&two_pow);
+            fp2_pow(&test_pow,&w0,digit_u,NWORDS_ORDER);
+            assert(fp2_is_equal(&test_pow,&w1));        
+        #endif
+
+        // copying the points to the first part of the kernel 
+        copy_point(&T1.P1,&V1.P2);
+        copy_point(&T2.P1,&V2.P2);
+        copy_point(&T1m2.P1,&V1m2.P2);
+        fp2_copy(&E01.E1.A,&Fu.codomain.E2.A);
+        fp2_copy(&E01.E1.C,&Fu.codomain.E2.C);
+
+        // multiplying by d1 
+        digit_t digit_d1[4] = {0};
+        ibz_to_digit_array(digit_d1,d1);
+        ec_mul(&T1.P1,&E01.E1,digit_d1,&T1.P1);
+        ec_mul(&T2.P1,&E01.E1,digit_d1,&T2.P1);
+        ec_mul(&T1m2.P1,&E01.E1,digit_d1,&T1m2.P1);
+
+
+        // computation of phiv
+        int bv = fixed_degree_isogeny(&Fv,&idealv,v,1);
+        assert(bv);
+
+        fp2_set(&xyP.P2.x,0);
+        fp2_set(&xyP.P2.y,1);
+        fp2_set(&xyP.P2.z,0);
+        fp2_set(&xyQ.P2.x,0);
+        fp2_set(&xyQ.P2.y,1);
+        fp2_set(&xyQ.P2.z,0);
+        fp2_set(&xyPmQ.P2.x,0);
+        fp2_set(&xyPmQ.P2.y,1);
+        fp2_set(&xyPmQ.P2.z,0);
+
+        // pushing the torsion points through Fv
+        theta_chain_eval_no_help(&V1,&Fv,&xyP,&E00);
+        theta_chain_eval_no_help(&V2,&Fv,&xyQ,&E00);
+        theta_chain_eval_no_help(&V1m2,&Fv,&xyPmQ,&E00);
+
+        //applying the endomorphism theta
+
+
+        assert(test_point_order_twof(&V1.P1,&Fv.codomain.E1,exp));
+        assert(test_point_order_twof(&V1.P2,&Fv.codomain.E2,exp));
+
+
+
+        #ifndef NDEBUG 
+            // presumably the correct curve is the the second one, we check this
+            // Changing the AC
+            fp2_copy(&AC.x,&Fv.codomain.E1.A);
+            fp2_copy(&AC.z,&Fv.codomain.E1.C);
+            A24_from_AC(&A24, &AC);
+            weil(&w1,exp,&V1.P1,&V2.P1,&V1m2.P1,&A24);
+            fp2_copy(&AC.x,&Fv.codomain.E2.A);
+            fp2_copy(&AC.z,&Fv.codomain.E2.C);
+            A24_from_AC(&A24, &AC);
+            weil(&w2,exp,&V1.P2,&V2.P2,&V1m2.P2,&A24);
+            ibz_pow(&two_pow,&ibz_const_two,Fv.length);
+            ibz_sub(&two_pow,&two_pow,v);
+            // now we are checking that one of the two is equal to the correct value
+            ibz_to_digit_array(digit_u,v);
+            fp2_pow(&test_pow,&w0,digit_u,NWORDS_ORDER);
+            if (!fp2_is_equal(&test_pow,&w2)) {
+                assert(fp2_is_equal(&test_pow,&w1));
+                printf("it was the first curve !!!!!!!!!! \n");
+
+            }
+            ibz_to_digit_array(digit_u,&two_pow);
+            fp2_pow(&test_pow,&w0,digit_u,NWORDS_ORDER);
+            assert(fp2_is_equal(&test_pow,&w1));        
+        #endif
+
+        copy_point(&bas.P,&V1.P2);
+        copy_point(&bas.Q,&V2.P2);
+        copy_point(&bas.PmQ,&V1m2.P2);
+
+        // applying theta
+        endomorphism_application_even_basis(&bas,&Fv.codomain.E2,&theta,exp); 
+
+        // copying points to the second part of the kernel
+        copy_point(&T1.P2,&bas.P);
+        copy_point(&T2.P2,&bas.Q);
+        copy_point(&T1m2.P2,&bas.PmQ); 
+
+        // copying the points to the first part of the kernel 
+        fp2_copy(&E01.E2.A,&Fv.codomain.E2.A);
+        fp2_copy(&E01.E2.C,&Fv.codomain.E2.C);
+
+
+        quat_left_ideal_finalize(&idealu);
+        quat_left_ideal_finalize(&idealv);
     }
     else if (number_sum_square==1) {
-
+        // TODO 
     }
     else {
         assert(number_sum_square==2);
+        E01.E1=E0;
+        E01.E2=E0;
         // in this case we have phiu = coeffs[0] + i coeffs[1] and phiv = coeffs[2] + i*coeffs[3]
-        // and theta = beta2 \hat{beta1}/n 
-        // we start by computing theta
-        ibz_set(&theta.denom,1);
-        quat_alg_conj(&theta,beta1);
-        quat_alg_mul(&theta,beta2,&theta,&QUATALG_PINFTY);
-        ibz_mul(&theta.denom,&theta.denom,&lideal->norm);
 
         #ifndef NDEBUG 
     
@@ -815,6 +957,24 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
             assert(ibz_cmp(&test1,&test2)==0);
 
         #endif
+
+        // // multiplication by d1 
+        // digit_t digit_d1[4] = {0};
+        // ibz_to_digit_array(digit_d1,d1);
+        // ec_mul(&bas.P,&E0,digit_d1,&bas.P);
+        // ec_mul(&bas.Q,&E0,digit_d1,&bas.Q);
+        // ec_mul(&bas.PmQ,&E0,digit_d1,&bas.PmQ);
+        
+        
+        // multiplication by u*d1 
+        // we mught have a more efficient to do this
+        ibz_mul(&target,u,d1);
+        ec_biscalar_mul_ibz(&T1.P1,&E0,&target,&ibz_const_zero,&bas);
+        ec_biscalar_mul_ibz(&T2.P1,&E0,&ibz_const_zero,&target,&bas);
+        ibz_neg(&tmp,&target);
+        ibz_pow(&two_pow,&ibz_const_two,exp);
+        ibz_mod(&tmp,&tmp,&two_pow);
+        ec_biscalar_mul_ibz(&T1m2.P1,&E0,&target,&tmp,&bas);
 
         // phiu 
         ibz_set(&quat_tmp.denom,1);
@@ -846,7 +1006,6 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         // theta <- theta * phiv
         quat_alg_mul(&theta,&theta,&quat_tmp,&QUATALG_PINFTY);
         quat_alg_normalize(&theta);
-        quat_alg_elem_print(&theta);
         assert(test_point_order_twof(&bas.P,&E0,exp));
         assert(test_point_order_twof(&bas.Q,&E0,exp));
         assert(test_point_order_twof(&bas.PmQ,&E0,exp));
@@ -858,12 +1017,11 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
             ibz_mul(&test2,&test2,u);
             ibz_mul(&test2,&test2,v);
             assert(ibz_cmp(&test1,&test2)==0);
-            assert(ibz_get(&test1)%2==1);
-            
+            assert(ibz_get(&test1)%2==1);          
         #endif
 
         // applying theta
-        endomorphism_application_even_basis(&bas,&theta,exp); 
+        endomorphism_application_even_basis(&bas,&E0,&theta,exp); 
 
         // copying  
         copy_point(&T1.P2,&bas.P);
@@ -878,16 +1036,12 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     }
 
 
-    // TODO change 
-    int strategy[245] = {89, 55, 34, 33, 21, 13, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 12, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1};
-
-
-    assert(test_point_order_twof(&T1.P1,&E0,exp));
-    assert(test_point_order_twof(&T1.P2,&E0,exp));
-    assert(test_point_order_twof(&T2.P1,&E0,exp));
-    assert(test_point_order_twof(&T2.P2,&E0,exp));
-    assert(test_point_order_twof(&T1m2.P1,&E0,exp));
-    assert(test_point_order_twof(&T1m2.P2,&E0,exp));
+    assert(test_point_order_twof(&T1.P1,&E01.E1,exp));
+    assert(test_point_order_twof(&T1.P2,&E01.E2,exp));
+    assert(test_point_order_twof(&T2.P1,&E01.E1,exp));
+    assert(test_point_order_twof(&T2.P2,&E01.E2,exp));
+    assert(test_point_order_twof(&T1m2.P1,&E01.E1,exp));
+    assert(test_point_order_twof(&T1m2.P2,&E01.E2,exp));
 
     theta_chain_comput_strategy(isog,exp,&E01,&T1,&T2,&T1m2,strategies[TORSION_PLUS_EVEN_POWER-exp+2],0);
 

@@ -95,6 +95,7 @@ typedef struct theta_structure {
 */
 typedef struct theta_gluing {  
 
+    theta_couple_curve_t domain;
     theta_couple_point_t K1_4;
     theta_couple_point_t K2_4;
     theta_couple_jac_point_t xyK1_4;
@@ -306,5 +307,19 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
  *  
    */
 void theta_chain_eval(theta_couple_point_t *out,theta_chain_t *phi,theta_couple_point_t *P12,const theta_couple_point_t *Help);
+
+/**
+ * @brief Evaluate a (2,2) isogeny chain in dimension 2 between elliptic products in the theta_model
+ *
+ * @param out Output: the image point
+ * @param phi : the (2,2) isogeny chain of domain E12
+ * @param P12 a couple jac point on E12, 
+ *   
+ * phi : E1xE2 -> E3xE4 of kernel 
+ * P12 in E1xE2
+ * out = phi(P12) in E3xE4 
+ *  
+   */
+void theta_chain_eval_no_help(theta_couple_point_t *out,theta_chain_t *phi,theta_couple_jac_point_t *P12, const theta_couple_curve_t *E12);
 
 #endif

@@ -430,6 +430,7 @@ void jac_to_xz(ec_point_t *P,const jac_point_t *xyP);
 bool is_jac_xz_equal(const jac_point_t* P, const ec_point_t* Q);
 void ADD(jac_point_t* R, jac_point_t const* P, jac_point_t const* Q, ec_curve_t const* AC);
 void DBL(jac_point_t* Q, jac_point_t const* P, ec_curve_t const* AC);
+void DBLMUL_generic(jac_point_t* R, const jac_point_t* P, const digit_t *k, const jac_point_t* Q, const digit_t *l, const ec_curve_t* curve,int size);
 void lift_point(jac_point_t *P, ec_point_t *Q, ec_curve_t *E);
 void lift_basis(jac_point_t *P, jac_point_t *Q, ec_basis_t *B, ec_curve_t *E);
 
@@ -443,6 +444,18 @@ static int test_point_order_twof(const ec_point_t *P, const ec_curve_t *E,int t)
     }
     if (fp2_is_zero(&test.z)) return 0;
     ec_dbl(&test,E,&test);
+    return (fp2_is_zero(&test.z));
+}
+
+static int test_jac_order_twof(const jac_point_t *P, const ec_curve_t *E,int t) {
+    jac_point_t test;
+    test = *P;
+    if (fp2_is_zero(&test.z)) return 0;
+    for (int i = 0;i<t-1;i++) {
+        DBL(&test,&test,E);
+    }
+    if (fp2_is_zero(&test.z)) return 0;
+    DBL(&test,&test,E);
     return (fp2_is_zero(&test.z));
 }
 

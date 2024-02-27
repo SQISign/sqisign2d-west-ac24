@@ -14,6 +14,7 @@
 #include <ec.h>
 #include <hd.h>
 #include <id2iso.h>
+#include <biextension.h>
 
 
 
@@ -56,11 +57,11 @@ int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *
  *  
  * beta1 and beta2 are elements in lideal of norm n(lideal)d1 and n(lideal) d2 respectively
  * u,v are integers such that 2^e = d1 u + d2 v, and it may be that u = coeffs[0]^2 + coeffs[1]^2, v = coeffs[2]^2 + coeffs[3]^2 
- * phiv is a dim 2 isogeny representing an isogeny of degree v : E0 -> Ev
- * F is a dim2 2^e - isogeny between E0 x Ev -> E_I x E 
- * that encodes an isogeny E0 -> E_I corresponding to the ideal lideal
+ * phiu,phiv are dim 2 isogeny representing isogenies of degree u,v : E0 -> Eu,Ev
+ * F is a dim2 2^e - isogeny between Eu x Ev -> E_I x E 
+ * that encodes an isogeny E0 -> E_I corresponding to the ideal lideal given in input
  */
-int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *beta1, quat_alg_elem_t *beta2, ibz_t *u, ibz_t *v, ibz_vec_4_t *coeffs, theta_chain_t *phiv,ibz_t *d1,ibz_t *d2, const quat_left_ideal_t *lideal, const quat_alg_t *Bpoo);
+int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *beta1, quat_alg_elem_t *beta2, ibz_t *u, ibz_t *v, ibz_vec_4_t *coeffs, theta_chain_t *phiu, theta_chain_t *phiv,ibz_t *d1,ibz_t *d2, const quat_left_ideal_t *lideal, const quat_alg_t *Bpoo);
 
 
 

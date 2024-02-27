@@ -29,5 +29,6 @@ void fp2_frommont(fp2_t* x, const fp2_t* y);
 int fp2_cmp(fp2_t* x, fp2_t* y);
 void fp2_batched_inv(fp2_t *x,int len);
 void fp2_setone(fp2_t *a);
+void fp2_pow(fp2_t *out,const fp2_t * x,const digit_t *exp,const int size);
 
 #endif

@@ -534,6 +534,10 @@ void DBL(jac_point_t* Q, jac_point_t const* P, ec_curve_t const* AC)
     fp2_sub(&Q->y, &Q->y, &t1);     // y2 = alpha(4x1y1^2 - x2) - 8y1^4
 }
 
+
+
+
+
 void ADD(jac_point_t* R, jac_point_t const* P, jac_point_t const* Q, ec_curve_t const* AC)
 { // Addition on a Montgomery curve, representation in Jacobian coordinates (X:Y:Z) corresponding to (X/Z^2,Y/Z^3)
   // This version receives the coefficient value A 
@@ -642,6 +646,33 @@ static bool mp_is_zero(const digit_t* a, unsigned int nwords)
     return (bool)is_digit_zero_ct(r);
 }
 
+// Double-scalar multiplication R <- k*P + l*Q, fixed for 64*size-bit scalars
+void DBLMUL_generic(jac_point_t* R, const jac_point_t* P, const digit_t *k, const jac_point_t* Q, const digit_t *l, const ec_curve_t* curve,int size) {
+
+    digit_t k_t, l_t;
+    jac_point_t PQ;
+
+    ADD(&PQ, P, Q, curve);
+    jac_init(R);
+    for (int j=size;j>0;j--) {
+        for (int i = 0; i < 64; i++) {
+            k_t = k[j-1] >> (63-i);
+            k_t &= 0x01;
+            l_t = l[j-1] >> (63-i);
+            l_t &= 0x01;
+            DBL(R, R, curve);
+            if (k_t == 1 && l_t == 1) {
+                ADD(R, R, &PQ, curve);
+            } else if (k_t == 1) {
+                ADD(R, R, P, curve);
+            } else if (l_t == 1) {
+                ADD(R, R, Q, curve);
+            }
+        }
+    }
+    
+}
+
 void DBLMUL(jac_point_t* R, const jac_point_t* P, const digit_t k, const jac_point_t* Q, const digit_t l, const ec_curve_t* curve)
 {  // Double-scalar multiplication R <- k*P + l*Q, fixed for 64-bit scalars
     digit_t k_t, l_t;
@@ -666,7 +697,7 @@ void DBLMUL(jac_point_t* R, const jac_point_t* P, const digit_t k, const jac_poi
     }
 }
 
-#define SCALAR_BITS 256  //// TODO: this could be defined by level
+#define SCALAR_BITS 128  //// TODO: this could be defined by level
 
 void DBLMUL2(jac_point_t* R, const jac_point_t* P, const digit_t* k, const jac_point_t* Q, const digit_t* l, const ec_curve_t* curve)
 {  // Double-scalar multiplication R <- k*P + l*Q, fixed for 128-bit scalars

@@ -225,27 +225,14 @@ const theta_couple_jac_point_t *xyK1_8, const theta_couple_jac_point_t *xyK2_8
     ec_basis_t B;
     theta_couple_point_t K1_8,K2_8;
 
-    // K1_4 = [2] K1_8  and K2_4 = [2] K2_8
-    // double_couple_point(&out->K1_4,E12,K1_8);
-    // double_couple_point(&out->K2_4,E12,K2_8);
-    // double_couple_point(&K1m2_4,E12,K1m2_8);
     double_couple_jac_point_iter(&out->xyK1_4,1,E12,xyK1_8);
-    double_couple_jac_point_iter(&out->xyK2_4,1,E12,xyK2_8);    
-
-    // copy_point(&B.P,&out->K1_4.P1);
-    // copy_point(&B.Q,&out->K2_4.P1);
-    // copy_point(&B.PmQ,&K1m2_4.P1);
-    // lift_basis(&out->xyK1_4.P1,&out->xyK2_4.P1,&B,&E12->E1);
-
-    // // TODO this second SQRT could be avoided
-    // copy_point(&B.P,&out->K1_4.P2);
-    // copy_point(&B.Q,&out->K2_4.P2);
-    // copy_point(&B.PmQ,&K1m2_4.P2);
-    // lift_basis(&out->xyK1_4.P2,&out->xyK2_4.P2,&B,&E12->E2);
+    double_couple_jac_point_iter(&out->xyK2_4,1,E12,xyK2_8);
+  
     couple_jac_to_xz(&K1_8,xyK1_8);
     couple_jac_to_xz(&K2_8,xyK2_8);
     couple_jac_to_xz(&out->K1_4,&out->xyK1_4);
     couple_jac_to_xz(&out->K2_4,&out->xyK2_4);
+    // assert(test_point_order_twof(&K1_8.P1,&E12->E1,8));    
 
     // computing the base change matrix
     ec_point_t P11,P12,P21,P22;
@@ -528,8 +515,6 @@ void gluing_eval_point(theta_point_t *image1, const theta_couple_point_t *P, con
         fp2_mul(&y,&y,&temp);
         fp2_mul(&z,&z,&temp);
         fp2_mul(&t,&t,&temp);
-        // fp2_inv(&temp);
-        // fp2_mul(&x,&x,&temp);
     }
     else {
         choose_index_theta_point(&temp,2^phi->zero_idx,&Tt);
@@ -541,8 +526,7 @@ void gluing_eval_point(theta_point_t *image1, const theta_couple_point_t *P, con
         fp2_mul(&y,&y,&temp);
         fp2_mul(&z,&z,&temp);
         fp2_mul(&t,&t,&temp);
-        // fp2_inv(&temp);
-        // fp2_mul(&x,&x,&temp);
+
     }
 
 
@@ -563,6 +547,88 @@ void gluing_eval_point(theta_point_t *image1, const theta_couple_point_t *P, con
     hadamard(image1,image1);
 }
 
+
+
+
+// sub routine of the gluing eval
+void gluing_eval_point_no_help(theta_point_t *image1, const theta_couple_jac_point_t *P, const theta_couple_curve_t *E12,const theta_gluing_t *phi) {
+
+    theta_couple_point_t Pt;
+    theta_couple_jac_point_t tmp;
+    theta_point_t T,Tt;
+    fp2_t x,y,z,t,temp;
+
+    #ifndef NDEBUG
+        jac_to_xz(&Pt.P2,&phi->xyK1_4.P2);
+        assert(test_point_order_twof(&phi->K1_4.P2,&E12->E2,2));
+        assert(test_point_order_twof(&Pt.P2,&E12->E2,2));
+    #endif
+
+
+    // we compute Pt 
+    ADD(&tmp.P1,&P->P1,&phi->xyK1_4.P1,&E12->E1);
+    ADD(&tmp.P2,&P->P2,&phi->xyK1_4.P2,&E12->E2);
+
+    couple_jac_to_xz(&Pt,&tmp);
+
+    // apply the basis change
+    // on the translated point
+    base_change(&Tt,phi,&Pt);
+    // on the point to evaluate
+    couple_jac_to_xz(&Pt,P);
+    base_change(&T,phi,&Pt);
+    
+
+    // apply the to_squared_theta transform
+    to_squared_theta(&T,&T);
+    to_squared_theta(&Tt,&Tt);
+
+    // compute y,z,t
+    choose_index_theta_point(&y,1^phi->zero_idx,&T);
+    choose_index_theta_point(&temp,1^phi->zero_idx,&phi->precomputation);
+    fp2_mul(&y,&y,&temp);
+    choose_index_theta_point(&z,2^phi->zero_idx,&T);
+    choose_index_theta_point(&temp,2^phi->zero_idx,&phi->precomputation);
+    fp2_mul(&z,&z,&temp);
+    choose_index_theta_point(&t,3^phi->zero_idx,&T);
+
+    //  normalize
+    if (!fp2_is_zero(&z)) {
+        fp2_copy(&x,&z);
+        choose_index_theta_point(&temp,3^phi->zero_idx,&Tt);
+
+        fp2_mul(&y,&y,&temp);
+        fp2_mul(&z,&z,&temp);
+        fp2_mul(&t,&t,&temp);
+    }
+    else {
+        choose_index_theta_point(&temp,2^phi->zero_idx,&Tt);
+        choose_index_theta_point(&x,2^phi->zero_idx,&phi->precomputation);
+        fp2_mul(&temp,&temp,&x);
+        fp2_copy(&x,&t);
+
+
+        fp2_mul(&y,&y,&temp);
+        fp2_mul(&z,&z,&temp);
+        fp2_mul(&t,&t,&temp);
+
+    }
+
+    // recover x
+    choose_index_theta_point(&temp,1^phi->zero_idx,&Tt);
+    fp2_mul(&x,&x,&temp);
+    choose_index_theta_point(&temp,1^phi->zero_idx,&phi->precomputation);
+    fp2_mul(&x,&x,&temp);
+
+    // fill the image coordinates 
+    set_index_theta_point(image1,0^phi->zero_idx,&x);
+    set_index_theta_point(image1,1^phi->zero_idx,&y);
+    set_index_theta_point(image1,2^phi->zero_idx,&z);
+    set_index_theta_point(image1,3^phi->zero_idx,&t);
+
+    // hadamard
+    hadamard(image1,image1);
+}
 
 
 
@@ -1426,10 +1492,6 @@ void theta_chain_comput_naive(theta_chain_t *out,int n, theta_couple_curve_t *E1
     // computing the curves of the codomain
     theta_product_structure_to_elliptic_product(&out->codomain,&out->last_step.B);
 
-    fp2_t j2,j3;
-    ec_j_inv(&j2,&out->codomain.E1);
-    ec_j_inv(&j3,&out->codomain.E2);
-
     ibz_finalize(&a);
     ibz_finalize(&b);
 
@@ -1604,10 +1666,6 @@ void theta_chain_comput_balanced(theta_chain_t *out,int n, theta_couple_curve_t 
     theta_product_structure_to_elliptic_product(&out->codomain,&out->last_step.B);
     TOC_clock(t,"splitting");
 
-    fp2_t j2,j3;
-    ec_j_inv(&j2,&out->codomain.E1);
-    ec_j_inv(&j3,&out->codomain.E2);
-
     ibz_finalize(&a);
     ibz_finalize(&b);
 
@@ -1639,12 +1697,34 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
     copy_point(&bas2.P,&T1->P2);
     copy_point(&bas2.Q,&T2->P2);
     copy_point(&bas2.PmQ,&T1m2->P2);
+
+    if (eight_above) {
+        assert(test_point_order_twof(&bas2.P,&E12->E2,n+2));
+        assert(test_point_order_twof(&bas1.P,&E12->E1,n+2));
+    }
+    else {
+        assert(test_point_order_twof(&bas2.P,&E12->E2,n));
+        assert(test_point_order_twof(&bas1.P,&E12->E1,n));
+    }
+    
     
     lift_basis(&xyT1.P1,&xyT2.P1,&bas1,&E12->E1);
     lift_basis(&xyT1.P2,&xyT2.P2,&bas2,&E12->E2);
-    TOC_clock(t,"lifting the two basis");
+
+    if (eight_above) {
+        assert(test_jac_order_twof(&xyT1.P2,&E12->E2,n+2));
+        assert(test_jac_order_twof(&xyT2.P1,&E12->E1,n+2));
+    }
+    else {
+        assert(test_jac_order_twof(&xyT1.P2,&E12->E2,n));
+        assert(test_jac_order_twof(&xyT2.P1,&E12->E1,n));
+    }
+
+
+    // TOC_clock(t,"lifting the two basis");
 
     int adjusting = 2*(1-eight_above);
+    assert( (eight_above && adjusting==0) || (!eight_above && adjusting==2));
 
     t = tic();
 
@@ -1684,20 +1764,21 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
     copy_jac_point(&xyK1.P2,&points1[len_list-1].P2);
     copy_jac_point(&xyK2.P1,&points2[len_list-1].P1);
     copy_jac_point(&xyK2.P2,&points2[len_list-1].P2);
-    TOC_clock(t,"4 xyz doubling");
+    // TOC_clock(t,"4 xyz doubling");
+
+    assert(test_jac_order_twof(&xyK1.P2,&E12->E2,3));
+    assert(test_jac_order_twof(&xyK2.P1,&E12->E1,3));
 
 
     // compute the gluing isogeny 
     t = tic();
     gluing_comput(&out->first_step,E12,&xyK1,&xyK2);
-    TOC_clock(t,"gluing comput");
+    // TOC_clock(t,"gluing comput");
 
     // set-up the theta_structure for the first codomain
-    t = tic(); 
     codomain.null_point=out->first_step.codomain;
     codomain.precomputation=0;
     theta_precomputation(&codomain);
-    TOC_clock(t,"precomputation for the first codomain");
 
     len_list--;
 
@@ -1707,7 +1788,7 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
     for (int i=0;i<len_list;i++) {
         gluing_eval_basis(&Q1[i],&Q2[i],&points1[i],&points2[i],E12,&out->first_step);
     }
-    TOC_clock(t,"gluing eval");
+    // TOC_clock(t,"gluing eval");
     t = tic();
     // and now we do the remaining steps 
 
@@ -1781,7 +1862,7 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
         codomain=out->steps[n-2].codomain;
     }
 
-    TOC_clock(t,"middle steps");
+    // TOC_clock(t,"middle steps");
 
     t = tic();
 
@@ -1791,13 +1872,7 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
 
     // computing the curves of the codomain
     theta_product_structure_to_elliptic_product(&out->codomain,&out->last_step.B);
-    TOC_clock(t,"splitting");
-
-    fp2_t j2,j3;
-    ec_j_inv(&j2,&out->codomain.E1);
-    ec_j_inv(&j3,&out->codomain.E2);
-    fp2_print("j2",j2);
-    fp2_print("j3",j3);
+    // TOC_clock(t,"splitting");
 
 }
 
@@ -1843,15 +1918,6 @@ void theta_chain_eval(theta_couple_point_t *out,theta_chain_t *phi,theta_couple_
 
     theta_couple_jac_point_t jac_help;
 
-    // TODO do something about this
-    // lift_point(&jac_help.P1,&P12->P1,&phi->domain.E1);
-    // // lift_point(&jac_help.P2,&P12->P2,&phi->domain.E2);
-    // ADD(&jac_help.P1,&jac_help.P1,&phi->first_step.xyK1_4.P1,&phi->domain.E1);
-    // ADD(&jac_help.P2,&jac_help.P2,&phi->first_step.xyK1_4.P2,&phi->domain.E2);
-    // possibly it could be the difference of the two instead of the sum
-    // assert(is_jac_xz_equal(&jac_help.P1,&Help->P1));
-    // assert(is_jac_xz_equal(&jac_help.P2,&Help->P2));
-
     // first, we apply the gluing
     gluing_eval_point(&temp,P12,Help,&phi->first_step);
 
@@ -1866,6 +1932,41 @@ void theta_chain_eval(theta_couple_point_t *out,theta_chain_t *phi,theta_couple_
     apply_isomorphism(&temp,&phi->last_step,&temp);
 
     // finaly the send the result to the elliptic product
+    theta_point_to_montgomery_point(out,&temp,&phi->last_step.B);
+
+}
+
+
+/**
+ * @brief Evaluate a (2,2) isogeny chain in dimension 2 between elliptic products in the theta_model
+ *
+ * @param out Output: the image point
+ * @param phi : the (2,2) isogeny chain of domain E12
+ * @param P12 a couple jac point on E12, 
+ *   
+ * phi : E1xE2 -> E3xE4 of kernel 
+ * P12 in E1xE2
+ * out = phi(P12) in E3xE4 
+ *  
+   */
+void theta_chain_eval_no_help(theta_couple_point_t *out,theta_chain_t *phi,theta_couple_jac_point_t *P12, const theta_couple_curve_t *E12) {
+    
+    theta_point_t temp;
+
+    // first, we apply the gluing
+    gluing_eval_point_no_help(&temp,P12,E12,&phi->first_step);
+
+
+    // then, we apply the successive isogenies
+    for (int i=0;i<phi->length-1;i++) {
+        theta_isogeny_eval(&temp,&phi->steps[i],&temp);
+    }
+
+
+    // we send the result to the theta product structure of the codomain
+    apply_isomorphism(&temp,&phi->last_step,&temp);
+
+    // finaly we send the result to the elliptic product
     theta_point_to_montgomery_point(out,&temp,&phi->last_step.B);
 
 }

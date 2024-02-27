@@ -25,7 +25,7 @@
 
 
 
-void fp2_printt(char *name, fp2_t const a){
+static void fp2_printt(char *name, fp2_t const a){
     fp_t b1,b2;
     fp_frommont(b1,a.re);
     fp_frommont(b2,a.im);
@@ -41,7 +41,7 @@ void fp2_printt(char *name, fp2_t const a){
 static void point_print(char *name, ec_point_t P){
     fp2_t a;
     if(fp2_is_zero(&P.z)){
-        printf("%s = INF\n", name);
+        printf("%s = INFINTY_POINT\n", name);
     }
     else{
     fp2_copy(&a, &P.z);
@@ -129,10 +129,9 @@ int hd_chain_test() {
     E0=CURVE_E0;
 
 
-    point_print("P1",B0_two.P);
-    point_print("P2",B0_two.Q);
-    point_print("P1m2",B0_two.PmQ);
-    // point_print("PmQ",B0_two.PmQ);
+    // point_print("P1",B0_two.P);
+    // point_print("P2",B0_two.Q);
+    // point_print("P1m2",B0_two.PmQ);
 
 
     #ifndef NDEBUG
@@ -170,19 +169,13 @@ int hd_chain_test() {
     ibz_to_digit_array(scalars[0],&tmp);
     ibz_sub(&tmp,&mat[1][0],&mat[1][1]);
     ibz_to_digit_array(scalars[1],&tmp);
+    clock_t timing = tic();
     ec_biscalar_mul(&B1_two.PmQ,&CURVE_E0,scalars[0],scalars[1],&B0_two);
-
-    // point_print("x + y*iota(Q)",B1_two.Q);
+    // TOC_clock(timing,"biscalar mul");
 
     assert(test_point_order_twof(&B1_two.P,&E0,TORSION_PLUS_EVEN_POWER));
     assert(test_point_order_twof(&B1_two.Q,&E0,TORSION_PLUS_EVEN_POWER));
     assert(test_point_order_twof(&B1_two.PmQ,&E0,TORSION_PLUS_EVEN_POWER));
-
-    printf("\n");
-    point_print("Q1",B1_two.P);
-    point_print("Q2",B1_two.Q);
-    point_print("Q1m2",B1_two.PmQ);
-
 
     // setting up the isogeny 
     phi.curve = E0;
@@ -199,11 +192,6 @@ int hd_chain_test() {
     }
     ec_eval_odd_basis(&E1,&phi,&B0_two,1);
 
-    fp2_t j1;
-    ec_j_inv(&j1,&E1);
-    printf("\n");
-    fp2_printt("j1",j1);
-
     assert(test_point_order_twof(&B0_two.P,&E1,TORSION_PLUS_EVEN_POWER));
     assert(test_point_order_twof(&B0_two.Q,&E1,TORSION_PLUS_EVEN_POWER));
 
@@ -212,13 +200,6 @@ int hd_chain_test() {
     theta_couple_point_t T1;
     theta_couple_point_t T2,T1m2;
     theta_chain_t dimtwo_chain;
-
-    printf("\n");
-    point_print("phi(P1)",B0_two.P);
-    point_print("phi(P2)",B0_two.Q);
-    point_print("phi(P1m2)",B0_two.PmQ);
-    printf("\n");
-
 
     clock_t t;
 
@@ -288,7 +269,7 @@ int hd_chain_test() {
     t = tic();
     theta_chain_comput_strategy(&dimtwo_chain,length,&E01,&T1,&T2,&T1m2,strategies[TORSION_PLUS_EVEN_POWER-length],1); 
 
-    TOC(t,"chain computation with eight above");
+    // TOC(t,"chain computation with eight above");
     t = tic();
     theta_chain_t no_sq_chain;
     theta_couple_point_t Ts1,Ts2,Ts1m2;
@@ -316,10 +297,44 @@ int hd_chain_test() {
 
     t = tic();
     theta_chain_eval(&FP,&dimtwo_chain,&FP,&Help);
-    TOC(t,"chain eval");
+    // TOC_clock(t,"chain eval");
 
     assert(test_point_order_twof(&FP.P1,&dimtwo_chain.codomain.E1,length+2));
     assert(test_point_order_twof(&FP.P2,&dimtwo_chain.codomain.E2,length+2));
+
+
+    // now we check that the evaluation with no helper works
+    jac_point_t xyP,xyQ,xyPmQ;
+    copy_point(&B0_two.P,&T1.P1);
+    copy_point(&B0_two.Q,&T2.P1);
+    copy_point(&B0_two.PmQ,&T1m2.P1);
+    lift_basis(&xyP,&xyQ,&B0_two,&E0);
+    jac_neg(&xyQ,&xyQ);
+    ADD(&xyPmQ,&xyP,&xyQ,&E0);
+    theta_couple_point_t result_no_help;
+    theta_couple_jac_point_t input_no_help;
+    copy_jac_point(&input_no_help.P1,&xyPmQ);
+    copy_jac_point(&input_no_help.P2,&xyPmQ);
+    for (int i=0;i<length+2;i++) {
+        DBL(&input_no_help.P2,&input_no_help.P2,&E0);
+    }
+    ec_point_t test;
+    jac_to_xz(&test,&input_no_help.P1);
+    assert(test_point_order_twof(&test,&E0,length+2));
+    assert(test_jac_order_twof(&input_no_help.P1,&E0,length+2));
+    assert(ec_is_equal(&test,&T1m2.P1));
+    fp2_set(&input_no_help.P2.x,0);
+    fp2_set(&input_no_help.P2.y,1);
+    fp2_set(&input_no_help.P2.z,0);
+
+    jac_to_xz(&test,&input_no_help.P2);
+    assert(ec_is_zero(&test));
+    theta_chain_eval_no_help(&result_no_help,&dimtwo_chain,&input_no_help,&E01);
+    assert(test_point_order_twof(&result_no_help.P2,&dimtwo_chain.codomain.E2,length+2));
+    assert(test_point_order_twof(&result_no_help.P1,&dimtwo_chain.codomain.E1,length+2));
+
+    assert(ec_is_equal(&result_no_help.P1,&FP.P1));
+    assert(ec_is_equal(&result_no_help.P2,&FP.P2));
     
 
     
@@ -335,19 +350,6 @@ int hd_chain_test() {
     assert(test_point_order_twof(&FP_no_sq.P1,&no_sq_chain.codomain.E1,length+2));
     assert(test_point_order_twof(&FP_no_sq.P2,&no_sq_chain.codomain.E2,length+2));
 
-    printf("\n \n");
-    point_print("FP.P1",FP.P1);
-    point_print("FP.P2",FP.P2);
-    point_print("FP_nosq.P1",FP_no_sq.P1);
-    point_print("FP_nosq.P2",FP_no_sq.P2);
-    // fp2_neg(&FP_no_sq.P1.x,&FP_no_sq.P1.x);
-    // point_print("FP_nosq.P1",FP_no_sq.P1);
-
-    curve_print("E1",dimtwo_chain.codomain.E1);
-    curve_print("E2",dimtwo_chain.codomain.E2);
-    curve_print("E1_no_sq",no_sq_chain.codomain.E1);
-    curve_print("E2_no_sq",no_sq_chain.codomain.E2);
-
     digit_t a[NWORDS_ORDER]={0,0,0,0};
     digit_t b[NWORDS_ORDER]={0,0,0,0}; 
     ibz_t scala,scalb;
@@ -355,38 +357,18 @@ int hd_chain_test() {
     ibz_init(&scalb);
     
 
-    ec_basis_t bas,bas_no_sq;
-    // bas =BASIS_EVEN;
-    // bas_no_sq= BASIS_EVEN;
-    copy_point(&bas.P,&BASIS_EVEN.P);
-    copy_point(&bas.Q,&BASIS_EVEN.Q);
-    copy_point(&bas.PmQ,&BASIS_EVEN.PmQ);
-    copy_point(&bas_no_sq.P,&BASIS_EVEN.P);
-    copy_point(&bas_no_sq.Q,&BASIS_EVEN.Q);
-    copy_point(&bas_no_sq.PmQ,&BASIS_EVEN.PmQ);
     ec_isom_t isom,isom_no_sq;
-    ec_curve_t E,E_no_sq;
-    E = dimtwo_chain.codomain.E2;
-    E_no_sq = no_sq_chain.codomain.E1;
-    ec_isomorphism(&isom,&E0,&E);
-    ec_isomorphism(&isom_no_sq,&E0,&E_no_sq);
-    ec_iso_eval(&bas.P,&isom);
-    ec_iso_eval(&bas.Q,&isom);
-    ec_iso_eval(&bas.PmQ,&isom);
-    ec_iso_eval(&bas_no_sq.P,&isom_no_sq);
-    ec_iso_eval(&bas_no_sq.Q,&isom_no_sq);
-    ec_iso_eval(&bas_no_sq.PmQ,&isom_no_sq);
+
 
     ec_isomorphism(&isom,&dimtwo_chain.codomain.E1,&no_sq_chain.codomain.E2);
     ec_iso_eval(&FP.P1,&isom);
     assert(ec_is_equal(&FP.P1,&FP_no_sq.P2));
     ec_isomorphism(&isom,&dimtwo_chain.codomain.E2,&no_sq_chain.codomain.E1);
     ec_iso_eval(&FP.P2,&isom);
-    // assert(ec_is_equal(&FP.P2,&FP_no_sq.P1));
+    // not equal due to some isomorphism of E0
 
+    
 
-    // assert(ec_is_equal(&FP.P1,&FP_no_sq.P1) || ec_is_equal(&FP.P1,&FP_no_sq.P2));
-    // assert(ec_is_equal(&FP.P2,&FP_no_sq.P2) || ec_is_equal(&FP.P2,&FP_no_sq.P1) );
 
     ibz_finalize(&scal);
     ibz_finalize(&scala);
