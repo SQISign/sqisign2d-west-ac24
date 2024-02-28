@@ -1732,7 +1732,7 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
     // first we must compute the length of the list
     int len_count=0;
     int index=0;
-    while (len_count!=n-1 - adjusting) {
+    while (len_count!=n-1 - adjusting && index < n + 10 ) {
         len_count = len_count + strategy[index];
         index++;
     }
