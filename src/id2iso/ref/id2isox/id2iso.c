@@ -953,6 +953,16 @@ void ec_biscalar_mul_ibz(ec_point_t* res, const ec_curve_t* curve,
     ec_biscalar_mul(res, curve, scalars[0], scalars[1], PQ);
 }
 
+void ec_mul_ibz(ec_point_t* res, const ec_curve_t* curve,
+    const ibz_t* scalarP,
+    const ec_point_t *P){
+
+    digit_t scalars[NWORDS_FIELD];
+    ibz_to_digit_array(scalars, scalarP);
+    ec_mul(res, curve, scalars, P);
+}
+
+
 
 // helper function to apply some endomorphism of E0 on the precomputed basis of E0[2^f]
 // works in place 
@@ -970,13 +980,12 @@ void endomorphism_application_even_basis(ec_basis_t *bas, const ec_curve_t *E,qu
     ibz_t content;
     ibz_init(&content);
 
-    digit_t scalars[2][NWORDS_ORDER] = {0};
+    digit_t scalars[2][NWORDS_FIELD] = {0};
 
     ec_basis_t tmp_bas;
     copy_point(&tmp_bas.P,&bas->P);
     copy_point(&tmp_bas.Q,&bas->Q);
     copy_point(&tmp_bas.PmQ,&bas->PmQ);
-
 
     // // decomposing theta on the basis 
     quat_alg_make_primitive(&coeffs,&content,theta,&MAXORD_O0,&QUATALG_PINFTY);
@@ -994,6 +1003,7 @@ void endomorphism_application_even_basis(ec_basis_t *bas, const ec_curve_t *E,qu
                 ibz_add(&mat[i][j], &mat[i][j], &tmp);
                 ibz_mul(&tmp, &ACTION_GEN4[i][j], &coeffs[3]);
                 ibz_add(&mat[i][j], &mat[i][j], &tmp);
+                ibz_mul(&mat[i][j],&mat[i][j],&content);
                 ibz_mod(&mat[i][j],&mat[i][j],&twopow);
             }
     }

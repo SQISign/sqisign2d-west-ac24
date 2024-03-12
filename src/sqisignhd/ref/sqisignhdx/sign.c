@@ -1,6 +1,6 @@
 #include <sqisignhd.h>
 #include <curve_extras.h>
-#include <toolbox.h>
+#include <tools.h>
 #include <fips202.h>
 #include <stdio.h>
 #include <string.h>

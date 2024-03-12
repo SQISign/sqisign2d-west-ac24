@@ -1,7 +1,7 @@
 #include<quaternion.h>
 #include <klpt.h>
 #include "tools.h"
-
+#include <tools.h>
 
 
 /** @file
@@ -507,9 +507,11 @@ int represent_integer_non_diag(quat_alg_elem_t *gamma, ibz_t *n_gamma, const qua
     ibz_t bound,sq_bound,temp;
     quat_alg_coord_t coeffs; // coeffs = [x,y,z,t]
     quat_alg_elem_t quat_temp;
-    int prime_list_length;short prime_list[1]; ibz_t prod_bad_primes; // TODO adapt
-    prime_list[0] = 5; prime_list_length = 1;  
-    ibz_init(&prod_bad_primes);ibz_copy(&prod_bad_primes,&ibz_const_one); 
+    // TODO this could be much simpler (use ibz_set_str for a start)
+    int prime_list_length; ibz_t prod_bad_primes; // TODO make this a precomputation
+    short prime_list[12] = {2, 5, 13, 17, 29, 37, 41, 53, 61, 73, 89, 97};
+    prime_list_length = 12;  
+    ibz_init(&prod_bad_primes);
     
     
     // var init
@@ -520,6 +522,21 @@ int represent_integer_non_diag(quat_alg_elem_t *gamma, ibz_t *n_gamma, const qua
     quat_alg_elem_init(&quat_temp);
     ibz_init(&adjusted_n_gamma);
     ibz_init(&cornacchia_target);
+
+
+    ibz_copy(&prod_bad_primes,&ibz_const_one); 
+    ibz_set(&temp,140227657289781369);
+    ibz_mul(&prod_bad_primes,&prod_bad_primes,&temp);
+    ibz_set(&temp,8695006970070847579);
+    ibz_mul(&prod_bad_primes,&prod_bad_primes,&temp);
+    ibz_set(&temp,4359375434796427649);
+    ibz_mul(&prod_bad_primes,&prod_bad_primes,&temp);
+    ibz_set(&temp,221191130330393351);
+    ibz_mul(&prod_bad_primes,&prod_bad_primes,&temp);
+    ibz_set(&temp,1516192381681334191);
+    ibz_mul(&prod_bad_primes,&prod_bad_primes,&temp);
+    ibz_set(&temp,5474546011261709671);
+    ibz_mul(&prod_bad_primes,&prod_bad_primes,&temp);
     
     //adjusting the norm of gamma (multiplied by 4 to find a solution in the full maximal order)
     ibz_mul(&adjusted_n_gamma,n_gamma,&ibz_const_two);
@@ -552,10 +569,17 @@ int represent_integer_non_diag(quat_alg_elem_t *gamma, ibz_t *n_gamma, const qua
         ibz_sub(&cornacchia_target,&adjusted_n_gamma,&cornacchia_target);
         // applying cornacchia extended
 
+        // applying cornacchia extended
         found = ibz_cornacchia_extended(&coeffs[0],&coeffs[1],&cornacchia_target,prime_list,prime_list_length, KLPT_primality_num_iter, &prod_bad_primes);
 
         // check that we can divide by two at least once
         // we must have x = t mod  2 and y = z mod 2
+        // if it doesn't work the first time, we simply swap x and y
+        if (!(ibz_get(&coeffs[0])%2 == ibz_get(&coeffs[3])%2)) {
+            ibz_copy(&temp,&coeffs[0]);
+            ibz_copy(&coeffs[0],&coeffs[1]);
+            ibz_copy(&coeffs[1],&temp);
+        }
         found = found && (ibz_get(&coeffs[0])%2 == ibz_get(&coeffs[3])%2) && (ibz_get(&coeffs[1])%2 == ibz_get(&coeffs[2])%2); 
         if (found) {
             // we further check that (x-t)/2 = 1 mod 2 and (y-z)/2 = 1 mod 2 to ensure that the resulting endomorphism will behave well for dim 2 computations
@@ -564,7 +588,6 @@ int represent_integer_non_diag(quat_alg_elem_t *gamma, ibz_t *n_gamma, const qua
 
     }
     if (found) {
-
         // translate x,y,z,t into the quaternion element gamma
         order_elem_create(gamma,&STANDARD_EXTREMAL_ORDER,&coeffs,Bpoo);
         // making gamma primitive

@@ -1,6 +1,8 @@
 #include <quaternion.h>
 #include "internal.h"
 #include <stdlib.h>
+#include <stdio.h>
+#include <tools.h>
 
 //Small helper for integers
 void ibz_rounded_div(ibz_t *q, const ibz_t *a, const ibz_t *b){
@@ -57,8 +59,11 @@ int ibz_cornacchia_prime(ibz_t *x, ibz_t *y, const ibz_t *n, const ibz_t *p){
     }
     
     //test coprimality (should always be ok in our cases)
-    ibz_gcd(&r2,p,n);
-    if (ibz_is_one(&r2) && (test != 0)){
+    #ifndef NDEBUG
+        ibz_gcd(&r2,p,n);
+        assert(ibz_is_one(&r2));
+    #endif
+    if ((test != 0)){
 
         // get sqrt of -n mod p
         ibz_set(&r2,0);
@@ -287,7 +292,8 @@ int ibz_cornacchia_extended(ibz_t *x, ibz_t *y, const ibz_t *n, const short *pri
         // compute the remainder mod 4
         ibz_mod(&r,&nodd,&four);
         if (ibz_is_one(&r)){ // we hope the 'unfactored' part is a prime 1 mod 4
-            if (ibz_probab_prime(&nodd, primality_test_iterations) || ibz_is_one(&nodd)){
+            int probab = ibz_probab_prime(&nodd, primality_test_iterations);
+            if (probab || ibz_is_one(&nodd)){
                 if (ibz_is_one(&nodd)){ // the unfactored part is 1
                     ibz_set(x,1);
                     ibz_set(y,0);
@@ -297,6 +303,7 @@ int ibz_cornacchia_extended(ibz_t *x, ibz_t *y, const ibz_t *n, const short *pri
                 if (res == 1){ // no need to continue if failure here
                     for (int i = 0; i < prime_list_length; i++){
                         if (valuations[i] != 0){
+            
                             res = res && ibz_cornacchia_extended_prime_loop(x, y, prime_list[i], valuations[i]);
                         }
                     }

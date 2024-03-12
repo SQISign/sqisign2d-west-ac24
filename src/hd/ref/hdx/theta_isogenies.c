@@ -1707,10 +1707,9 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
         assert(test_point_order_twof(&bas1.P,&E12->E1,n));
     }
     
-    
+    t = tic();
     lift_basis(&xyT1.P1,&xyT2.P1,&bas1,&E12->E1);
     lift_basis(&xyT1.P2,&xyT2.P2,&bas2,&E12->E2);
-
     if (eight_above) {
         assert(test_jac_order_twof(&xyT1.P2,&E12->E2,n+2));
         assert(test_jac_order_twof(&xyT2.P1,&E12->E1,n+2));
@@ -1753,11 +1752,14 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
     copy_jac_point(&points2[0].P2,&xyT2.P2);
     level[0]=0;
     // and then the rest
+    t= tic();
     for (int i=1;i<len_list;i++) {
         double_couple_jac_point_iter(&points1[i],strategy[i-1],E12,&points1[i-1]);
         double_couple_jac_point_iter(&points2[i],strategy[i-1],E12,&points2[i-1]);
         level[i] = strategy[i-1];
     }
+    // printf("4 * %d  (x:y:z) doubling ",n);
+    // TOC_clock(t,"");
 
     // prepare the kernel of the first step
     copy_jac_point(&xyK1.P1,&points1[len_list-1].P1);

@@ -166,7 +166,7 @@ int dim2id2iso_test_dimid2iso() {
 
     clock_t tt = tic();
     found = dim2id2iso_ideal_to_isogeny_clapotis(&Phi,&beta1,&beta2,&u,&v,&coeffs,&phiu,&phiv,&d1,&d2,&lideal_small,&QUATALG_PINFTY);
-    TOC(tt,"total time for ideal to isogeny clapotis \n");
+    TOC(tt,"total time for ideal to isogeny clapotis");
 
     // // now we verify that Phi correctly translates the isogeny we are looking for by evaluating and checking weil pairing
     // theta_couple_jac_point_t Teval1,Teval2,Teval3;

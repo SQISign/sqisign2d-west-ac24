@@ -1622,6 +1622,17 @@ void lift_basis(jac_point_t *P, jac_point_t *Q, ec_basis_t *B, ec_curve_t *E) {
 void ec_dbl(ec_point_t* res, const ec_curve_t* curve, const ec_point_t* P){
     xDBL(res, P, (ec_point_t const*)curve);
 }
+
+void ec_dbl_iter(ec_point_t* res, int n, const ec_curve_t* curve, const ec_point_t* P) {
+    if (n>0) {
+        ec_dbl(res,curve,P);
+        for (int i=0;i<n-1;i++) {
+            ec_dbl(res,curve,res);
+        }
+    }
+
+}
+
 void ec_mul(ec_point_t* res, const ec_curve_t* curve, const digit_t* scalar, const ec_point_t* P){
     xMUL(res, P, scalar, curve);
 }

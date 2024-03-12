@@ -1,6 +1,6 @@
 #include <sqisignhd.h>
 #include <curve_extras.h>
-#include <toolbox.h>
+#include <tools.h>
 
 
 /* Interface */

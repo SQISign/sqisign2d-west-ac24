@@ -234,6 +234,15 @@ void ec_add(ec_point_t* res, const ec_point_t* P, const ec_point_t* Q, const ec_
 void ec_dbl(ec_point_t* res, const ec_curve_t* curve, const ec_point_t* P);
 
 /**
+ * @brief Point iterated doubling
+ *
+ * @param res computed double of P
+ * @param P a point
+ * @param n the number of double
+ */
+void ec_dbl_iter(ec_point_t* res, int n, const ec_curve_t* curve, const ec_point_t* P);
+
+/**
  * @brief Point multiplication
  *
  * @param res computed scalar * P
