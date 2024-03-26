@@ -1505,22 +1505,8 @@ void change_of_basis_matrix_two(ibz_mat_2x2_t *mat, ec_basis_t *B1, ec_basis_t *
     assert(test_point_order_twof(&(B2->Q),E,TORSION_PLUS_EVEN_POWER));
     assert(test_point_order_twof(&(B2->PmQ),E,TORSION_PLUS_EVEN_POWER));
 
-    // digit_t t1[4]={1123,35364536846,3513513651,3165454};
-    // digit_t t2[4]={11256,35364536835653,3513513651515,31654545444};
-    // digit_print("",t1);
-    // digit_print("",t2);
-    // ec_biscalar_mul(&B1->P,E,t1,t2,B2);
-    // t1[0]-=1;
-    // t2[0]+=1;
-    // ec_biscalar_mul(&B1->Q,E,t1,t2,B2);
-    // copy_point(&B1->PmQ,&B2->PmQ);
-
 
     ec_dlog_2_weil(x1,x2,x3,x4,B2,B1,E,TORSION_PLUS_EVEN_POWER);
-
-    // ec_dlog_2(x1,x2,B2,&(B1->P),E);
-
-    // ec_dlog_2(x3,x4,B2,&(B1->Q),E);
 
     // copying the digits
     ibz_copy_digit_array(&i1,x1);
