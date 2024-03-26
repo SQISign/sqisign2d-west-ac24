@@ -25,39 +25,6 @@
 
 
 
-static void fp2_printt(char *name, fp2_t const a){
-    fp_t b1,b2;
-    fp_frommont(b1,a.re);
-    fp_frommont(b2,a.im);
-    printf("%s = 0x", name);
-    for(int i = NWORDS_FIELD - 1; i >=0; i--)
-        printf("%016" PRIx64, b1[i]);
-    printf(" + i*0x");
-    for(int i = NWORDS_FIELD - 1; i >=0; i--)
-        printf("%016" PRIx64, b2[i]);
-    printf("\n");
-}
-
-static void point_print(char *name, ec_point_t P){
-    fp2_t a;
-    if(fp2_is_zero(&P.z)){
-        printf("%s = INFINTY_POINT\n", name);
-    }
-    else{
-    fp2_copy(&a, &P.z);
-    fp2_inv(&a);
-    fp2_mul(&a, &a, &P.x);
-    fp2_printt(name, a);
-    }
-}
-
-static void curve_print(char *name, ec_curve_t E){
-    fp2_t a;
-    fp2_copy(&a, &E.C);
-    fp2_inv(&a);
-    fp2_mul(&a, &a, &E.A);
-    fp2_printt(name, a);
-}
 
 
 

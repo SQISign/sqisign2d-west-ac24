@@ -234,14 +234,7 @@ void xMULv2(ec_point_t* Q, ec_point_t const* P, digit_t const* k, const int kbit
     fp2_copy(&Q->z, &R0.z);
 }
 
-static void mp_add(digit_t* c, const digit_t* a, const digit_t* b, const unsigned int nwords)
-{ // Multiprecision addition
-    unsigned int i, carry = 0;
 
-    for (i = 0; i < nwords; i++) {
-        ADDC(c[i], carry, a[i], b[i], carry);
-    }
-}
 
 static void mp_sub(digit_t* c, digit_t const* a, digit_t const* b, const unsigned int nwords)
 { // Multiprecision subtraction, assuming a > b
@@ -646,7 +639,7 @@ static bool mp_is_zero(const digit_t* a, unsigned int nwords)
     return (bool)is_digit_zero_ct(r);
 }
 
-// Double-scalar multiplication R <- k*P + l*Q, fixed for 64*size-bit scalars
+// Double-scalar multiplication R <- k*P + l*Q, fixed for (64*size)-bit scalars
 void DBLMUL_generic(jac_point_t* R, const jac_point_t* P, const digit_t *k, const jac_point_t* Q, const digit_t *l, const ec_curve_t* curve,int size) {
 
     digit_t k_t, l_t;
@@ -765,6 +758,8 @@ static void ec_dlog_2_step(digit_t* x, digit_t* y, const jac_point_t* R, const i
     *x = 0;        
     *y = 0;
 
+    printf(" ec_dlog_2_step on size %d \n",f);
+
     copy_jac_point(&P, &Pe2[f-1]);
     copy_jac_point(&Q, &Qe2[f-1]);
     copy_jac_point(&Re[f-1], R);
@@ -876,6 +871,9 @@ static void ec_dlog_2_step(digit_t* x, digit_t* y, const jac_point_t* R, const i
 
 void ec_dlog_2(digit_t* scalarP, digit_t* scalarQ, const ec_basis_t* PQ2, const ec_point_t* R, const ec_curve_t* curve)
 { // Optimized implementation based on Montgomery formulas using Jacobian coordinates
+
+    printf(" ec_dlog_2 %d %d %d\n",POWER_OF_2,NWORDS_ORDER,RADIX);
+
     int i;
     digit_t w0 = 0, z0 = 0, x0 = 0, y0 = 0, x1 = 0, y1 = 0, w1 = 0, z1 = 0, e, e1, f, f1, f2, f2div2, f22, w, z;
     digit_t fp2[NWORDS_ORDER] = {0}, xx[NWORDS_ORDER] = {0}, yy[NWORDS_ORDER] = {0}, ww[NWORDS_ORDER] = {0}, zz[NWORDS_ORDER] = {0};
@@ -999,7 +997,7 @@ void ec_dlog_2(digit_t* scalarP, digit_t* scalarQ, const ec_basis_t* PQ2, const 
 
     // R2r <- R2 - (w*Pe2[f-1] + z*Qe2[f-1]), R2r has order 2^(f-e)
     //DBLMUL(&R2r, &Pe2[f-1], w, &Qe2[f-1], z, &curvenorm);
-    DBLMUL2(&R2r, &Pe2[f-1], &w_p[0], &Qe2[f-1], &z_p[0], &curvenorm);
+    DBLMUL_generic(&R2r, &Pe2[f-1], &w_p[0], &Qe2[f-1], &z_p[0], &curvenorm,NWORDS_FIELD);
     jac_neg(&R2r, &R2r);
     ADD(&R2r, &RR, &R2r, &curvenorm);
     copy_jac_point(&TT, &R2r);
@@ -1639,3 +1637,4 @@ void ec_mul(ec_point_t* res, const ec_curve_t* curve, const digit_t* scalar, con
 void ec_biscalar_mul(ec_point_t* res, const ec_curve_t* curve, const digit_t* scalarP, const digit_t* scalarQ, const ec_basis_t* PQ){
     xDBLMUL(res, &PQ->P, scalarP, &PQ->Q, scalarQ, &PQ->PmQ, curve);
 }
+

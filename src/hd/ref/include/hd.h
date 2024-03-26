@@ -322,4 +322,6 @@ void theta_chain_eval(theta_couple_point_t *out,theta_chain_t *phi,theta_couple_
    */
 void theta_chain_eval_no_help(theta_couple_point_t *out,theta_chain_t *phi,theta_couple_jac_point_t *P12, const theta_couple_curve_t *E12);
 
+void theta_print(char *name, theta_point_t P);
+
 #endif

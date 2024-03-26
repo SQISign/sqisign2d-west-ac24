@@ -17,7 +17,12 @@ bool fp_is_equal(const digit_t* a, const digit_t* b);
 bool fp_is_zero(const digit_t* a);
 void fp_copy(digit_t* out, const digit_t* a);
 digit_t mp_shiftr(digit_t* x, const unsigned int shift, const unsigned int nwords);
+void multiple_mp_shiftl(digit_t* x, const unsigned int shift, const unsigned int nwords);
 void mp_shiftl(digit_t* x, const unsigned int shift, const unsigned int nwords);
+
+
+void mp_add(digit_t* c, const digit_t* a, const digit_t* b, const unsigned int nwords);
+
 void fp_add(digit_t* out, const digit_t* a, const digit_t* b);
 void fp_sub(digit_t* out, const digit_t* a, const digit_t* b);
 void fp_neg(digit_t* out, const digit_t* a);
@@ -74,3 +79,6 @@ static inline unsigned int is_digit_lessthan_ct(digit_t x, digit_t y)
     (shiftOut) = ((highIn) << (shift)) ^ ((lowIn) >> (RADIX - (shift)));
 
 #endif
+
+
+

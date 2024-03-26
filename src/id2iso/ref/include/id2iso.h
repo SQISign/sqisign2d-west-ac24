@@ -163,7 +163,7 @@ void matrix_of_endomorphism_even(ibz_mat_2x2_t *mat, const quat_alg_elem_t *alph
  * @param B1 the target basis
  * @param E the elliptic curve
  */
-void change_of_basis_matrix_two(ibz_mat_2x2_t *mat, const ec_basis_t *B1, const ec_basis_t *B2, const ec_curve_t *E);
+void change_of_basis_matrix_two(ibz_mat_2x2_t *mat, ec_basis_t *B1, ec_basis_t *B2, ec_curve_t *E);
 
 void change_of_basis_matrix_three(ibz_mat_2x2_t *mat, const ec_basis_t *B1, const ec_basis_t *B2, const ec_curve_t *E);
 

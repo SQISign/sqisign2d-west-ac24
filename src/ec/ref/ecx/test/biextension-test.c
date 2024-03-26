@@ -33,7 +33,6 @@ void cubical_2e(ec_point_t* R, uint64_t e, ec_point_t const* P, ec_point_t const
     }
 }
 */
-
 int biextension_test() 
 {
     clock_t t;

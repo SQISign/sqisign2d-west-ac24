@@ -5,33 +5,6 @@
 #include <inttypes.h>
 
 
-static void fp2_print(char *name, fp2_t const a){
-    fp2_t b;
-    fp2_set(&b, 1);
-    fp2_mul(&b, &b, &a);
-    printf("%s0x", name);
-    for(int i = NWORDS_FIELD - 1; i >=0; i--)
-        printf("%016llx", b.re[i]);
-    printf(" + i*0x");
-    for(int i = NWORDS_FIELD - 1; i >=0; i--)
-        printf("%016llx", b.im[i]);
-    printf("\n");
-}
-static void point_print(char *name, ec_point_t P){
-    fp2_t a;
-    if(fp2_is_zero(&P.z)){
-        printf("%s = INF\n", name);
-    }
-    else{
-    fp2_copy(&a, &P.z);
-    fp2_inv(&a);
-    fp2_mul(&a, &a, &P.x);
-    fp2_print(name, a);
-    }
-}
-
-
-
 void secret_key_init(secret_key_t *sk) {
     quat_left_ideal_init(&(sk->secret_ideal_two));
     quat_alg_elem_init(&(sk->two_to_three_transporter));

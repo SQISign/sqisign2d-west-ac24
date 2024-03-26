@@ -3,8 +3,10 @@
 #include <ec.h>
 #include <inttypes.h>
 
-#include "test_sqisignhd.h"
+#include "test_sqisigndim2.h"
 #include <tools.h>
+
+
 
 
 
@@ -37,15 +39,15 @@ int test_sqisign(int repeat)
     TOC(t, "protocols_keygen");
 
 
-    printf("Printing details of first signature\n");
-    int val = protocols_sign(&sig, &pk, &sk, msg, 32, 1);
+    // printf("Printing details of first signature\n");
+    // int val = protocols_sign(&sig, &pk, &sk, msg, 32, 1);
 
 
     printf("\n\nTesting more signatures\n");
     t = tic();
     for (int i = 0; i < repeat; ++i)
     {
-        int val = protocols_sign(&sig, &pk, &sk, msg, 32, 0);
+        // int val = protocols_sign(&sig, &pk, &sk, msg, 32, 0);
     }
     // TOC(t, "protocols_sign");
 

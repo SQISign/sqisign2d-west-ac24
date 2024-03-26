@@ -6,50 +6,13 @@
 #include <locale.h> 
 #include <bench.h>
 #include <curve_extras.h>
+#include <biextension.h>
 
 static __inline__ uint64_t rdtsc(void)
 {
     return (uint64_t) cpucycles();
 }
 
-
-
-
-//XXX FIXME stolen from src/ec/opt/generic/test/isog-test.c
-static void fp2_print(char *name, fp2_t const a){
-    fp2_t b;
-    fp2_set(&b, 1);
-    fp2_mul(&b, &b, &a);
-    printf("%s = 0x", name);
-    for(int i = NWORDS_FIELD - 1; i >=0; i--)
-        printf("%016" PRIx64, b.re[i]);
-    printf(" + i*0x");
-    for(int i = NWORDS_FIELD - 1; i >=0; i--)
-        printf("%016" PRIx64, b.im[i]);
-    printf("\n");
-}
-
-static void curve_print(char *name, ec_curve_t E){
-    fp2_t a;
-    fp2_copy(&a, &E.C);
-    fp2_inv(&a);
-    fp2_mul(&a, &a, &E.A);
-    fp2_print(name, a);
-}
-
-static void point_print(char *name, ec_point_t P){
-    fp2_t a;
-    if(fp2_is_zero(&P.z)){
-        printf("%s = INF\n", name);
-    }
-    else{
-    fp2_copy(&a, &P.z);
-    fp2_inv(&a);
-    fp2_mul(&a, &a, &P.x);
-    fp2_print(name, a);
-    }
-}
-//XXX
 
 void id2iso_long_two_isog_init(id2iso_long_two_isog_t *isog, const size_t length)
 {
@@ -1528,7 +1491,7 @@ void id2iso_kernel_dlogs_to_ideal_three(quat_left_ideal_t *lideal, const ibz_vec
 // finds mat such that:
 // (mat*v).B2 = v.B1
 // where "." is the dot product, defined as (v1,v2).(P,Q) = v1*P + v2*Q
-void change_of_basis_matrix_two(ibz_mat_2x2_t *mat, const ec_basis_t *B1, const ec_basis_t *B2, const ec_curve_t *E){
+void change_of_basis_matrix_two(ibz_mat_2x2_t *mat, ec_basis_t *B1, ec_basis_t *B2, ec_curve_t *E){
     // TODO
     digit_t x1[NWORDS_ORDER] = {0},x2[NWORDS_ORDER] = {0},x3[NWORDS_ORDER] = {0},x4[NWORDS_ORDER] = {0};  
     digit_t x5[NWORDS_ORDER] = {0},x6[NWORDS_ORDER] = {0};  
@@ -1542,8 +1505,22 @@ void change_of_basis_matrix_two(ibz_mat_2x2_t *mat, const ec_basis_t *B1, const 
     assert(test_point_order_twof(&(B2->Q),E,TORSION_PLUS_EVEN_POWER));
     assert(test_point_order_twof(&(B2->PmQ),E,TORSION_PLUS_EVEN_POWER));
 
-    ec_dlog_2(x1,x2,B2,&(B1->P),E);
-    ec_dlog_2(x3,x4,B2,&(B1->Q),E);
+    // digit_t t1[4]={1123,35364536846,3513513651,3165454};
+    // digit_t t2[4]={11256,35364536835653,3513513651515,31654545444};
+    // digit_print("",t1);
+    // digit_print("",t2);
+    // ec_biscalar_mul(&B1->P,E,t1,t2,B2);
+    // t1[0]-=1;
+    // t2[0]+=1;
+    // ec_biscalar_mul(&B1->Q,E,t1,t2,B2);
+    // copy_point(&B1->PmQ,&B2->PmQ);
+
+
+    ec_dlog_2_weil(x1,x2,x3,x4,B2,B1,E,TORSION_PLUS_EVEN_POWER);
+
+    // ec_dlog_2(x1,x2,B2,&(B1->P),E);
+
+    // ec_dlog_2(x3,x4,B2,&(B1->Q),E);
 
     // copying the digits
     ibz_copy_digit_array(&i1,x1);

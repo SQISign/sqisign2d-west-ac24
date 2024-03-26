@@ -22,19 +22,6 @@ bool fp2_isone(fp2_t a){
     return res;
 }
 
-void fp2_print(char *name, fp2_t const a){
-    fp2_t b;
-    fp2_set(&b, 1);
-    fp2_mul(&b, &b, &a);
-    printf("%s = 0x", name);
-    for(int i = NWORDS_FIELD - 1; i >=0; i--)
-        printf("%016" PRIx64, b.re[i]);
-    printf(" + i*0x");
-    for(int i = NWORDS_FIELD - 1; i >=0; i--)
-        printf("%016" PRIx64, b.im[i]);
-    printf("\n");
-}
-
 // VERY NOT SECURE (testing only)
 void fp2_random(fp2_t *a){
     for(int i = 0; i < NWORDS_FIELD; i++){

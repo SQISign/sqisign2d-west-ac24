@@ -23,7 +23,7 @@ static digit_t p_plus_minus_bitlength[P_LEN + M_LEN] =
 	{ 3, 2 };
 
 // p+1 divided by the power of 2
-static digit_t p_cofactor_for_2f[2] = { 0x90e0ba1ffe771625, 0xa09eebaf572395ba };
+static digit_t p_cofactor_for_2f[2] = { 0x0000000000000005, 0x0000000000000000 };
 #define P_COFACTOR_FOR_2F_BITLENGTH 128
 
 // p+1 divided by the power of 3

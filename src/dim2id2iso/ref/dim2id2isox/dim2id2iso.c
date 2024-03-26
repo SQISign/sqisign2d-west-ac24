@@ -9,43 +9,6 @@
 #include <id2iso.h>
 #include <tools.h>
 
-//XXX FIXME stolen from src/ec/opt/generic/test/isog-test.c
-static void fp2_print(char *name, fp2_t const a){
-    fp_t b1,b2;
-    fp_frommont(b1,a.re);
-    fp_frommont(b2,a.im);
-    printf("%s = 0x", name);
-    for(int i = NWORDS_FIELD - 1; i >=0; i--)
-        printf("%016" PRIx64, b1[i]);
-    printf(" + i*0x");
-    for(int i = NWORDS_FIELD - 1; i >=0; i--)
-        printf("%016" PRIx64, b2[i]);
-    printf("\n");
-}
-
-static void point_print(char *name, ec_point_t P){
-    fp2_t a;
-    if(fp2_is_zero(&P.z)){
-        printf("%s = INF\n", name);
-    }
-    else{
-    fp2_copy(&a, &P.z);
-    fp2_inv(&a);
-    fp2_mul(&a, &a, &P.x);
-    fp2_print(name, a);
-    }
-}
-
-static void theta_print(char *name, theta_point_t P) {
-    fp2_t a;
-    assert(!fp2_is_zero(&P.x));
-    fp2_copy(&a,&P.x);
-    fp2_inv(&a);
-    fp2_mul(&a,&a,&P.y);
-    fp2_print(name,a);
-}
-
-
 
 void swap(ibz_t *a, ibz_t *b,ibz_vec_4_t *va,ibz_vec_4_t *vb) {
     ibz_t temp;
@@ -537,10 +500,13 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
                 
                         }
                     #endif
-                    ibz_copy(&((*coeffs)[0]),&au);
-                    ibz_copy(&((*coeffs)[1]),&bu);
-                    ibz_copy(&((*coeffs)[2]),&av);
-                    ibz_copy(&((*coeffs)[3]),&bv);
+                    if (number_sum_square>0) {
+                        ibz_copy(&((*coeffs)[0]),&au);
+                        ibz_copy(&((*coeffs)[1]),&bu);
+                        ibz_copy(&((*coeffs)[2]),&av);
+                        ibz_copy(&((*coeffs)[3]),&bv);
+                    }
+                    
 
                     // printf("Found after %d attempts and %d deg one hit out of %d \n",i1*index*overstretch + overstretch*i2 + i3,count,overstretch*index*(index-1)/2);
                     break;
@@ -623,7 +589,7 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
  * that encodes an isogeny E0 -> E_I corresponding to the ideal lideal
  */
 int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *beta1, quat_alg_elem_t *beta2, ibz_t *u, ibz_t *v, ibz_vec_4_t *coeffs, theta_chain_t 
-*phiu, theta_chain_t *phiv,ibz_t *d1,ibz_t *d2, const quat_left_ideal_t *lideal, const quat_alg_t *Bpoo) {
+*phiu, theta_chain_t *phiv,ibz_t *d1,ibz_t *d2, ec_curve_t *codomain, ec_basis_t *basis, const quat_left_ideal_t *lideal, const quat_alg_t *Bpoo) {
     
     ibz_t target,tmp,two_pow;
     quat_alg_elem_t theta;
@@ -645,8 +611,12 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     quat_alg_elem_init(&quat_tmp);
     quat_alg_elem_init(&quat_gcd_remove);
     
-
+    // TODO set-up this parameter somewhere clean
+    // TODECIDE the final value of this parameter
     int number_sum_square=0;
+    
+    
+    
     clock_t t = tic();
     // first, we find u,v,d1,d2,beta1,beta2
     int found = find_uv(u,v,coeffs,beta1,beta2,d1,d2,&target,number_sum_square,lideal,Bpoo);
@@ -729,17 +699,18 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     theta_couple_point_t T1;
     theta_couple_point_t T2,T1m2;
     
+    ec_basis_t bas_u;
 
 
     copy_point(&bas.P,&BASIS_EVEN.P);
     copy_point(&bas.Q,&BASIS_EVEN.Q);
     copy_point(&bas.PmQ,&BASIS_EVEN.PmQ);
 
-    for (int i=0;i<TORSION_PLUS_EVEN_POWER-exp;i++) {
-        ec_dbl(&bas.P,&E0,&bas.P);
-        ec_dbl(&bas.Q,&E0,&bas.Q);
-        ec_dbl(&bas.PmQ,&E0,&bas.PmQ);
-    }
+    // for (int i=0;i<TORSION_PLUS_EVEN_POWER-exp;i++) {
+    //     ec_dbl(&bas.P,&E0,&bas.P);
+    //     ec_dbl(&bas.Q,&E0,&bas.Q);
+    //     ec_dbl(&bas.PmQ,&E0,&bas.PmQ);
+    // }
 
 
     // we start by computing theta = beta2 \hat{beta1}/n  
@@ -784,8 +755,8 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         theta_chain_eval_no_help(&V2,&Fu,&xyQ,&E00);
         theta_chain_eval_no_help(&V1m2,&Fu,&xyPmQ,&E00);
 
-        assert(test_point_order_twof(&V1.P1,&Fu.codomain.E1,exp));
-        assert(test_point_order_twof(&V1.P2,&Fu.codomain.E2,exp));
+        assert(test_point_order_twof(&V1.P1,&Fu.codomain.E1,TORSION_PLUS_EVEN_POWER));
+        assert(test_point_order_twof(&V1.P2,&Fu.codomain.E2,TORSION_PLUS_EVEN_POWER));
 
         #ifndef NDEBUG 
             // presumably the correct curve is the the second one, we check this
@@ -795,16 +766,16 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
             ec_point_t AC,A24;
             copy_point(&AC, &CURVE_E0_A24); //Warning, this is AC, not A24!
             A24_from_AC(&A24, &AC);
-            weil(&w0,exp,&bas.P,&bas.Q,&bas.PmQ,&A24);
+            weil(&w0,TORSION_PLUS_EVEN_POWER,&bas.P,&bas.Q,&bas.PmQ,&A24);
             // Changing the AC
             fp2_copy(&AC.x,&Fu.codomain.E1.A);
             fp2_copy(&AC.z,&Fu.codomain.E1.C);
             A24_from_AC(&A24, &AC);
-            weil(&w1,exp,&V1.P1,&V2.P1,&V1m2.P1,&A24);
+            weil(&w1,TORSION_PLUS_EVEN_POWER,&V1.P1,&V2.P1,&V1m2.P1,&A24);
             fp2_copy(&AC.x,&Fu.codomain.E2.A);
             fp2_copy(&AC.z,&Fu.codomain.E2.C);
             A24_from_AC(&A24, &AC);
-            weil(&w2,exp,&V1.P2,&V2.P2,&V1m2.P2,&A24);
+            weil(&w2,TORSION_PLUS_EVEN_POWER,&V1.P2,&V2.P2,&V1m2.P2,&A24);
             ibz_pow(&two_pow,&ibz_const_two,Fu.length);
             ibz_sub(&two_pow,&two_pow,u);
             // now we are checking that one of the two is equal to the correct value 
@@ -819,20 +790,17 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
             assert(fp2_is_equal(&test_pow,&w1));        
         #endif
 
+        // copying the basis images
+        copy_point(&bas_u.P,&V1.P2);
+        copy_point(&bas_u.Q,&V2.P2);
+        copy_point(&bas_u.PmQ,&V1m2.P2);
+
         // copying the points to the first part of the kernel 
         copy_point(&T1.P1,&V1.P2);
         copy_point(&T2.P1,&V2.P2);
         copy_point(&T1m2.P1,&V1m2.P2);
         fp2_copy(&E01.E1.A,&Fu.codomain.E2.A);
         fp2_copy(&E01.E1.C,&Fu.codomain.E2.C);
-
-        // // multiplying by d1 
-        // digit_t digit_d1[4] = {0};
-        // ibz_to_digit_array(digit_d1,d1);
-        // ec_mul(&T1.P1,&E01.E1,digit_d1,&T1.P1);
-        // ec_mul(&T2.P1,&E01.E1,digit_d1,&T2.P1);
-        // ec_mul(&T1m2.P1,&E01.E1,digit_d1,&T1m2.P1);
-
 
         // computation of phiv
         t = tic();
@@ -855,8 +823,8 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         theta_chain_eval_no_help(&V2,&Fv,&xyQ,&E00);
         theta_chain_eval_no_help(&V1m2,&Fv,&xyPmQ,&E00);
 
-        assert(test_point_order_twof(&V1.P1,&Fv.codomain.E1,exp));
-        assert(test_point_order_twof(&V1.P2,&Fv.codomain.E2,exp));
+        assert(test_point_order_twof(&V1.P1,&Fv.codomain.E1,TORSION_PLUS_EVEN_POWER));
+        assert(test_point_order_twof(&V1.P2,&Fv.codomain.E2,TORSION_PLUS_EVEN_POWER));
 
         #ifndef NDEBUG 
             // presumably the correct curve is the the second one, we check this
@@ -864,11 +832,11 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
             fp2_copy(&AC.x,&Fv.codomain.E1.A);
             fp2_copy(&AC.z,&Fv.codomain.E1.C);
             A24_from_AC(&A24, &AC);
-            weil(&w1,exp,&V1.P1,&V2.P1,&V1m2.P1,&A24);
+            weil(&w1,TORSION_PLUS_EVEN_POWER,&V1.P1,&V2.P1,&V1m2.P1,&A24);
             fp2_copy(&AC.x,&Fv.codomain.E2.A);
             fp2_copy(&AC.z,&Fv.codomain.E2.C);
             A24_from_AC(&A24, &AC);
-            weil(&w2,exp,&V1.P2,&V2.P2,&V1m2.P2,&A24);
+            weil(&w2,TORSION_PLUS_EVEN_POWER,&V1.P2,&V2.P2,&V1m2.P2,&A24);
             ibz_pow(&two_pow,&ibz_const_two,Fv.length);
             ibz_sub(&two_pow,&two_pow,v);
             // now we are checking that one of the two is equal to the correct value
@@ -889,14 +857,14 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         copy_point(&bas.PmQ,&V1m2.P2);
 
         // multiplying theta by the inverse of d1 
-        ibz_pow(&two_pow,&ibz_const_two,exp);
+        ibz_pow(&two_pow,&ibz_const_two,TORSION_PLUS_EVEN_POWER);
         ibz_invmod(&tmp,d1,&two_pow);
         ibz_mul(&theta.coord[0],&theta.coord[0],&tmp);
         ibz_mul(&theta.coord[1],&theta.coord[1],&tmp);
         ibz_mul(&theta.coord[2],&theta.coord[2],&tmp);
         ibz_mul(&theta.coord[3],&theta.coord[3],&tmp);
         // applying theta
-        endomorphism_application_even_basis(&bas,&Fv.codomain.E2,&theta,exp); 
+        endomorphism_application_even_basis(&bas,&Fv.codomain.E2,&theta,TORSION_PLUS_EVEN_POWER); 
 
         // copying points to the second part of the kernel
         copy_point(&T1.P2,&bas.P);
@@ -945,8 +913,8 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         theta_chain_eval_no_help(&V2,&Fu,&xyQ,&E00);
         theta_chain_eval_no_help(&V1m2,&Fu,&xyPmQ,&E00);
 
-        assert(test_point_order_twof(&V1.P1,&Fu.codomain.E1,exp));
-        assert(test_point_order_twof(&V1.P2,&Fu.codomain.E2,exp));
+        assert(test_point_order_twof(&V1.P1,&Fu.codomain.E1,TORSION_PLUS_EVEN_POWER));
+        assert(test_point_order_twof(&V1.P2,&Fu.codomain.E2,TORSION_PLUS_EVEN_POWER));
 
         #ifndef NDEBUG 
             // presumably the correct curve is the the second one, we check this
@@ -956,16 +924,16 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
             ec_point_t AC,A24;
             copy_point(&AC, &CURVE_E0_A24); //Warning, this is AC, not A24!
             A24_from_AC(&A24, &AC);
-            weil(&w0,exp,&bas.P,&bas.Q,&bas.PmQ,&A24);
+            weil(&w0,TORSION_PLUS_EVEN_POWER,&bas.P,&bas.Q,&bas.PmQ,&A24);
             // Changing the AC
             fp2_copy(&AC.x,&Fu.codomain.E1.A);
             fp2_copy(&AC.z,&Fu.codomain.E1.C);
             A24_from_AC(&A24, &AC);
-            weil(&w1,exp,&V1.P1,&V2.P1,&V1m2.P1,&A24);
+            weil(&w1,TORSION_PLUS_EVEN_POWER,&V1.P1,&V2.P1,&V1m2.P1,&A24);
             fp2_copy(&AC.x,&Fu.codomain.E2.A);
             fp2_copy(&AC.z,&Fu.codomain.E2.C);
             A24_from_AC(&A24, &AC);
-            weil(&w2,exp,&V1.P2,&V2.P2,&V1m2.P2,&A24);
+            weil(&w2,TORSION_PLUS_EVEN_POWER,&V1.P2,&V2.P2,&V1m2.P2,&A24);
             ibz_pow(&two_pow,&ibz_const_two,Fu.length);
             ibz_sub(&two_pow,&two_pow,u);
             // now we are checking that one of the two is equal to the correct value 
@@ -995,7 +963,6 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         ec_mul(&T1m2.P1,&E01.E1,digit_d1,&T1m2.P1);
 
         // now we deal with the second part of the kernel
-
         // phiv    
         ibz_set(&quat_tmp.denom,1);
         ibz_copy(&quat_tmp.coord[0],&((*coeffs)[2]));
@@ -1009,7 +976,7 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         quat_alg_normalize(&theta);
 
         // applying theta
-        endomorphism_application_even_basis(&bas,&E0,&theta,exp); 
+        endomorphism_application_even_basis(&bas,&E0,&theta,TORSION_PLUS_EVEN_POWER); 
 
         // copying points to the second part of the kernel
         copy_point(&T1.P2,&bas.P);
@@ -1037,13 +1004,6 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
             assert(ibz_cmp(&test1,&test2)==0);
 
         #endif
-
-        // // multiplication by d1 
-        // digit_t digit_d1[4] = {0};
-        // ibz_to_digit_array(digit_d1,d1);
-        // ec_mul(&bas.P,&E0,digit_d1,&bas.P);
-        // ec_mul(&bas.Q,&E0,digit_d1,&bas.Q);
-        // ec_mul(&bas.PmQ,&E0,digit_d1,&bas.PmQ);
         
         
         // multiplication by u*d1 
@@ -1111,8 +1071,16 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         assert(test_point_order_twof(&bas.P,&E0,exp));
         assert(test_point_order_twof(&bas.Q,&E0,exp));
         assert(test_point_order_twof(&bas.PmQ,&E0,exp));
-
         
+    }
+
+    for (int i=0;i<TORSION_PLUS_EVEN_POWER-exp;i++) {
+        ec_dbl(&T1.P1,&E01.E1,&T1.P1);
+        ec_dbl(&T2.P1,&E01.E1,&T2.P1);
+        ec_dbl(&T1m2.P1,&E01.E1,&T1m2.P1);
+        ec_dbl(&T1.P2,&E01.E2,&T1.P2);
+        ec_dbl(&T2.P2,&E01.E2,&T2.P2);
+        ec_dbl(&T1m2.P2,&E01.E2,&T1m2.P2);
     }
 
 
@@ -1125,7 +1093,91 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
 
     t=tic();
     theta_chain_comput_strategy(isog,exp,&E01,&T1,&T2,&T1m2,strategies[TORSION_PLUS_EVEN_POWER-exp+2],0);
-    TOC(t,"final theta chain computation");
+    TOC(t,"final theta chain computation"); 
+
+    // now we evaluate the basis points through the isogeny
+    assert(test_point_order_twof(&bas_u.P,&E01.E1,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&bas_u.Q,&E01.E1,TORSION_PLUS_EVEN_POWER));
+
+    // evaluating the basis through the isogeny of degree u*d1
+    theta_couple_jac_point_t xyP,xyQ,xyPmQ;
+    jac_point_t temp;
+    lift_basis(&xyP.P1,&xyQ.P1,&bas_u,&E01.E1);
+    // TODO we can do better, the addition has been computed inside lift_basis
+    jac_neg(&temp,&xyQ.P1);
+    ADD(&xyPmQ.P1,&xyP.P1,&temp,&E01.E1);
+    fp2_set(&xyP.P2.x,0);
+    fp2_set(&xyP.P2.y,1);
+    fp2_set(&xyP.P2.z,0);
+    fp2_set(&xyQ.P2.x,0);
+    fp2_set(&xyQ.P2.y,1);
+    fp2_set(&xyQ.P2.z,0);
+    fp2_set(&xyPmQ.P2.x,0);
+    fp2_set(&xyPmQ.P2.y,1);
+    fp2_set(&xyPmQ.P2.z,0);
+    theta_chain_eval_no_help(&T1,isog,&xyP,&E01);
+    theta_chain_eval_no_help(&T2,isog,&xyQ,&E01);
+    theta_chain_eval_no_help(&T1m2,isog,&xyPmQ,&E01);
+
+    assert(test_point_order_twof(&T1.P1,&isog->codomain.E1,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&T2.P1,&isog->codomain.E1,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&T1m2.P1,&isog->codomain.E1,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&T1.P2,&isog->codomain.E2,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&T2.P2,&isog->codomain.E2,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&T1m2.P2,&isog->codomain.E2,TORSION_PLUS_EVEN_POWER));
+
+    copy_point(&basis->P,&T1.P2);
+    copy_point(&basis->Q,&T2.P2);
+    copy_point(&basis->PmQ,&T1m2.P2);
+    copy_curve(codomain,&isog->codomain.E2);
+
+    // using weil pairing to verify that we selected the correct curve
+    fp2_t w0,w1;
+    ec_point_t AC,A24;
+    ec_basis_t bas0=BASIS_EVEN;
+    copy_point(&AC, &CURVE_E0_A24); //Warning, this is AC, not A24!
+    A24_from_AC(&A24, &AC);
+    weil(&w0,TORSION_PLUS_EVEN_POWER,&bas0.P,&bas0.Q,&bas0.PmQ,&A24);
+    // Changing the AC
+    fp2_copy(&AC.x,&codomain->A);
+    fp2_copy(&AC.z,&codomain->C);
+    A24_from_AC(&A24, &AC);
+    weil(&w1,TORSION_PLUS_EVEN_POWER,&basis->P,&basis->Q,&basis->PmQ,&A24);
+
+    digit_t digit_d[NWORDS_ORDER]={0};
+    ibz_mul(&tmp,d1,u);
+    ibz_mul(&tmp,&tmp,u);
+    ibz_to_digit_array(digit_d,&tmp);
+    fp2_t test_pow;
+    fp2_pow(&test_pow,&w0,digit_d,NWORDS_ORDER);
+
+    // then we have selected the wrong one
+    if (!fp2_is_equal(&w1,&test_pow)) {
+        
+        copy_point(&basis->P,&T1.P1);
+        copy_point(&basis->Q,&T2.P1);
+        copy_point(&basis->PmQ,&T1m2.P1);
+        copy_curve(codomain,&isog->codomain.E1);
+
+        // verifying that the other one is the good one
+        #ifndef NDEBUG
+            fp2_copy(&AC.x,&codomain->A);
+            fp2_copy(&AC.z,&codomain->C);
+            A24_from_AC(&A24, &AC);
+            weil(&w1,TORSION_PLUS_EVEN_POWER,&basis->P,&basis->Q,&basis->PmQ,&A24);
+
+            ibz_mul(&tmp,d1,u);
+            ibz_mul(&tmp,&tmp,u);
+            ibz_to_digit_array(digit_d,&tmp);
+            fp2_pow(&test_pow,&w0,digit_d,NWORDS_ORDER);
+            assert(fp2_is_equal(&test_pow,&w1));
+        #endif 
+
+    }
+
+    // copying the points to the output
+    
+
 
     ibq_finalize(&norm);
     ibz_finalize(&test1);

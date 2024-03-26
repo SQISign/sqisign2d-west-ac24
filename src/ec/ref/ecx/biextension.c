@@ -256,3 +256,210 @@ void weil(fp2_t* r, uint64_t e, ec_point_t* P, ec_point_t* Q, ec_point_t* PQ, ec
     to_cubical_i(Q, P, &ixP, &ixQ);
     weil_n(r, e, P, Q, PQ, &ixP, &ixQ, A24);
 }
+
+// recursive dlog function 
+bool fp2_dlog_2e_rec(digit_t *a, long len, fp2_t *pows_f, fp2_t *pows_g, long stacklen){
+  if (len == 0) {
+    // *a = 0;
+    for (int i=0;i<NWORDS_ORDER;i++) {
+        a[i]=0;
+    }
+    return true;
+  }
+  else if (len == 1) {
+    if (fp2_is_one(&pows_f[stacklen-1])) {
+      // a = 0;
+      for (int i=0;i<NWORDS_ORDER;i++) {
+        a[i]=0;
+      }
+      for (int i = 0; i < stacklen-1; ++i) {
+        fp2_sqr(&pows_g[i],&pows_g[i]); // new_g = g^2 
+      }
+      return true;
+    }
+    else if (fp2_is_equal(&pows_f[stacklen-1],&pows_g[stacklen-1])) {
+      // a = 1;
+      a[0]=1;
+      for (int i=1;i<NWORDS_ORDER;i++) {
+        a[i]=0;
+      }
+      fp2_t tmp;
+      for (int i = 0; i < stacklen-1; ++i) {
+        fp2_mul(&pows_f[i],&pows_f[i],&pows_g[i]); // new_f = f*g
+        fp2_sqr(&pows_g[i],&pows_g[i]); // new_g = g^2 
+      }
+      return true;
+    }
+    else { return false; }
+  }
+  else {
+    long right = (double)len * 0.5;
+    long left = len - right;
+    pows_f[stacklen] = pows_f[stacklen-1];
+    pows_g[stacklen] = pows_g[stacklen-1];
+    for (int i = 0; i < left; i++) {
+      fp2_sqr(&pows_f[stacklen], &pows_f[stacklen]);
+      fp2_sqr(&pows_g[stacklen], &pows_g[stacklen]);
+    
+    }
+    // uint64_t dlp1 = 0, dlp2 = 0;
+    digit_t dlp1[NWORDS_ORDER],dlp2[NWORDS_ORDER];
+    bool ok;
+    ok = fp2_dlog_2e_rec(dlp1, right, pows_f, pows_g, stacklen+1);
+    if (!ok) return false;
+    ok = fp2_dlog_2e_rec(dlp2, left, pows_f, pows_g, stacklen);
+    if (!ok) return false;
+    // a = dlp1 + 2^right * dlp2
+    multiple_mp_shiftl(dlp2,right,NWORDS_ORDER);
+    mp_add(a,dlp2,dlp1,NWORDS_ORDER);
+
+    return true;
+  }
+}
+
+
+//compute DLP
+bool fp2_dlog_2e(digit_t* scal,const fp2_t *f,const fp2_t *g,int e){
+  long log, len = e;
+  for (log = 0; len > 1; len >>= 1) log++;
+  log += 1;
+
+  fp2_t pows_f[log], pows_g[log];
+  pows_f[0] = *f;
+  pows_g[0] = *g;
+  fp2_inv(&pows_g[0]);
+
+  for (int i=0;i<NWORDS_ORDER;i++) {
+    scal[i]=0;
+  }
+
+  bool ok = fp2_dlog_2e_rec(scal, e, pows_f, pows_g,1);
+  assert(ok);
+
+  return ok;
+}
+
+
+
+
+// compute the decomputation of basis on the basis PQ
+void ec_dlog_2_weil(digit_t* scalarP1, digit_t* scalarQ1, digit_t* scalarP2, digit_t* scalarQ2, ec_basis_t* PQ, ec_basis_t *basis, ec_curve_t* curve,int e) {
+
+    assert(test_point_order_twof(&PQ->P,curve,e));
+    assert(test_point_order_twof(&PQ->Q,curve,e));
+    assert(test_point_order_twof(&PQ->PmQ,curve,e));
+    assert(test_point_order_twof(&basis->P,curve,e));
+    assert(test_point_order_twof(&basis->Q,curve,e));
+    assert(test_point_order_twof(&basis->PmQ,curve,e));
+
+
+
+    fp2_t w0,w;
+    ec_point_t AC,A24;
+    ec_point_t PmP1,P1mQ,PmP2,P2mQ;
+    jac_point_t xyP,xyQ,xyP1,xyP2,temp;
+
+    // we start by computing the different weil pairings
+
+    // precomputing the correct curve data
+    fp2_copy(&AC.x,&curve->A);
+    fp2_copy(&AC.z,&curve->C);
+    A24_from_AC(&A24, &AC);
+
+    // lifting the two basis points
+    lift_basis(&xyP,&xyQ,PQ,curve);
+    lift_basis(&xyP1,&xyP2,basis,curve);
+
+    // computation of the differences 
+    jac_neg(&temp,&xyP1);
+    ADD(&temp,&temp,&xyP,curve);
+    jac_to_xz(&PmP1,&temp);
+    jac_neg(&temp,&xyP2);
+    ADD(&temp,&temp,&xyP,curve);
+    jac_to_xz(&PmP2,&temp);
+    jac_neg(&temp,&xyQ);
+    ADD(&temp,&temp,&xyP1,curve);
+    jac_to_xz(&P1mQ,&temp);
+    jac_neg(&temp,&xyQ);
+    ADD(&temp,&temp,&xyP2,curve);
+    jac_to_xz(&P2mQ,&temp);
+
+
+    // computation of the reference weil pairing 
+    weil(&w0,e,&PQ->P,&PQ->Q,&PQ->PmQ,&A24);
+    // e(P,P1) = w0^scalarQ1
+    weil(&w,e,&PQ->P,&basis->P,&PmP1,&A24);
+    fp2_dlog_2e(scalarQ1,&w,&w0,e);
+    // e(P1,Q) = w0^scalarP1
+    weil(&w,e,&basis->P,&PQ->Q,&P1mQ,&A24);
+    fp2_dlog_2e(scalarP1,&w,&w0,e);
+    // e(P,P2) = w0^scalarQ2
+    weil(&w,e,&PQ->P,&basis->Q,&PmP2,&A24);
+    fp2_dlog_2e(scalarQ2,&w,&w0,e);
+    // e(P2,Q) = w0^scalarP2
+    weil(&w,e,&basis->Q,&PQ->Q,&P2mQ,&A24);
+    fp2_dlog_2e(scalarP2,&w,&w0,e);
+
+    #ifndef NDEBUG
+        ec_point_t test_comput;
+        ec_biscalar_mul(&test_comput,curve,scalarP1,scalarQ1,PQ);
+
+        assert(ec_is_equal(&test_comput,&basis->P));
+        ec_biscalar_mul(&test_comput,curve,scalarP2,scalarQ2,PQ);
+        assert(ec_is_equal(&test_comput,&basis->Q));
+    #endif
+
+}
+
+// compute a DLP between elements of order 2^e in fp2_t
+// void fp2_dlog_2e(digit_t* scal,const fp2_t *f,const fp2_t *g,int e) {
+    
+//     fp2_t recon,acc;
+
+//     fp2_t pows_f[e];
+//     fp2_t pows_g[e];
+//     int num_word = e/RADIX + 1;
+//     int j=0;
+//     int i=0;
+//     // setting everything to zero
+//     for (j=0;j<num_word;j++) {
+//         scal[j]=0;
+//     }
+
+//     // computing the list of power of f
+//     fp2_setone(&pows_f[0]);
+//     fp2_copy(&pows_f[1],f);
+//     fp2_setone(&pows_g[0]);
+//     fp2_copy(&pows_g[1],g);
+//     fp2_inv(&pows_g[1]);
+
+    
+
+//     // pows[i] = f^i
+//     for (i=2;i<e;i++) {
+//         fp2_sqr(&pows_f[i],&pows_f[i-1]);
+//         fp2_sqr(&pows_g[i],&pows_g[i-1]);
+//     }
+
+//     i=0;
+//     fp2_setone(&acc);
+//     unsigned long value;
+//     for (j=0;j<num_word;j++) {
+//             value=1;
+//         for (i=0;(i<64 && i+64*j<e-1);i++) {
+//             fp2_mul(&recon,&pows_f[e-1 - (i +j*64)],&acc);
+//             if (!fp2_is_one(&recon)) {
+//                 scal[j]= (unsigned long) (scal[j] + value);
+//                 fp2_mul(&acc,&acc,&pows_g[i + 64*j+1]);
+//                 printf("%lu %lu  \n",scal[j],value);
+//             }
+//             value<<=1;
+//         }
+//     }
+//     printf("result %lu %lu %lu %lu \n",scal[0],scal[1],scal[2],scal[3]);
+
+//     fp2_mul(&recon,&pows_f[1],&acc);
+//     assert(fp2_is_one(&recon));
+
+//     // now we com
+// }

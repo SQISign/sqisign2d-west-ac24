@@ -85,6 +85,16 @@ void MUL(digit_t* out, const digit_t a, const digit_t b)
     out[1] ^= (ahbh & mask_high) + carry;     // out11
 }
 
+
+void mp_add(digit_t* c, const digit_t* a, const digit_t* b, const unsigned int nwords)
+{ // Multiprecision addition
+    unsigned int i, carry = 0;
+
+    for (i = 0; i < nwords; i++) {
+        ADDC(c[i], carry, a[i], b[i], carry);
+    }
+}
+
 digit_t mp_shiftr(digit_t* x, const unsigned int shift, const unsigned int nwords)
 { // Multiprecision right shift
     digit_t bit_out = x[0] & 1;
@@ -97,12 +107,21 @@ digit_t mp_shiftr(digit_t* x, const unsigned int shift, const unsigned int nword
 }
 
 void mp_shiftl(digit_t* x, const unsigned int shift, const unsigned int nwords)
-{ // Multiprecision left shift
+{ // Multiprecision left shift of at most 64
 
     for (int i = nwords-1; i > 0; i--) {
         SHIFTL(x[i], x[i-1], shift, x[i], RADIX);
     }
     x[0] <<= shift;
+}
+
+void multiple_mp_shiftl(digit_t* x, const unsigned int shift, const unsigned int nwords) {
+    int t = shift;
+    while (t>60) {
+        mp_shiftl(x,60,nwords);
+        t = t-60;
+    }
+    mp_shiftl(x,t,nwords);
 }
 
 static void fp_exp3div4(digit_t* out, const digit_t* a)

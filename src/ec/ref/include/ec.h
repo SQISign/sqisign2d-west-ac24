@@ -11,6 +11,7 @@
 #include <fp2.h>
 #include <ec_params.h>
 #include <tools.h>
+#include <stdio.h>
 
 
 /** @defgroup ec Elliptic curves
@@ -480,6 +481,28 @@ static int test_point_order_threef(const ec_point_t *P, const ec_curve_t *E,int 
     if (fp2_is_zero(&test.z)) return 0;
     ec_mul(&test, E, three, &test);
     return (fp2_is_zero(&test.z));
+}
+
+
+static void point_print(char *name, ec_point_t P){
+    fp2_t a;
+    if(fp2_is_zero(&P.z)){
+        printf("%s = INF\n", name);
+    }
+    else{
+    fp2_copy(&a, &P.z);
+    fp2_inv(&a);
+    fp2_mul(&a, &a, &P.x);
+    fp2_print(name, a);
+    }
+}
+
+static void curve_print(char *name, ec_curve_t E){
+    fp2_t a;
+    fp2_copy(&a, &E.C);
+    fp2_inv(&a);
+    fp2_mul(&a, &a, &E.A);
+    fp2_print(name, a);
 }
 
 

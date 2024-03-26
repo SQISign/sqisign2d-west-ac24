@@ -34,7 +34,8 @@ bool fp2_is_one(const fp2_t* a)
   // Returns 1 (true) if a=0, 0 (false) otherwise
 
     fp2_t t;
-    fp2_set_one(&t);
+    fp_set(t.im,0);
+    fp_mont_setone(t.re);
     return fp2_is_equal(&t, a);
 }
 
@@ -267,4 +268,24 @@ void fp2_pow(fp2_t *out,const fp2_t * x,const digit_t *exp,const int size) {
         fp2_sqr(&acc, &acc);
     }
 
+}
+
+void digit_print(char *name,digit_t *a) {
+    printf("%s0x = ", name);
+    for(int i = NWORDS_FIELD - 1; i >=0; i--)
+        printf("%016lx", a[i]);
+    printf("\n");
+}
+
+void fp2_print(char *name, fp2_t const a){
+    fp2_t b;
+    fp2_set(&b, 1);
+    fp2_mul(&b, &b, &a);
+    printf("%s0x", name);
+    for(int i = NWORDS_FIELD - 1; i >=0; i--)
+        printf("%016lx", b.re[i]);
+    printf(" + i*0x");
+    for(int i = NWORDS_FIELD - 1; i >=0; i--)
+        printf("%016lx", b.im[i]);
+    printf("\n");
 }

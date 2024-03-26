@@ -5,34 +5,9 @@
 #include <tools.h>
 
 
-//XXX FIXME stolen from src/ec/opt/generic/test/isog-test.c
-static void fp2_print(char *name, fp2_t const a){
-    fp_t b1,b2;
-    fp_frommont(b1,a.re);
-    fp_frommont(b2,a.im);
-    printf("%s = 0x", name);
-    for(int i = NWORDS_FIELD - 1; i >=0; i--)
-        printf("%016" PRIx64, b1[i]);
-    printf(" + i*0x");
-    for(int i = NWORDS_FIELD - 1; i >=0; i--)
-        printf("%016" PRIx64, b2[i]);
-    printf("\n");
-}
 
-static void point_print(char *name, ec_point_t P){
-    fp2_t a;
-    if(fp2_is_zero(&P.z)){
-        printf("%s = INF\n", name);
-    }
-    else{
-    fp2_copy(&a, &P.z);
-    fp2_inv(&a);
-    fp2_mul(&a, &a, &P.x);
-    fp2_print(name, a);
-    }
-}
 
-static void theta_print(char *name, theta_point_t P) {
+void theta_print(char *name, theta_point_t P) {
     fp2_t a;
     assert(!fp2_is_zero(&P.y));
     fp2_copy(&a,&P.y);
