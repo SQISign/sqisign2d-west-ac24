@@ -343,16 +343,12 @@ bool fp2_dlog_2e(digit_t* scal,const fp2_t *f,const fp2_t *g,int e){
 
 
 // compute the decomputation of basis on the basis PQ
+// note that basis might not actually be a basis (the order might me smaller than 2^e)
 void ec_dlog_2_weil(digit_t* scalarP1, digit_t* scalarQ1, digit_t* scalarP2, digit_t* scalarQ2, ec_basis_t* PQ, ec_basis_t *basis, ec_curve_t* curve,int e) {
 
     assert(test_point_order_twof(&PQ->P,curve,e));
     assert(test_point_order_twof(&PQ->Q,curve,e));
     assert(test_point_order_twof(&PQ->PmQ,curve,e));
-    assert(test_point_order_twof(&basis->P,curve,e));
-    assert(test_point_order_twof(&basis->Q,curve,e));
-    assert(test_point_order_twof(&basis->PmQ,curve,e));
-
-
 
     fp2_t w0,w;
     ec_point_t AC,A24;

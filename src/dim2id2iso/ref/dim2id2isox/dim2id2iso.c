@@ -116,9 +116,9 @@ int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *
     ibz_sub(&tmp,&two_pow,u);
     ibz_mul(&tmp,&tmp,u);
 
-    clock_t t = tic();
+    // clock_t t = tic();
     found = represent_integer_non_diag(&theta,&tmp,&QUATALG_PINFTY);
-    TOC(t,"represent integer");
+    // TOC(t,"represent integer");
 
     if (!found) {
         printf("represent integer failed \n");
@@ -191,10 +191,10 @@ int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *
     else {
 
         // need to adjust 
-        t = tic();
+        // t = tic();
         assert(TORSION_PLUS_EVEN_POWER - length >= 2);
         theta_chain_comput_strategy(isog,length,&E01,&T1,&T2,&T1m2,special_small_strategy,extra_info);
-        TOC(t,"theta chain inside fixed");
+        // TOC(t,"theta chain inside fixed");
     }
 
 
@@ -299,6 +299,7 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
         ibz_swap(&gram[3][2],&gram[1][2]);
         ibz_swap(&gram[3][3],&gram[1][1]);
     }
+    // TODO : sometimes this fail, needs to be fixed
     assert(ibz_cmp(&gram[0][0],&gram[1][1])==0);
     // adjusting the sign if needed 
     if (ibz_cmp(&reduced[0][0],&reduced[1][1])!=0) {
@@ -605,6 +606,7 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
 
     ibz_init(&target);ibz_init(&tmp);ibz_init(&two_pow);
     // TODECIDE allow for a smaller exponent ?
+    // TODO if we remain with the smaller exponent then this value has already been computed
     int exp = TORSION_PLUS_EVEN_POWER;
     ibz_pow(&target,&ibz_const_two,exp);
     quat_alg_elem_init(&theta);
@@ -615,18 +617,17 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     // TODECIDE the final value of this parameter
     int number_sum_square=0;
     
-    
-    
-    clock_t t = tic();
+    // clock_t t = tic();
     // first, we find u,v,d1,d2,beta1,beta2
+    // such that u*d1 + v*d2 = 2^TORSION_PLUS_EVEN_POWER and there are ideals of norm d1,d2 equivalent to ideal
+    // beta1 and beta2 are elements of norm nd1, nd2 where n=n(lideal)
     int found = find_uv(u,v,coeffs,beta1,beta2,d1,d2,&target,number_sum_square,lideal,Bpoo);
-    TOC(t,"\n \ntotal time to find u,v");
+    // TOC(t,"\n \ntotal time to find u,v");
 
     if (!found) {
         return 0;
     }
    
-    // TODO the following works only when d1,d2 are odd
     assert(ibz_get(d1)%2==1 && ibz_get(d2)%2==1); 
     // compute the valuation of the GCD of u,v 
     ibz_gcd(&tmp,u,v);
@@ -706,12 +707,6 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     copy_point(&bas.Q,&BASIS_EVEN.Q);
     copy_point(&bas.PmQ,&BASIS_EVEN.PmQ);
 
-    // for (int i=0;i<TORSION_PLUS_EVEN_POWER-exp;i++) {
-    //     ec_dbl(&bas.P,&E0,&bas.P);
-    //     ec_dbl(&bas.Q,&E0,&bas.Q);
-    //     ec_dbl(&bas.PmQ,&E0,&bas.PmQ);
-    // }
-
 
     // we start by computing theta = beta2 \hat{beta1}/n  
     ibz_set(&theta.denom,1);
@@ -731,9 +726,9 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         E00.E2 = E0;
 
         // we perform the computation of phiu with a fixed degree isogeny 
-        t = tic();
+        // t = tic();
         fixed_degree_isogeny(&Fu,&idealu,u,1,1);
-        TOC(t,"1st fixed deg");
+        // TOC(t,"1st fixed deg");
         // pushing the torsion points through Fu
         // first we lift the basis 
         theta_couple_jac_point_t xyP,xyQ,xyPmQ;
@@ -803,10 +798,10 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         fp2_copy(&E01.E1.C,&Fu.codomain.E2.C);
 
         // computation of phiv
-        t = tic();
+        // t = tic();
         int bv = fixed_degree_isogeny(&Fv,&idealv,v,1,1);
         assert(bv);
-        TOC(t,"2nd fixed deg");
+        // TOC(t,"2nd fixed deg");
 
         fp2_set(&xyP.P2.x,0);
         fp2_set(&xyP.P2.y,1);
@@ -1091,9 +1086,11 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     assert(test_point_order_twof(&T1m2.P1,&E01.E1,exp));
     assert(test_point_order_twof(&T1m2.P2,&E01.E2,exp));
 
-    t=tic();
+    assert(ibz_get(u)%2==1);
+
+    // t=tic();
     theta_chain_comput_strategy(isog,exp,&E01,&T1,&T2,&T1m2,strategies[TORSION_PLUS_EVEN_POWER-exp+2],0);
-    TOC(t,"final theta chain computation"); 
+    // TOC(t,"final theta chain computation"); 
 
     // now we evaluate the basis points through the isogeny
     assert(test_point_order_twof(&bas_u.P,&E01.E1,TORSION_PLUS_EVEN_POWER));
@@ -1175,8 +1172,29 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
 
     }
 
-    // copying the points to the output
-    
+    // now we apply M / (u * d1) where M is the matrix corresponding to the endomorphism beta1 = phi o dual(phi1)
+    // we multiply beta1 by the inverse of (u*d1) mod 2^TORSION_PLUS_EVEN_POWER
+    ibz_mul(&tmp,u,d1);
+    ibz_invmod(&tmp,&tmp,&TORSION_PLUS_2POWER);
+    ibz_mul(&beta1->coord[0],&beta1->coord[0],&tmp);
+    ibz_mul(&beta1->coord[1],&beta1->coord[1],&tmp);
+    ibz_mul(&beta1->coord[2],&beta1->coord[2],&tmp);
+    ibz_mul(&beta1->coord[3],&beta1->coord[3],&tmp);
+
+    endomorphism_application_even_basis(basis,codomain,beta1,TORSION_PLUS_EVEN_POWER);
+
+    #ifndef NDEBUG 
+
+        fp2_copy(&AC.x,&codomain->A);
+        fp2_copy(&AC.z,&codomain->C);
+        A24_from_AC(&A24, &AC);
+        weil(&w1,TORSION_PLUS_EVEN_POWER,&basis->P,&basis->Q,&basis->PmQ,&A24);
+
+        ibz_to_digit_array(digit_d,&lideal->norm);
+        fp2_pow(&test_pow,&w0,digit_d,NWORDS_ORDER);
+        assert(fp2_is_equal(&test_pow,&w1));
+
+    #endif
 
 
     ibq_finalize(&norm);
@@ -1189,6 +1207,53 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     quat_alg_elem_finalize(&theta);
     quat_alg_elem_finalize(&quat_tmp);
     quat_alg_elem_init(&quat_gcd_remove);
+    return found;
+
+}
+
+
+
+/**
+ * @brief Translating an ideal into a representation of the corresponding isogeny
+ *
+ * @param basis Output : evaluation of the canonical basis of E0 through the ideal corresponding to lideal
+ * @param lideal : ideal in input
+ * 
+ * This is a wrapper around the ideal to isogeny clapotis function 
+ */
+int dim2id2iso_arbitrary_isogeny_evaluation(ec_basis_t *basis, ec_curve_t *codomain,const quat_left_ideal_t *lideal) {
+    int found;
+    ibz_vec_4_t coeffs;
+
+    quat_alg_elem_t beta1,beta2;
+    ibz_t u,v,au,bu,d1,d2;
+
+    // theta stuff
+    theta_chain_t Phi;
+    theta_chain_t phiu,phiv;
+
+    quat_alg_elem_init(&beta1);
+    quat_alg_elem_init(&beta2);
+
+    ibz_vec_4_init(&coeffs);
+
+    ibz_init(&u);
+    ibz_init(&v);
+    ibz_init(&d1);ibz_init(&d2);
+
+
+
+    found = dim2id2iso_ideal_to_isogeny_clapotis(&Phi,&beta1,&beta2,&u,&v,&coeffs,&phiu,&phiv,&d1,&d2,codomain,basis,lideal,&QUATALG_PINFTY);
+
+    ibz_vec_4_finalize(&coeffs);
+
+    quat_alg_elem_finalize(&beta1);
+    quat_alg_elem_finalize(&beta2);
+
+    ibz_finalize(&u);
+    ibz_finalize(&v);
+    ibz_finalize(&d1);ibz_finalize(&d2);
+
     return found;
 
 }

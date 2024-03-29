@@ -1649,6 +1649,8 @@ void theta_chain_comput_balanced(theta_chain_t *out,int n, theta_couple_curve_t 
 
 void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t *E12,const theta_couple_point_t *T1,const theta_couple_point_t *T2, const theta_couple_point_t *T1m2,int *strategy, int eight_above) {
 
+    // printf("theta chain of length %d \n",n);
+
     theta_couple_point_t P1,P2,P1m2;
     theta_point_t R1,R2;
     theta_isogeny_t steps[n-1];
@@ -1733,8 +1735,7 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
         double_couple_jac_point_iter(&points2[i],strategy[i-1],E12,&points2[i-1]);
         level[i] = strategy[i-1];
     }
-    // printf("4 * %d  (x:y:z) doubling ",n);
-    // TOC_clock(t,"");
+
 
     // prepare the kernel of the first step
     copy_jac_point(&xyK1.P1,&points1[len_list-1].P1);
@@ -1745,6 +1746,8 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
 
     assert(test_jac_order_twof(&xyK1.P2,&E12->E2,3));
     assert(test_jac_order_twof(&xyK2.P1,&E12->E1,3));
+    assert(test_jac_order_twof(&xyK1.P1,&E12->E1,3));
+    assert(test_jac_order_twof(&xyK2.P2,&E12->E2,3));
 
 
     // compute the gluing isogeny 

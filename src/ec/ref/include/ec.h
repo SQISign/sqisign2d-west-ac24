@@ -304,7 +304,7 @@ void ec_biscalar_mul(ec_point_t* res, const ec_curve_t* curve,
  * @param PQ2 computed basis of the 2^f-torsion
  * @param curve the computed curve
  */
-void ec_curve_to_basis_2(ec_basis_t *PQ2, const ec_curve_t *curve);
+void ec_curve_to_basis_2(ec_basis_t *PQ2, const ec_curve_t *curve,int f);
 
 /**
  * @brief Complete a basis of the 2^f-torsion
@@ -381,6 +381,9 @@ void ec_dlog_3(digit_t* scalarP, digit_t* scalarQ,
 void ec_eval_even(ec_curve_t* image, const ec_isog_even_t* phi,
     ec_point_t* points, unsigned short length);
 
+// naive implementation for very small chain
+void ec_eval_small_chain(ec_curve_t *image, const ec_point_t *kernel, int len,ec_point_t *points,int len_points);   
+
 /**
  * @brief Evaluate isogeny of even degree on list of points, assuming the point (0,0) is not in the kernel
  *
@@ -448,6 +451,7 @@ void lift_basis(jac_point_t *P, jac_point_t *Q, ec_basis_t *B, ec_curve_t *E);
 static int test_point_order_twof(const ec_point_t *P, const ec_curve_t *E,int t) {
     ec_point_t test;
     test = *P;
+    // copy_point(&test,P);
     if (fp2_is_zero(&test.z)) return 0;
     for (int i = 0;i<t-1;i++) {
         ec_dbl(&test,E,&test);

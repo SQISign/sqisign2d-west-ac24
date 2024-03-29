@@ -497,7 +497,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, const secret_key_t 
     // BA0 = image through secret isogeny of canonical basis of E0
     // Bcom0 = image through commitment isogeny (odd degree) of canonical basis of E0
 
-    ec_curve_to_basis_2(&Bcom_can, &E_com);
+    ec_curve_to_basis_2(&Bcom_can, &E_com,TORSION_PLUS_EVEN_POWER);
 
 
     matrix_of_endomorphism_even(&mat_alpha0, &resp_quat); // matrix of alpha wrt the basis B0
@@ -508,7 +508,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, const secret_key_t 
     // M_Bcom_to_Bcom0*Bcom_can = Bcom0
 
     if (verbose) TOC(t, "change_of_basis_matrix_two in");
-    change_of_basis_matrix_two(&mat_Bcom0_to_Bcom, &Bcom0, &Bcom_can, &E_com); // a 2-dimensional DLP
+    change_of_basis_matrix_two(&mat_Bcom0_to_Bcom, &Bcom0, &Bcom_can, &E_com,TORSION_PLUS_EVEN_POWER); // a 2-dimensional DLP
     if (verbose) TOC(t, "change_of_basis_matrix_two out");
 
     // (M_BA0_to_BA*v).BA = v.BA0, precomputed
@@ -549,7 +549,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, const secret_key_t 
         ibz_printf("ker_phi_vect[1] = %Zd, ", &(vec_can[1]));
 
 
-        ec_curve_to_basis_2(&B_can_two, &(pk->curve)); 
+        ec_curve_to_basis_2(&B_can_two, &(pk->curve),TORSION_PLUS_EVEN_POWER); 
         point_print("xPA = ", B_can_two.P);
         point_print("xQA = ", B_can_two.Q);
         point_print("xPAmQA = ", B_can_two.PmQ);
@@ -557,7 +557,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, const secret_key_t 
 
         curve_print("A_E1 = ", sig->E_com);
 
-        ec_curve_to_basis_2(&B_com_can_two, &(sig->E_com)); 
+        ec_curve_to_basis_2(&B_com_can_two, &(sig->E_com),TORSION_PLUS_EVEN_POWER); 
         point_print("xP1 = ", B_com_can_two.P);
         point_print("xQ1 = ", B_com_can_two.Q);
         point_print("xP1mQ1 = ", B_com_can_two.PmQ);

@@ -7,7 +7,7 @@ import os
 # importing math
 import math
 # importing sage
-# from sage.all import *
+from sage.all import *
 
 # The following benchmarks are required for computing optimal strategies.
 # The costs can be specified in arbitrary units and can be obtained by
@@ -137,7 +137,10 @@ if __name__ == '__main__':
     f.write(f'#define P_COFACTOR_FOR_6FG_BITLENGTH {((p+1)//3**POWER_OF_3//2**POWER_OF_2).bit_length()}\n')
     f.write('\n')
     f.write('// Strategy for 4-isogenies\n')
-    f.write(f'static int STRATEGY4[{POWER_OF_2//2-1}] = {list2str(strategy(POWER_OF_2//2-1, 2*p2, q4))};\n')
+    f.write(f'static int STRATEGY4[{15}][{POWER_OF_2//2-1}]='+'{\n')
+    for i in range(0,15):
+        f.write(f'{list2str(strategy((POWER_OF_2-i)//2-1, 2*p2, q4)+[0]*((i+1)//2))},\n')
+    f.write(f''+'};')
     f.write('\n')
     f.write('// Optimal sizes for I,J,K in squareroot Velu\n')
     f.write(f'static int sizeI[{len(sizeI)}] =\n\t{list2str(sizeI)};\n')

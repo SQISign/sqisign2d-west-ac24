@@ -12,11 +12,13 @@ const clock_t time_sample_response = 0;
 const clock_t time_change_of_basis_matrix = 0;
 
 void secret_sig_init(signature_t *sig) {
-    ibz_mat_2x2_init(&(sig->mat_sigma_phichall));
+    ibz_mat_2x2_init(&(sig->mat_Bchall_can_to_B_chall));
+    ibz_init(&sig->chall_coeff);
 }
 
 void secret_sig_finalize(signature_t *sig) {
-    ibz_mat_2x2_finalize(&(sig->mat_sigma_phichall));
+    ibz_mat_2x2_finalize(&(sig->mat_Bchall_can_to_B_chall));
+    ibz_finalize(&sig->chall_coeff);
 }
 
 static void ibz_vec_2_print2(char *name, const ibz_vec_2_t *vec){
@@ -37,13 +39,13 @@ static void ibz_vec_4_print2(char *name, const ibz_vec_4_t *vec){
 
 void print_signature(const signature_t *sig) {
     fp2_t j;
-    ec_j_inv(&j, &sig->E_com);
+    ec_j_inv(&j, &sig->E_aux);
     fp2_print("j_E1 = ", j);
     // ibz_mat_2x2_print(&sig->mat_sigma_phichall);
-    ibz_printf("M_sigma[00] = %Zd, ", &((sig->mat_sigma_phichall)[0][0]));
-    ibz_printf("M_sigma[01] = %Zd, ", &((sig->mat_sigma_phichall)[0][1]));
-    ibz_printf("M_sigma[10] = %Zd, ", &((sig->mat_sigma_phichall)[1][0]));
-    ibz_printf("M_sigma[11] = %Zd", &((sig->mat_sigma_phichall)[1][1]));
+    ibz_printf("M_sigma[00] = %Zd, ", &((sig->mat_Bchall_can_to_B_chall)[0][0]));
+    ibz_printf("M_sigma[01] = %Zd, ", &((sig->mat_Bchall_can_to_B_chall)[0][1]));
+    ibz_printf("M_sigma[10] = %Zd, ", &((sig->mat_Bchall_can_to_B_chall)[1][0]));
+    ibz_printf("M_sigma[11] = %Zd", &((sig->mat_Bchall_can_to_B_chall)[1][1]));
 
 }
 
@@ -54,47 +56,25 @@ void print_public_key(const public_key_t *pk) {
 }
 
 
-
-void commit(ec_curve_t *E_com, ec_basis_t *basis_even_com, quat_left_ideal_t *lideal_commit_three, int verbose) {
+// compute the commitment with ideal to isogeny clapotis
+// and apply it to the basis of E0 (together with the multiplication by some scalar u) 
+// the scalar adjusting_factor is a scalar through which the points of the basis are multiplied
+void commit(ec_curve_t *E_com, ec_basis_t *basis_even_com, quat_left_ideal_t *lideal_com) {
     
-    quat_alg_elem_t gamma;
-    quat_left_ideal_t lideal_even;
-    ec_isog_even_t two_isogeny_first_half, two_isogeny_second_half;
-    ec_isog_odd_t phi_first_half, phi_second_half;
-    ec_point_t list_points[3];
+    int found=1;
+    ibz_t n;
+    ec_basis_t B_0_two;
+    ibz_init(&n);
 
-    quat_alg_elem_init(&gamma);
-    quat_left_ideal_init(&lideal_even); 
-    // doublepath(&gamma, &lideal_even, lideal_commit_three, 
-    // NULL,  // not used ?
-    // basis_even_com, E_com, verbose); // used only for image of BASIS_EVEN
+    // generate a random ideal of random norm for the secret ideal
+    generate_random_prime(&n,1,128);
+    sampling_random_ideal_O0(lideal_com,&n);
 
+    // ideal to isogeny clapotis
+    found = dim2id2iso_arbitrary_isogeny_evaluation(basis_even_com,E_com,lideal_com);
+    assert(found);
 
-    // #ifndef NDEBUG 
-    //     ec_curve_t E_test;
-    //     copy_curve(&E_test, &CURVE_E0);
-    //     copy_point(list_points + 0, &BASIS_EVEN.P);
-    //     copy_point(list_points + 1, &BASIS_EVEN.Q);
-    //     copy_point(list_points + 2, &BASIS_EVEN.PmQ);
-    //     TAC("ec_eval_odd in");
-    //     ec_eval_odd(&E_test, &phi_first_half, list_points, 3);
-    //     ec_eval_odd(&E_test, &phi_second_half, list_points, 3);
-    //     TAC("ec_eval_odd out");
-
-    //     assert(ec_is_equal(&(basis_even_com->P), list_points + 0));
-    //     assert(ec_is_equal(&(basis_even_com->Q), list_points + 1));
-    //     assert(ec_is_equal(&(basis_even_com->PmQ), list_points + 2));
-
-
-    //     fp2_t j_R,j_L;
-    //     ec_j_inv(&j_R, &E_test);
-    //     ec_j_inv(&j_L, E_com);
-    //     assert(fp2_is_equal(&j_R,&j_L));
-    // #endif
-
-    quat_alg_elem_finalize(&gamma);
-    quat_left_ideal_finalize(&lideal_even); 
-    return;
+    ibz_finalize(&n);
 }
 
 
@@ -205,11 +185,11 @@ void norm_from_2_times_gram(ibz_t *norm, ibz_mat_4x4_t *gram, ibz_vec_4_t *vec) 
 // TODO(security): currently just samples smallest vector, instead of random in a ball
 void sample_response(quat_alg_elem_t *x, const quat_lattice_t *lattice, ibz_t const *lattice_content, int verbose) {
     ibz_mat_4x4_t lll;
-    ibz_t denom_gram, norm;
+    // ibz_t denom_gram, norm;
 
     ibz_mat_4x4_init(&lll);
-    ibz_init(&denom_gram);
-    ibz_init(&norm);
+    // ibz_init(&denom_gram);
+    // ibz_init(&norm);
 
     // printf("[");
     // for (int col = 0; col < 4; ++col) {
@@ -223,97 +203,97 @@ void sample_response(quat_alg_elem_t *x, const quat_lattice_t *lattice, ibz_t co
 
     int err = quat_lattice_lll(&lll, lattice, &(QUATALG_PINFTY.p), 1000);
     assert(!err);
-    // The shortest vector found by lll is a candidate
-
-
-
-    ibz_mat_4x4_t prod, gram;
-    ibz_mat_4x4_init(&prod);
-    ibz_mat_4x4_init(&gram);
-
-    ibz_mat_4x4_transpose(&prod,&lll);
-    ibz_mat_4x4_mul(&prod,&prod,&(QUATALG_PINFTY.gram));
-    ibz_mat_4x4_mul(&gram,&prod,&lll);
-
-    ibz_copy(&denom_gram, &(lattice->denom));
-    ibz_mul(&denom_gram, &denom_gram, &(lattice->denom));
-    ibz_mul(&denom_gram, &denom_gram, lattice_content);
-
-
-    assert(ibz_is_even(&denom_gram));
-    ibz_div_2exp(&denom_gram, &denom_gram, 1);
-
-    int divides = ibz_mat_4x4_scalar_div(&gram, &denom_gram, &gram);
-    assert(divides);
 
     ibz_copy(&(x->denom), &(lattice->denom));
-
-    ibz_vec_4_t vec;
-    ibz_vec_4_init(&vec);
-
-    int k = 0;
-    for (int i1 = 0; i1 < 10; i1++){
-        for (int i2 = 0; i2 < 10; i2++){
-            for (int i3 = 0; i3 < 10; i3++){
-                for (int i4 = 0; i4 < 10; i4++){
-                    k++;
-                    ibz_vec_4_set(&vec, i1,i2,i3,i4);
-                    norm_from_2_times_gram(&norm, &gram, &vec);
-                    if (is_good_norm(&norm)) {
-
-                        ibz_mat_4x4_eval(&(x->coord), &lll, &vec);
-
-                        assert(quat_lattice_contains(NULL, lattice, x, &QUATALG_PINFTY));
-                        assert(is_good(x, lattice_content));
-
-                        #ifndef NDEBUG
-                            ibq_t N_q;
-                            ibz_t N, tmp, q;
-                            ibq_init(&N_q);
-                            ibz_init(&N);
-                            ibz_init(&tmp);
-                            quat_alg_norm(&N_q, x, &QUATALG_PINFTY);
-                            ibq_to_ibz(&N, &N_q);
-                            assert(ibz_divides(&N, lattice_content));
-                            ibz_div(&N, &tmp, &N, lattice_content);
-
-                            assert(ibz_cmp(&N, &norm) == 0);
-
-                            ibz_finalize(&N);
-                            ibq_finalize(&N_q);
-                            ibz_finalize(&tmp);
-                        #endif
-
-
-                        #ifndef NDEBUG
-                            printf("good sample found after %d attempts\n", k);
-                        #endif
-
-                        if (verbose) printf("e = %lu, ", RESPONSE_LENGTH);
-                        if (verbose) ibz_printf("q = %Zd, ", &norm);
-                        // ibz_printf("2^e - q = sum of two squares = prime 1 mod 4\n");
-                        i1 = i2 = i3 = i4 = 10;
-
-                    }
-
-
-
-                }
-            }
-        }
+    for (int i=0;i<4;i++) {
+        ibz_copy(&x->coord[i], &lll[i][0]);
     }
-    // ibz_copy(&x->coord[i], &lll[i][0]);
-
-
     assert(quat_lattice_contains(NULL, lattice, x, &QUATALG_PINFTY));
 
+    // The shortest vector found by lll is our response
 
-    ibz_finalize(&denom_gram);
-    ibz_finalize(&norm);
-    ibz_mat_4x4_finalize(&prod);
-    ibz_mat_4x4_finalize(&gram);
-    ibz_mat_4x4_finalize(&lll);
-    ibz_vec_4_finalize(&vec);
+    // ibz_mat_4x4_t prod, gram;
+    // ibz_mat_4x4_init(&prod);
+    // ibz_mat_4x4_init(&gram);
+
+    // ibz_mat_4x4_transpose(&prod,&lll);
+    // ibz_mat_4x4_mul(&prod,&prod,&(QUATALG_PINFTY.gram));
+    // ibz_mat_4x4_mul(&gram,&prod,&lll);
+
+    // ibz_copy(&denom_gram, &(lattice->denom));
+    // ibz_mul(&denom_gram, &denom_gram, &(lattice->denom));
+    // ibz_mul(&denom_gram, &denom_gram, lattice_content);
+    // assert(ibz_is_even(&denom_gram));
+    // ibz_div_2exp(&denom_gram, &denom_gram, 1);
+
+    // int divides = ibz_mat_4x4_scalar_div(&gram, &denom_gram, &gram);
+    // assert(divides);
+
+    
+
+
+    
+
+    // int k = 0;
+    // for (int i1 = 0; i1 < 10; i1++){
+    //     for (int i2 = 0; i2 < 10; i2++){
+    //         for (int i3 = 0; i3 < 10; i3++){
+    //             for (int i4 = 0; i4 < 10; i4++){
+    //                 k++;
+    //                 ibz_vec_4_set(&vec, i1,i2,i3,i4);
+    //                 norm_from_2_times_gram(&norm, &gram, &vec);
+    //                 if (is_good_norm(&norm)) {
+
+    //                     ibz_mat_4x4_eval(&(x->coord), &lll, &vec);
+
+    //                     assert(quat_lattice_contains(NULL, lattice, x, &QUATALG_PINFTY));
+    //                     assert(is_good(x, lattice_content));
+
+    //                     #ifndef NDEBUG
+    //                         ibq_t N_q;
+    //                         ibz_t N, tmp, q;
+    //                         ibq_init(&N_q);
+    //                         ibz_init(&N);
+    //                         ibz_init(&tmp);
+    //                         quat_alg_norm(&N_q, x, &QUATALG_PINFTY);
+    //                         ibq_to_ibz(&N, &N_q);
+    //                         assert(ibz_divides(&N, lattice_content));
+    //                         ibz_div(&N, &tmp, &N, lattice_content);
+
+    //                         assert(ibz_cmp(&N, &norm) == 0);
+
+    //                         ibz_finalize(&N);
+    //                         ibq_finalize(&N_q);
+    //                         ibz_finalize(&tmp);
+    //                     #endif
+
+
+    //                     #ifndef NDEBUG
+    //                         printf("good sample found after %d attempts\n", k);
+    //                     #endif
+
+    //                     if (verbose) printf("e = %lu, ", RESPONSE_LENGTH);
+    //                     if (verbose) ibz_printf("q = %Zd, ", &norm);
+    //                     // ibz_printf("2^e - q = sum of two squares = prime 1 mod 4\n");
+    //                     i1 = i2 = i3 = i4 = 10;
+
+    //                 }
+
+
+
+    //             }
+    //         }
+    //     }
+    // }
+    
+
+
+    // ibz_finalize(&denom_gram);
+    // ibz_finalize(&norm);
+    // ibz_mat_4x4_finalize(&prod);
+    // ibz_mat_4x4_finalize(&gram);
+    // ibz_mat_4x4_finalize(&lll);
+    // ibz_vec_4_finalize(&vec);
     return;
 }
 
@@ -321,12 +301,13 @@ void sample_response(quat_alg_elem_t *x, const quat_lattice_t *lattice, ibz_t co
 
 
 // TODO(code): this is also used in verification, move to a common location when verification is implemented
-void hash_to_challenge(ibz_vec_2_t *scalars, const ec_curve_t *curve, const unsigned char *message, const public_key_t *pk, size_t length)
+// compute the challenge as the hash of the message and the commitment curve and public key
+void hash_to_challenge(ibz_vec_2_t *scalars, const ec_curve_t *com_curve, const unsigned char *message, const public_key_t *pk, size_t length)
 {
     unsigned char *buf = malloc(sizeof(fp2_t) + sizeof(fp2_t) + length);
     {
         fp2_t j1, j2;
-        ec_j_inv(&j1, curve);
+        ec_j_inv(&j1, com_curve);
         ec_j_inv(&j2, &pk->curve);
         memcpy(buf, &j1, sizeof(j1));
         memcpy(buf + sizeof(j1), &j2, sizeof(j2));
@@ -344,18 +325,6 @@ void hash_to_challenge(ibz_vec_2_t *scalars, const ec_curve_t *curve, const unsi
         ibz_copy_digit_array(&(*scalars)[1], digits);
     }
 
-    // #ifndef NDEBUG
-    // {
-    // ibz_t gcd;
-    // ibz_init(&gcd);
-    // ibz_set(&gcd, 6);
-    // ibz_gcd(&gcd, &gcd, &(*scalars)[0]);
-    // ibz_gcd(&gcd, &gcd, &(*scalars)[1]);
-    // assert(ibz_is_one(&gcd));
-    // ibz_finalize(&gcd);
-    // }
-    // #endif
-
     ibz_set(&((*scalars)[0]), 1);
     // ibz_rand_interval(&((*scalars)[1]), &((*scalars)[0]), &TORSION_PLUS_2POWER);
 
@@ -366,231 +335,608 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, const secret_key_t 
     clock_t t = tic();
 
     ibz_t lattice_content;
-    ec_curve_t E_com;
-    ec_basis_t Bcom0, Bcom_can; // basis of 2^n-torsion
-    ibz_vec_2_t vec, vec_can, vec_zero;
+    ec_curve_t E_aux,E_com;
+    ec_basis_t Bcom0,Baux0; // basis of 2^TORSION_PLUS_EVEN_POWER-torsion
+    ec_basis_t B_resp_two;
+    ibz_vec_4_t dummy_coord;
+    ibz_vec_2_t vec, vec_chall,vec_resp_two;
     quat_left_ideal_t lideal_tmp; 
-    quat_left_ideal_t lideal_commit_three, lideal_chall_three; 
-    quat_left_ideal_t lideal_chall3_secret2, lideal_chall3_secret3;
+    quat_left_ideal_t lideal_commit, lideal_chall_two; 
+    quat_left_ideal_t lideal_chall_secret, lideal_com_resp,lideal_aux,lideal_aux_resp_com,lideal_resp_two;
     quat_lattice_t lattice_hom_chall_to_com, lat_commit;
     quat_alg_elem_t resp_quat;
     quat_alg_elem_t elem_tmp;
-    ibz_mat_2x2_t mat_alpha0, mat_Bcom0_to_Bcom;
-    ibz_mat_2x2_t mat_sigma_phichall_BA_to_Bcomcan, mat_sigma_phichall_BA0_to_Bcom0;
-    ibz_t degree_com_isogeny, tmp;
+    ibz_mat_2x2_t mat_Baux2_to_Baux2_can, mat_Bchall_can_to_Bchall;
+    // ibz_mat_2x2_t mat_sigma_phichall_BA_to_Bcomcan, mat_sigma_phichall_BA0_to_Bcom0;
+    ibz_t degree_com_isogeny, tmp, remain;
+    ibz_t degree_full_resp,degree_odd_resp;
+    ibq_t temp_norm;
+    int exp_diadic_val_full_resp;
+    int pow_dim2_deg_resp;
+    int backtracking;
 
-    ibz_init(&degree_com_isogeny); ibz_init(&tmp); ibz_init(&lattice_content);
+    ibz_init(&tmp); ibz_init(&lattice_content);ibz_init(&remain);
 
-    ibz_mat_2x2_init(&mat_alpha0); ibz_mat_2x2_init(&mat_Bcom0_to_Bcom); 
-    ibz_mat_2x2_init(&mat_sigma_phichall_BA_to_Bcomcan); 
-    ibz_mat_2x2_init(&mat_sigma_phichall_BA0_to_Bcom0);
+    ibz_init(&degree_full_resp);
+    ibz_init(&degree_odd_resp);
+    ibq_init(&temp_norm);
+
+    ibz_mat_2x2_init(&mat_Bchall_can_to_Bchall); 
+    ibz_mat_2x2_init(&mat_Baux2_to_Baux2_can);
+    ibz_vec_4_init(&dummy_coord);
+    // ibz_mat_2x2_init(&mat_sigma_phichall_BA_to_Bcomcan); 
+    // ibz_mat_2x2_init(&mat_sigma_phichall_BA0_to_Bcom0);
 
     quat_alg_elem_init(&resp_quat);
     quat_alg_elem_init(&elem_tmp);
     quat_lattice_init(&lattice_hom_chall_to_com); quat_lattice_init(&lat_commit);
     quat_left_ideal_init(&lideal_tmp);
-    quat_left_ideal_init(&lideal_commit_three); quat_left_ideal_init(&lideal_chall_three);
-    quat_left_ideal_init(&lideal_chall3_secret2); quat_left_ideal_init(&lideal_chall3_secret3);
+    quat_left_ideal_init(&lideal_commit); quat_left_ideal_init(&lideal_chall_two);
+    quat_left_ideal_init(&lideal_chall_secret); quat_left_ideal_init(&lideal_resp_two);
+    quat_left_ideal_init(&lideal_com_resp);
+    quat_left_ideal_init(&lideal_aux_resp_com);
+    quat_left_ideal_init(&lideal_aux);
 
+    ibz_vec_2_init(&vec); ibz_vec_2_init(&vec_chall);ibz_vec_2_init(&vec_resp_two);
 
-    ibz_vec_2_init(&vec); ibz_vec_2_init(&vec_can);
+    // computing the commitment 
+    commit(&E_com, &Bcom0, &lideal_commit);
 
-    // t = tic();
-    commit(&E_com, &Bcom0, &lideal_commit_three, verbose);
-
-    ibz_copy(&degree_com_isogeny, &(lideal_commit_three.norm));  
+    // computing the challenge
+    // vec_chall is a pair of coefficients encoding the kernel of the challenge isogeny
+    // as vec_chall[0]*B[0] + vec_chall[1]*B[1] where B is the canonical basis of the 2^TORSION_PLUS_EVEN_TORSION torsion of EA
+    hash_to_challenge(&vec_chall, &E_com, m, pk, l);
     
-    // ibz_printf("degree_com_isogeny = %Zd ", &degree_com_isogeny);
+    // now we compute the ideal associated to the challenge 
+    // for that, we need to find vec such that 
+    // the kernel of the challenge isogeny is generated by vec[0]*B0[0] + vec[1]*B0[1] where B0 is the image through the secret key isogeny of the canonical basis E0
+    ibz_mat_2x2_eval(&vec, &(sk->mat_BAcan_to_BA0_two), &vec_chall);
 
-    hash_to_challenge(&vec_can, &E_com, m, pk, l);
-    // vec_can is a pair or random coefficients
-    // the kernel of the challenge isogeny is generated by vec_can[0]*B[0] + vec_can[1]*B[1] where B is the canonical basis of the three^n torsion of EA
+    // lideal_chall_two is the pullback of the ideal challenge through the secret key ideal
+    id2iso_kernel_dlogs_to_ideal_two(&lideal_chall_two, &vec);
+    assert(ibz_cmp(&lideal_chall_two.norm, &TORSION_PLUS_2POWER) == 0);
 
+    // lideal_chall_secret = lideal_secret * lideal_chall_two
+    quat_lideal_inter(&lideal_chall_secret, &lideal_chall_two, &(sk->secret_ideal), &QUATALG_PINFTY);
 
+    // now we compute lideal_com_to_chall which is dual(Icom)* lideal_chall_secret 
+    quat_lideal_conjugate_lattice(&lat_commit, &lideal_commit);
+    quat_lattice_intersect(&lattice_hom_chall_to_com, &lideal_chall_secret.lattice, &lat_commit);
 
-    // ibz_mat_2x2_eval(&vec, &(sk->mat_BAcan_to_BA0_three), &vec_can);
-    // the kernel of the challenge isogeny is generated by vec[0]*B0[0] + vec[1]*B0[1] where B0 is the image through secret isogeny of the canonical basis E0
-
-    // t = tic();
-    id2iso_kernel_dlogs_to_ideal_three(&lideal_chall_three, &vec);
-    assert(ibz_cmp(&lideal_chall_three.norm, &TORSION_PLUS_3POWER) == 0);
-    // TODO(optimization): only 3-torsion is used. Can optimise
-
-
-    quat_lideal_inter(&lideal_chall3_secret2, &lideal_chall_three, &(sk->secret_ideal), &QUATALG_PINFTY);
-    // quat_lideal_mul(&lideal_chall3_secret3, &lideal_chall3_secret2, &(sk->two_to_three_transporter), &QUATALG_PINFTY, 0); 
-
-
-
-
-
-
-    // Careful: want to intersect lideal_chall3_secret3 and dual(lideal_commit_three)
-    // Both have norm a power of three, so trouble!! First replace lideal_chall3_secret3 with 
-    // an equivalent ideal of norm coprime to 3; compute intersection with that, then sample 
-    // in there, and transport the result back to the wanted intersection
-    quat_lideal_generator_coprime(&elem_tmp, &lideal_chall3_secret3, &ibz_const_one, &QUATALG_PINFTY, 0);
-    quat_alg_conj(&elem_tmp, &elem_tmp);
-    ibz_mul(&(elem_tmp.denom), &(elem_tmp.denom) , &(lideal_chall3_secret3.norm));
-
-    quat_lideal_mul(&lideal_tmp, &lideal_chall3_secret3, &elem_tmp, &QUATALG_PINFTY, 0); 
-    int test = quat_lideal_isom(&elem_tmp, &lideal_tmp, &lideal_chall3_secret3, &QUATALG_PINFTY);
-    assert(test);
-
-    quat_lideal_conjugate_lattice(&lat_commit, &lideal_commit_three);
-
-
-    quat_lattice_intersect(&lattice_hom_chall_to_com, &lideal_tmp.lattice, &lat_commit);
-    // this lattice contains all isogenies that start with chall3_secret3 and end with dual(commit_three)
-
-    // ibz_printf(">>>> lideal_chall3_secret3.norm = %Zd\n", &(lideal_chall3_secret3.norm));
-    // ibz_printf(">>>> lideal_commit_three.norm = %Zd\n", &(lideal_commit_three.norm));
-
-    ibz_mul(&lattice_content, &(lideal_tmp.norm), &(lideal_commit_three.norm));
-    if (verbose) TOC(t, "sample_response in");
-
+    // sampling the smallest response
+    ibz_mul(&lattice_content, &(lideal_chall_secret.norm), &(lideal_commit.norm));
     sample_response(&resp_quat, &lattice_hom_chall_to_com, &lattice_content, verbose);
-    assert(is_good(&resp_quat, &lattice_content));
-    quat_alg_mul(&resp_quat, &resp_quat, &elem_tmp, &QUATALG_PINFTY); // bring it to intersection of lat_commit and lideal_chall3_secret3
-    
-    if (verbose) TOC(t, "sample_response out");
 
+    // computing the amount of backtracking we're making
+    // and removing it
+    quat_alg_make_primitive(&dummy_coord,&tmp,&resp_quat,&MAXORD_O0,&QUATALG_PINFTY);
+    ibz_mul(&resp_quat.denom,&resp_quat.denom,&tmp);
+    assert(quat_lattice_contains(NULL,&MAXORD_O0,&resp_quat,&QUATALG_PINFTY));
+
+    // the backtracking is the common part of the response and the challenge
+    // the degree of the backtring is the scalar tmp computed above such that quat_resp is in tmp * O0
+    // we assume that the length of the backtracking is smaller than 60;
+    backtracking = two_adic_valuation(ibz_get(&tmp));
+    // TODO define this as a proper constant (and possibly increase the constant ?)
+    assert(backtracking<15);
+    ibz_pow(&tmp,&ibz_const_two,backtracking);
+    ibz_div(&lattice_content,&remain,&lattice_content,&tmp);
+
+    // creating lideal_com * lideal_resp 
+    // we first compute the norm of lideal_resp 
+    // norm of the resp_quat
+    quat_alg_norm(&temp_norm,&resp_quat,&QUATALG_PINFTY);
+    // dividing by n(lideal_com) * n(lideal_secret_chall)
+    int is_int =ibq_to_ibz(&degree_full_resp,&temp_norm);
+    assert(is_int);
+    ibz_div(&degree_full_resp,&remain,&degree_full_resp,&lattice_content);
+    assert(ibz_cmp(&remain,&ibz_const_zero)==0);
+
+    // computing the diadic valuation
+    // right now we make the overwhelmingly likely assumption that the diadic valuation of degree_full_resp is smaller than 60
+    exp_diadic_val_full_resp = two_adic_valuation(ibz_get(&degree_full_resp));
+    assert(exp_diadic_val_full_resp < 60);
+    // removing the power of two part
+    ibz_pow(&tmp,&ibz_const_two,exp_diadic_val_full_resp);
+    ibz_div(&degree_odd_resp,&remain,&degree_full_resp,&tmp);
+    assert(ibz_cmp(&remain,&ibz_const_zero)==0);
+    assert( (2*ibz_bitsize(&degree_odd_resp)) < ibz_bitsize(&QUATALG_PINFTY.p));
+
+    // creating the ideal
+    quat_alg_conj(&resp_quat,&resp_quat);
+    // setting the norm 
+    ibz_mul(&tmp,&lideal_commit.norm,&degree_odd_resp);
+    quat_lideal_create_from_primitive(&lideal_com_resp,&resp_quat,&tmp,&MAXORD_O0,&QUATALG_PINFTY);
+
+    // now we compute the ideal_aux
+    // computing the norm
+    // TODO make a clean constant for this
+    // possibly adjust with the value of exp_diadic_val_full_resp
+    pow_dim2_deg_resp = 150;
+    //pow_dim2_deg_resp = ibz_bitsize(&QUATALG_PINFTY.p)/2 +1 - exp_diadic_val_full_resp;
+    ibz_pow(&remain,&ibz_const_two,pow_dim2_deg_resp);
+    ibz_sub(&tmp,&remain,&degree_odd_resp);
+
+    // multiplying by 4 to account for the fact that we use the 4 torsion above the kernel
+    ibz_mul(&remain,&remain,&ibz_const_two);
+    ibz_mul(&remain,&remain,&ibz_const_two);
+    
+    // TODO replace these two steps with a clean function that samples random ideals from a right order
+    sampling_random_ideal_O0(&lideal_aux,&tmp);
+    // pushing forward 
+    quat_lideal_inter(&lideal_aux_resp_com,&lideal_com_resp,&lideal_aux,&QUATALG_PINFTY);
+
+
+
+    // now we evaluate this isogeny on the basis of E0 
+    dim2id2iso_arbitrary_isogeny_evaluation(&Baux0,&E_aux,&lideal_aux_resp_com);
+
+    // ibz_printf("norm resp aux com %Zd \n",lideal_aux_resp_com.norm);
+    
+
+    // notational conventions:
+    // B0 = canonical basis of E0
+    // Bcom0 = image through commitment isogeny (odd degree) of canonical basis of E0
+    // Baux0 = image through aux_resp_com isogeny (odd degree) of canonical basis of E0
 
     #ifndef NDEBUG
-    {
-        ibq_t N_q;
-        ibz_t N, tmp;
+        // testing 
+        assert(test_point_order_twof(&Bcom0.P,&E_com,TORSION_PLUS_EVEN_POWER));
+        assert(test_point_order_twof(&Bcom0.Q,&E_com,TORSION_PLUS_EVEN_POWER));
+        assert(test_point_order_twof(&Bcom0.PmQ,&E_com,TORSION_PLUS_EVEN_POWER));
+        assert(test_point_order_twof(&Baux0.P,&E_aux,TORSION_PLUS_EVEN_POWER));
+        assert(test_point_order_twof(&Baux0.Q,&E_aux,TORSION_PLUS_EVEN_POWER));
+        assert(test_point_order_twof(&Baux0.PmQ,&E_aux,TORSION_PLUS_EVEN_POWER));
+    #endif
 
-        ibq_init(&N_q);
-        ibz_init(&N);
-        ibz_init(&tmp);
-
-        assert(quat_lattice_contains(NULL, &(lideal_chall3_secret3.lattice), &resp_quat, &QUATALG_PINFTY));
-        assert(!quat_lattice_contains(NULL, &(lideal_commit_three.lattice), &resp_quat, &QUATALG_PINFTY));
-
-        quat_alg_conj(&resp_quat, &resp_quat);
-        assert(quat_lattice_contains(NULL, &(lideal_commit_three.lattice), &resp_quat, &QUATALG_PINFTY));
-        assert(!quat_lattice_contains(NULL, &(lideal_chall3_secret3.lattice), &resp_quat, &QUATALG_PINFTY));
-        quat_alg_conj(&resp_quat, &resp_quat); // repair
-
-        quat_alg_norm(&N_q, &resp_quat, &QUATALG_PINFTY);
-        ibq_to_ibz(&N, &N_q);
-        // ibz_printf("norm of response: %Zd\n", &N);
-    
-        ibz_mul(&tmp, &(lideal_chall3_secret3.norm), &(lideal_commit_three.norm)); 
-        assert(ibz_divides(&N, &tmp));
-        assert(is_good(&resp_quat, &tmp));
-
-
-        ibq_finalize(&N_q);
-        ibz_finalize(&N);
-        ibz_finalize(&tmp);
+    // applying the matrix to compute Baux
+    // first, we copy and reduce to the relevant order 
+    for (int i=0;i<TORSION_PLUS_EVEN_POWER-pow_dim2_deg_resp-exp_diadic_val_full_resp-2;i++) {
+        ec_dbl(&Baux0.P,&E_aux,&Baux0.P);
+        ec_dbl(&Baux0.Q,&E_aux,&Baux0.Q);
+        ec_dbl(&Baux0.PmQ,&E_aux,&Baux0.PmQ);
+        ec_dbl(&Bcom0.P,&E_com,&Bcom0.P);
+        ec_dbl(&Bcom0.Q,&E_com,&Bcom0.Q);
+        ec_dbl(&Bcom0.PmQ,&E_com,&Bcom0.PmQ);
     }
+
+    // now, we compute the isogeny Phi : Ecom x Eaux -> Echl' x Eaux' 
+    // where Echl' is 2^exp_diadic_val_full_resp isogenous to Echal 
+    // ker Phi = <(Bcom_can.P,Baux.P),(Bcom_can.Q,Baux.Q)>
+    theta_chain_t isog;
+    theta_couple_point_t T1,T2,T1m2;
+    theta_couple_curve_t EcomXEaux;
+    // preparing the domain
+    copy_curve(&EcomXEaux.E1,&E_com);
+    copy_curve(&EcomXEaux.E2,&E_aux);
+
+    // preparing the kernel
+    copy_point(&T1.P1,&Bcom0.P);
+    copy_point(&T2.P1,&Bcom0.Q);
+    copy_point(&T1m2.P1,&Bcom0.PmQ);
+
+    copy_point(&T1.P2,&Baux0.P);
+    copy_point(&T2.P2,&Baux0.Q);
+    copy_point(&T1m2.P2,&Baux0.PmQ);
+
+    // multiplying by 1/ deg resp 
+    ibz_invmod(&tmp,&degree_odd_resp,&remain);
+    ec_mul_ibz(&T1.P2,&E_aux,&tmp,&T1.P2);
+    ec_mul_ibz(&T2.P2,&E_aux,&tmp,&T2.P2);
+    ec_mul_ibz(&T1m2.P2,&E_aux,&tmp,&T1m2.P2);
+
+    // and multiplying by 2^exp_diadic...
+    for (int i=0;i<exp_diadic_val_full_resp;i++) {
+        ec_dbl(&T1.P1,&E_com,&T1.P1);
+        ec_dbl(&T2.P1,&E_com,&T2.P1);
+        ec_dbl(&T1m2.P1,&E_com,&T1m2.P1);
+        ec_dbl(&T1.P2,&E_aux,&T1.P2);
+        ec_dbl(&T2.P2,&E_aux,&T2.P2);
+        ec_dbl(&T1m2.P2,&E_aux,&T1m2.P2);
+    }
+
+    int extra_info = 1;
+
+    // computation of the dim2 isogeny
+    // TODO potentially adjust the strategy used if we allow for a smaller value 
+    theta_chain_comput_strategy(&isog,pow_dim2_deg_resp,&EcomXEaux,&T1,&T2,&T1m2,special_small_strategy,extra_info);
+
+
+    // pushing the points of torsion to recover the kernel of the dual 
+    jac_point_t temp_jac;
+    theta_couple_jac_point_t Teval1,Teval2,Teval3;
+    theta_couple_point_t Tev1,Tev2,Tev1m2;
+    lift_basis(&Teval1.P1,&Teval2.P1,&Bcom0,&E_com);
+    jac_neg(&temp_jac,&Teval2.P1);
+    ADD(&Teval3.P1,&Teval1.P1,&temp_jac,&E_com);
+    fp2_set(&Teval1.P2.x,0);
+    fp2_set(&Teval1.P2.y,1);
+    fp2_set(&Teval1.P2.z,0);
+    fp2_set(&Teval2.P2.x,0);
+    fp2_set(&Teval2.P2.y,1);
+    fp2_set(&Teval2.P2.z,0);
+    fp2_set(&Teval3.P2.x,0);
+    fp2_set(&Teval3.P2.y,1);
+    fp2_set(&Teval3.P2.z,0);
+    theta_chain_eval_no_help(&Tev1,&isog,&Teval1,&EcomXEaux);
+    theta_chain_eval_no_help(&Tev2,&isog,&Teval2,&EcomXEaux);
+    theta_chain_eval_no_help(&Tev1m2,&isog,&Teval3,&EcomXEaux);
+
+    assert(test_point_order_twof(&Tev1.P1,&isog.codomain.E1,pow_dim2_deg_resp+exp_diadic_val_full_resp+2));
+    assert(test_point_order_twof(&Tev1.P2,&isog.codomain.E2,pow_dim2_deg_resp+exp_diadic_val_full_resp+2));
+
+    ec_curve_t E_chall_2;
+    copy_curve(&E_chall_2,&isog.codomain.E2);
+
+    // copying torsion point, it should always be the second curve
+    copy_point(&B_resp_two.P,&Tev1.P2);
+    copy_point(&B_resp_two.Q,&Tev2.P2);
+    copy_point(&B_resp_two.PmQ,&Tev1m2.P2);
+
+    // computation of the remaining small chain of two isogenies when needed
+    if (exp_diadic_val_full_resp>0) {
+
+        // computing the ideal
+        ibz_pow(&tmp,&ibz_const_two,exp_diadic_val_full_resp);
+
+        // we compute the generator of the challenge ideal 
+        // quat_lideal_generator(&elem_tmp,&lideal_chall_two,&QUATALG_PINFTY,0);
+        // quat_alg_conj(&elem_tmp,&elem_tmp);
+        // assert(quat_alg_is_primitive(&elem_tmp,&MAXORD_O0,&QUATALG_PINFTY));
+        // quat_alg_mul(&elem_tmp,&resp_quat,&elem_tmp,&QUATALG_PINFTY);
+        // quat_alg_mul(&elem_tmp,&elem_tmp,&resp_quat,&QUATALG_PINFTY);
+        quat_lideal_create_from_primitive(&lideal_resp_two,&resp_quat,&tmp,&MAXORD_O0,&QUATALG_PINFTY);
+
+        // computing the coefficients of the kernel in terms of the basis of O0 
+        ec_isog_even_t phi_two;
+        id2iso_ideal_to_isogeny_even_dlogs(&phi_two,&vec_resp_two,&lideal_resp_two);
+
+        // dividing by the right power of 2
+        ibz_pow(&tmp,&ibz_const_two,TORSION_PLUS_EVEN_POWER-exp_diadic_val_full_resp);
+        ibz_div(&vec_resp_two[0],&remain,&vec_resp_two[0],&tmp);
+        assert(ibz_cmp(&remain,&ibz_const_zero)==0);
+        ibz_div(&vec_resp_two[1],&remain,&vec_resp_two[1],&tmp);
+        assert(ibz_cmp(&remain,&ibz_const_zero)==0); 
+
+        ec_point_t points[3];
+        copy_point(&points[0],&B_resp_two.P);
+        copy_point(&points[1],&B_resp_two.Q);
+        copy_point(&points[2],&B_resp_two.PmQ);
+
+        // getting down to the right order and applying the matrix
+        for (int i=0;i<pow_dim2_deg_resp + 2;i++){
+            ec_dbl(&B_resp_two.P,&isog.codomain.E2,&B_resp_two.P);
+            ec_dbl(&B_resp_two.Q,&isog.codomain.E2,&B_resp_two.Q);
+            ec_dbl(&B_resp_two.PmQ,&isog.codomain.E2,&B_resp_two.PmQ);
+        }
+        assert(test_point_order_twof(&B_resp_two.P,&isog.codomain.E2,exp_diadic_val_full_resp));
+        assert(test_point_order_twof(&B_resp_two.Q,&isog.codomain.E2,exp_diadic_val_full_resp));
+        assert(test_point_order_twof(&B_resp_two.PmQ,&isog.codomain.E2,exp_diadic_val_full_resp));
+
+        ec_point_t ker;
+        // applyling the vector to find the kernel 
+        ec_biscalar_mul_ibz(&ker,&isog.codomain.E2,&vec_resp_two[0],&vec_resp_two[1],&B_resp_two);
+        #ifndef NDEBUG
+            if (ibz_cmp(&vec_resp_two[0],&ibz_const_zero)==0 && ibz_cmp(&vec_resp_two[1],&ibz_const_one)==0 ) {
+                assert(ec_is_equal(&ker,&B_resp_two.Q));
+            } 
+        #endif  
+        assert(test_point_order_twof(&ker,&isog.codomain.E2,exp_diadic_val_full_resp));
+
+
+        // computing the isogeny and pushing the points
+        ec_eval_small_chain(&E_chall_2,&ker,exp_diadic_val_full_resp,points,3);
+
+        // copying the result 
+        copy_point(&B_resp_two.P,&points[0]);
+        copy_point(&B_resp_two.Q,&points[1]);
+        copy_point(&B_resp_two.PmQ,&points[2]);
+
+        #ifndef NDEBUG 
+            fp2_t w0;
+            ec_point_t AC,A24;
+            fp2_copy(&AC.x,&E_chall_2.A);
+            fp2_copy(&AC.z,&E_chall_2.C);
+            A24_from_AC(&A24,&AC);
+            weil(&w0,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp,&B_resp_two.P,&B_resp_two.Q,&B_resp_two.PmQ,&A24);
+        #endif
+
+    }
+
+
+    // computing the codomain of the challenge
+    // we need to settle the exact kernel point we are going to use
+
+    if (ibz_get(&vec_chall[0])%2==1) {
+        sig->chall_b = 0;
+        ibz_pow(&tmp,&ibz_const_two,TORSION_PLUS_EVEN_POWER);
+        ibz_invmod(&sig->chall_coeff,&vec_chall[0],&tmp);
+        ibz_mul(&sig->chall_coeff,&vec_chall[1],&sig->chall_coeff);
+        ibz_set(&vec_chall[0],1);
+    }
+    else {
+        sig->chall_b = 1;
+        ibz_pow(&tmp,&ibz_const_two,TORSION_PLUS_EVEN_POWER);
+        ibz_invmod(&sig->chall_coeff,&vec_chall[1],&tmp);
+        ibz_mul(&sig->chall_coeff,&vec_chall[0],&sig->chall_coeff);
+        ibz_set(&vec_chall[1],1);
+    }
+
+    ec_isog_even_t phi_chall;
+    ec_basis_t bas_sk;
+    ec_curve_to_basis_2(&bas_sk, &(sk->curve),TORSION_PLUS_EVEN_POWER); // canonical 
+    phi_chall.curve = sk->curve;
+    phi_chall.length = TORSION_PLUS_EVEN_POWER-backtracking;
+    ec_biscalar_mul_ibz(&phi_chall.kernel,&sk->curve,&vec_chall[0],&vec_chall[1],&bas_sk);
+    for (int i=0;i<backtracking;i++) {
+                ec_dbl(&phi_chall.kernel,&sk->curve,&phi_chall.kernel);
+    }
+    ec_curve_t Echall=sk->curve;
+    ec_eval_even(&Echall,&phi_chall,&bas_sk.P,1);
+
+    #ifndef NDEBUG 
+            fp2_t j_chall,j_test1,j_test2;
+            ec_j_inv(&j_test1,&isog.codomain.E1);
+            ec_j_inv(&j_test2,&E_chall_2);
+            ec_j_inv(&j_chall,&Echall);
+            // apparently its always the second one
+            assert(fp2_is_equal(&j_chall,&j_test2) || fp2_is_equal(&j_chall,&j_test1));
+
+    #endif 
+
+    // applying the isomorphism from E_chall_2 to Echall
+    ec_isom_t isom;
+    ec_isomorphism(&isom,&E_chall_2,&Echall);
+    ec_iso_eval(&B_resp_two.P,&isom);
+    ec_iso_eval(&B_resp_two.Q,&isom);
+    ec_iso_eval(&B_resp_two.PmQ,&isom);
+
+    #ifndef NDEBUG 
+            fp2_t w0;
+            ec_point_t AC,A24;
+            fp2_copy(&AC.x,&Echall.A);
+            fp2_copy(&AC.z,&Echall.C);
+            A24_from_AC(&A24,&AC);
+            weil(&w0,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp,&B_resp_two.P,&B_resp_two.Q,&B_resp_two.PmQ,&A24);
+    #endif
+    
+    // now it only remains to format the response for the verification
+
+    // canonical basis
+    ec_basis_t B_can_chall,B_aux2,B_aux2_can;
+    ec_curve_t E_aux2;
+    // it should always be the first curve
+    copy_curve(&E_aux2,&isog.codomain.E1);
+    copy_point(&B_aux2.P,&Tev1.P1);
+    copy_point(&B_aux2.Q,&Tev2.P1);
+    copy_point(&B_aux2.PmQ,&Tev1m2.P1);
+    ec_curve_to_basis_2(&B_can_chall,&Echall,TORSION_PLUS_EVEN_POWER);
+    ec_curve_to_basis_2(&B_aux2_can,&E_aux2,TORSION_PLUS_EVEN_POWER);
+
+    for (int i=0;i< TORSION_PLUS_EVEN_POWER - (pow_dim2_deg_resp+2 + exp_diadic_val_full_resp);i++)
+    {
+        ec_dbl(&B_aux2_can.P,&E_aux2,&B_aux2_can.P);
+        ec_dbl(&B_aux2_can.Q,&E_aux2,&B_aux2_can.Q);
+        ec_dbl(&B_aux2_can.PmQ,&E_aux2,&B_aux2_can.PmQ);
+        ec_dbl(&B_can_chall.P,&Echall,&B_can_chall.P);
+        ec_dbl(&B_can_chall.Q,&Echall,&B_can_chall.Q);
+        ec_dbl(&B_can_chall.PmQ,&Echall,&B_can_chall.PmQ);
+    }
+    assert(test_point_order_twof(&B_aux2.P,&E_aux2,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp)); 
+    assert(test_point_order_twof(&B_aux2.Q,&E_aux2,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp)); 
+    assert(test_point_order_twof(&B_aux2.PmQ,&E_aux2,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp)); 
+    #ifndef NDEBUG 
+            fp2_copy(&AC.x,&E_aux2.A);
+            fp2_copy(&AC.z,&E_aux2.C);
+            A24_from_AC(&A24,&AC);
+            weil(&w0,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp,&B_aux2.P,&B_aux2.Q,&B_aux2.PmQ,&A24);
+            weil(&w0,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp,&B_aux2_can.P,&B_aux2_can.Q,&B_aux2_can.PmQ,&A24);
     #endif
 
 
+    // compute the matrix to go from B_aux2 to B_aux2_can
+    change_of_basis_matrix_two(&mat_Baux2_to_Baux2_can,&B_aux2_can,&B_aux2,&E_aux2,pow_dim2_deg_resp+ 2 + exp_diadic_val_full_resp); 
 
-    // notational conventions:
-    // BA = canonical basis of (the even torsion of) EA
-    // B0 = canonical basis of E0
-    // BA0 = image through secret isogeny of canonical basis of E0
-    // Bcom0 = image through commitment isogeny (odd degree) of canonical basis of E0
+    // apply the change of basis to B_resp_two
+    matrix_application_even_basis(&B_resp_two,&Echall,&mat_Baux2_to_Baux2_can,pow_dim2_deg_resp+exp_diadic_val_full_resp+2);
 
-    ec_curve_to_basis_2(&Bcom_can, &E_com);
+    // compute the matrix to go from B_chall_can to B_resp_two
+    change_of_basis_matrix_two(&mat_Bchall_can_to_Bchall,&B_resp_two,&B_can_chall,&Echall,pow_dim2_deg_resp+exp_diadic_val_full_resp+2);
 
-
-    matrix_of_endomorphism_even(&mat_alpha0, &resp_quat); // matrix of alpha wrt the basis B0
-
-    // printf("mat_alpha0 = ");
-    // ibz_mat_2x2_print(&mat_alpha0);
-
-    // M_Bcom_to_Bcom0*Bcom_can = Bcom0
-
-    if (verbose) TOC(t, "change_of_basis_matrix_two in");
-    change_of_basis_matrix_two(&mat_Bcom0_to_Bcom, &Bcom0, &Bcom_can, &E_com); // a 2-dimensional DLP
-    if (verbose) TOC(t, "change_of_basis_matrix_two out");
-
-    // (M_BA0_to_BA*v).BA = v.BA0, precomputed
-
-    // compute mat_sigma_phichall_BA0_to_Bcom0 = mat_alpha0/degree_com_isogeny 
-    // the matrix of sigma_phichall from basis BA0 to basis Bcom0
-    ibz_invmod(&tmp, &degree_com_isogeny, &TORSION_PLUS_2POWER);
-    for (int row = 0; row < 2; ++row) {
-        for (int col = 0; col < 2; ++col) {
-            ibz_mul(&(mat_sigma_phichall_BA0_to_Bcom0[row][col]), &(mat_alpha0[row][col]), &tmp);
-            ibz_mod(&(mat_sigma_phichall_BA0_to_Bcom0[row][col]), &(mat_sigma_phichall_BA0_to_Bcom0[row][col]), &TORSION_PLUS_2POWER);
-        }
-    }
-    // sigma_phichall_BA_to_Bcom = M_Bcom0_to_Bcom*M_sigma_phichall_BA0_to_Bcom0*M_BA_to_BA0 // the matrix of sigma_phichall from basis BA to basis Bcom
-
-    ibz_2x2_mul_mod(&mat_sigma_phichall_BA_to_Bcomcan, &mat_Bcom0_to_Bcom, &mat_sigma_phichall_BA0_to_Bcom0, &TORSION_PLUS_2POWER);
-    ibz_2x2_mul_mod(&mat_sigma_phichall_BA_to_Bcomcan, &mat_sigma_phichall_BA_to_Bcomcan, &(sk->mat_BAcan_to_BA0_two), &TORSION_PLUS_2POWER);
-
-    copy_curve(&(sig->E_com), &E_com);
-    ibz_mat_2x2_copy(&(sig->mat_sigma_phichall), &mat_sigma_phichall_BA_to_Bcomcan);
-
-
-
-
-    ec_basis_t B_can_three, B_can_two, B_com_can_two;
-
-
-
-    if (verbose) {
-        curve_print("A_EA = ", pk->curve);
-
-        ec_curve_to_basis_3(&B_can_three, &(pk->curve));
-
-        point_print("xP3A = ", B_can_three.P);
-        point_print("xQ3A = ", B_can_three.Q);
-        point_print("xP3AmQ3A = ", B_can_three.PmQ);
-        ibz_printf("ker_phi_vect[0] = %Zd, ", &(vec_can[0]));
-        ibz_printf("ker_phi_vect[1] = %Zd, ", &(vec_can[1]));
-
-
-        ec_curve_to_basis_2(&B_can_two, &(pk->curve)); 
-        point_print("xPA = ", B_can_two.P);
-        point_print("xQA = ", B_can_two.Q);
-        point_print("xPAmQA = ", B_can_two.PmQ);
-
-
-        curve_print("A_E1 = ", sig->E_com);
-
-        ec_curve_to_basis_2(&B_com_can_two, &(sig->E_com)); 
-        point_print("xP1 = ", B_com_can_two.P);
-        point_print("xQ1 = ", B_com_can_two.Q);
-        point_print("xP1mQ1 = ", B_com_can_two.PmQ);
-
-
-        print_public_key(pk);
-        print_signature(sig);
-    }
-
-
-
-
-
-
-
+    // filling the output 
+    sig->backtracking=backtracking;
+    sig->two_resp_length=exp_diadic_val_full_resp;
+    copy_curve(&sig->E_aux,&E_aux2);
+    ibz_mat_2x2_copy(&sig->mat_Bchall_can_to_B_chall,&mat_Bchall_can_to_Bchall);
 
     ibz_vec_2_finalize(&vec);
-    ibz_vec_2_finalize(&vec_can);
-    ibz_mat_2x2_finalize(&mat_alpha0); ibz_mat_2x2_finalize(&mat_Bcom0_to_Bcom); 
-    ibz_mat_2x2_finalize(&mat_sigma_phichall_BA_to_Bcomcan); ibz_mat_2x2_finalize(&mat_sigma_phichall_BA0_to_Bcom0);
+    ibz_vec_2_finalize(&vec_chall);
+    ibz_vec_2_finalize(&vec_resp_two);
+    ibz_mat_2x2_finalize(&mat_Bchall_can_to_Bchall); 
+    ibz_mat_2x2_finalize(&mat_Baux2_to_Baux2_can);
 
     quat_alg_elem_finalize(&resp_quat);
     quat_alg_elem_finalize(&elem_tmp);
     quat_lattice_finalize(&lattice_hom_chall_to_com); quat_lattice_finalize(&lat_commit);
-    quat_left_ideal_finalize(&lideal_commit_three); quat_left_ideal_finalize(&lideal_chall_three);
-    quat_left_ideal_finalize(&lideal_chall3_secret2); quat_left_ideal_finalize(&lideal_chall3_secret3);
-    quat_left_ideal_finalize(&lideal_tmp);
+    quat_left_ideal_finalize(&lideal_commit); quat_left_ideal_finalize(&lideal_chall_two);
+    quat_left_ideal_finalize(&lideal_chall_secret); quat_left_ideal_finalize(&lideal_resp_two);
+    quat_left_ideal_finalize(&lideal_tmp);quat_left_ideal_finalize(&lideal_com_resp);
+    quat_left_ideal_init(&lideal_aux_resp_com);
+    quat_left_ideal_finalize(&lideal_aux);
 
-    ibz_finalize(&degree_com_isogeny); ibz_finalize(&tmp); ibz_finalize(&lattice_content);
-    return 0;
+    ibz_vec_4_finalize(&dummy_coord);
+    ibz_finalize(&degree_full_resp);
+    ibz_finalize(&degree_odd_resp);
+
+    ibq_finalize(&temp_norm);
+    ibz_finalize(&tmp); ibz_finalize(&lattice_content);ibz_finalize(&remain);
+    return 1;
 }
 
 
 
 
+int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned char* m, size_t l) {
+
+    int verif;
+
+    ibz_t tmp;
+    ibz_vec_2_t vec_chall,check_vec_chall;
+
+    ibz_init(&tmp);
+    ibz_vec_2_init(&vec_chall);
+    ibz_vec_2_init(&check_vec_chall);
+
+
+    // computation of the challenge 
+    ec_isog_even_t phi_chall;
+    ec_basis_t bas_EA;
+    ec_curve_to_basis_2(&bas_EA, &(pk->curve),TORSION_PLUS_EVEN_POWER); // canonical 
+    phi_chall.curve = pk->curve;
+    phi_chall.length = TORSION_PLUS_EVEN_POWER-sig->backtracking;
+    
+    // recovering the exact vec_chall 
+    if (sig->chall_b) {
+        ibz_copy(&vec_chall[0],&sig->chall_coeff);
+        ibz_set(&vec_chall[1],1);
+    }
+    else {
+        ibz_copy(&vec_chall[1],&sig->chall_coeff);
+        ibz_set(&vec_chall[0],1);
+    }
+    
+    ec_biscalar_mul_ibz(&phi_chall.kernel,&pk->curve,&vec_chall[0],&vec_chall[1],&bas_EA);
+    for (int i=0;i<sig->backtracking;i++) {
+                ec_dbl(&phi_chall.kernel,&pk->curve,&phi_chall.kernel);
+    }
+    ec_curve_t Echall=pk->curve;
+    ec_eval_even(&Echall,&phi_chall,&bas_EA.P,1);
+
+    ec_basis_t B_chall_can,B_aux_can;
+
+    // recovering the canonical basis 
+    ec_curve_to_basis_2(&B_chall_can,&Echall,TORSION_PLUS_EVEN_POWER);
+    ec_curve_to_basis_2(&B_aux_can,&sig->E_aux,TORSION_PLUS_EVEN_POWER);
+
+    // TODO make a clean constant for this
+    int pow_dim2_deg_resp = 150;
+
+    // setting to the right order 
+    
+    for (int i=0;i< TORSION_PLUS_EVEN_POWER - (pow_dim2_deg_resp+2);i++)
+    {
+        ec_dbl(&B_aux_can.P,&sig->E_aux,&B_aux_can.P);
+        ec_dbl(&B_aux_can.Q,&sig->E_aux,&B_aux_can.Q);
+        ec_dbl(&B_aux_can.PmQ,&sig->E_aux,&B_aux_can.PmQ);
+    }
+    for (int i=0;i< TORSION_PLUS_EVEN_POWER - (pow_dim2_deg_resp+2 + sig->two_resp_length);i++) {
+        ec_dbl(&B_chall_can.P,&Echall,&B_chall_can.P);
+        ec_dbl(&B_chall_can.Q,&Echall,&B_chall_can.Q);
+        ec_dbl(&B_chall_can.PmQ,&Echall,&B_chall_can.PmQ);
+    }
+
+    assert(test_point_order_twof(&B_chall_can.P,&Echall,2+pow_dim2_deg_resp+sig->two_resp_length));
+    assert(test_point_order_twof(&B_chall_can.Q,&Echall,2+pow_dim2_deg_resp+sig->two_resp_length));
+    assert(test_point_order_twof(&B_chall_can.PmQ,&Echall,2+pow_dim2_deg_resp+sig->two_resp_length));
+
+    // applying the change matrix on the basis of E_chall
+    matrix_application_even_basis(&B_chall_can,&Echall,&sig->mat_Bchall_can_to_B_chall,pow_dim2_deg_resp+2 + sig->two_resp_length);
+
+    ec_curve_t E_chall_2;
+    ec_curve_t mem;
+    copy_curve(&E_chall_2,&Echall);
+    copy_curve(&mem,&Echall);
+
+    if (sig->two_resp_length>0) {
+
+        // computing the small two chain
+        ec_curve_t E_chall_2;
+        copy_curve(&E_chall_2,&Echall);
+        ec_point_t ker,points[3];
+
+        // choosing the right point for the small two_isogenies 
+        if (ibz_get(&sig->mat_Bchall_can_to_B_chall[0][0])%2==0 && ibz_get(&sig->mat_Bchall_can_to_B_chall[1][0])%2==0) {
+            copy_point(&ker,&B_chall_can.Q);
+        }
+        else {
+            copy_point(&ker,&B_chall_can.P);
+        }
+        
+        copy_point(&points[0],&B_chall_can.P);
+        copy_point(&points[1],&B_chall_can.Q);
+        copy_point(&points[2],&B_chall_can.PmQ);
+        // we extract the kernel by multiplying by 2^(2+pow_dim2_deg_resp)
+        for (int i=0;i<pow_dim2_deg_resp+2;i++) {
+            ec_dbl(&ker,&Echall,&ker);
+        }
+        assert(test_point_order_twof(&ker,&E_chall_2,sig->two_resp_length));
+        ec_eval_small_chain(&E_chall_2,&ker,sig->two_resp_length,points,3);
+
+        
+        assert(test_point_order_twof(&points[0],&E_chall_2,2+pow_dim2_deg_resp));
+        assert(test_point_order_twof(&points[1],&E_chall_2,2+pow_dim2_deg_resp));
+        assert(test_point_order_twof(&points[2],&E_chall_2,2+pow_dim2_deg_resp));
+        copy_point(&B_chall_can.P,&points[0]);
+        copy_point(&B_chall_can.Q,&points[1]);
+        copy_point(&B_chall_can.PmQ,&points[2]);
+        copy_curve(&mem,&E_chall_2);
+        
+    }
+    // due to a weird error that I couldn't understand 
+    copy_curve(&E_chall_2,&mem);
+    assert(test_point_order_twof(&B_chall_can.P,&E_chall_2,2+pow_dim2_deg_resp));    
+    assert(test_point_order_twof(&B_chall_can.Q,&E_chall_2,2+pow_dim2_deg_resp));
+    assert(test_point_order_twof(&B_chall_can.PmQ,&E_chall_2,2+pow_dim2_deg_resp));
+    assert(test_point_order_twof(&B_aux_can.P,&sig->E_aux,2+pow_dim2_deg_resp));    
+    assert(test_point_order_twof(&B_aux_can.Q,&sig->E_aux,2+pow_dim2_deg_resp));
+    assert(test_point_order_twof(&B_aux_can.PmQ,&sig->E_aux,2+pow_dim2_deg_resp));
+
+
+    // now compute the dim2 isogeny from E_chall_2 x E_aux -> E_com x E_aux'
+    // of kernel B_chall_can x B_aux_can
+
+    // first we set-up the kernel
+    theta_couple_curve_t EchallxEaux;
+    theta_couple_point_t T1,T2,T1m2;
+    theta_chain_t isog;
+    copy_curve(&EchallxEaux.E1,&E_chall_2);
+    copy_curve(&EchallxEaux.E2,&sig->E_aux);
+    copy_point(&T1.P2,&B_aux_can.P);
+    copy_point(&T2.P2,&B_aux_can.Q);
+    copy_point(&T1m2.P2,&B_aux_can.PmQ);
+    copy_point(&T1.P1,&B_chall_can.P);
+    copy_point(&T2.P1,&B_chall_can.Q);
+    copy_point(&T1m2.P1,&B_chall_can.PmQ);
+
+    // computing the isogeny
+    int extra_info =1;
+    theta_chain_comput_strategy(&isog,pow_dim2_deg_resp,&EchallxEaux,&T1,&T2,&T1m2,special_small_strategy,extra_info);
+
+    // computing the commitment curve
+    // apparently its always the second one
+    ec_curve_t E_com;
+    copy_curve(&E_com,&isog.codomain.E2);
+
+    // recomputing the challenge vector
+    hash_to_challenge(&check_vec_chall,&E_com,m,pk,l);
+
+    // performing the final check 
+    if (sig->chall_b) {
+        ibz_mul(&vec_chall[0],&vec_chall[0],&check_vec_chall[1]);
+        verif = (ibz_cmp(&vec_chall[0],&check_vec_chall[0])==0);
+    }
+    else {
+        ibz_mul(&vec_chall[1],&vec_chall[1],&check_vec_chall[0]);
+        verif = (ibz_cmp(&vec_chall[1],&check_vec_chall[1])==0);
+    }
+
+
+    return verif;
+
+    ibz_finalize(&tmp);
+    ibz_vec_2_finalize(&vec_chall);
+    ibz_vec_2_finalize(&check_vec_chall);
+
+}
 
 

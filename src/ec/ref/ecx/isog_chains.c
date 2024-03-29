@@ -56,7 +56,7 @@ void ec_eval_even_nonzero(ec_curve_t* image, const ec_isog_even_t* phi,
 static void ec_eval_even_strategy(ec_curve_t* image, ec_point_t* points, unsigned short points_len,
     ec_point_t* A24, const ec_point_t *kernel, const int isog_len){
     
-    assert(isog_len == POWER_OF_2-2);
+    // assert(isog_len == POWER_OF_2-2);
         
     uint8_t log2_of_e, tmp;
     fp2_t t0;
@@ -94,10 +94,10 @@ static void ec_eval_even_strategy(ec_curve_t* image, ec_point_t* points, unsigne
             current += 1;
             // We set the seed of the new split to be computed and saved
             copy_point(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current - 1]);
-            for(i = 0; i < 2*STRATEGY4[strategy]; i++)
+            for(i = 0; i < 2*STRATEGY4[TORSION_PLUS_EVEN_POWER-2-isog_len][strategy]; i++)
                 xDBLv2(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current], A24);
-            XDBLs[current] = STRATEGY4[strategy];  // The number of doublings performed is saved
-            BLOCK += STRATEGY4[strategy];          // BLOCK is increased by the number of doublings performed
+            XDBLs[current] = STRATEGY4[TORSION_PLUS_EVEN_POWER-2-isog_len][strategy];  // The number of doublings performed is saved
+            BLOCK += STRATEGY4[TORSION_PLUS_EVEN_POWER-2-isog_len][strategy];          // BLOCK is increased by the number of doublings performed
             strategy += 1;                  // Next, we move to the next element of the strategy
         }
 
@@ -118,6 +118,93 @@ static void ec_eval_even_strategy(ec_curve_t* image, ec_point_t* points, unsigne
     // Output curve in the form (A:C)
     A24_to_AC(image, A24);
 }
+
+// naive implementation
+void ec_eval_small_chain(ec_curve_t *image, const ec_point_t *kernel, int len,ec_point_t *points,int len_points) {
+
+    ec_point_t A24;
+    AC_to_A24(&A24,image);
+
+    ec_point_t small_K,big_K;
+    copy_point(&big_K,kernel);
+
+    for (int i=0;i<len;i++) {
+        copy_point(&small_K,&big_K);
+        // small_K = big_K;
+        for (int j=0;j<len-i-1;j++) {
+            xDBLv2(&small_K,&small_K,&A24);
+        }
+        if (fp2_is_zero(&small_K.x)) {
+            ec_point_t B24;
+            xisog_2_singular(&B24,A24);
+            xeval_2_singular(&big_K,&big_K,1);
+            xeval_2_singular(points,points,len_points);
+            copy_point(&A24,&B24);
+        }
+        else {
+            xisog_2(&A24,small_K);
+            xeval_2(&big_K,&big_K,1);
+            xeval_2(points,points,len_points);
+        }
+    }
+    A24_to_AC(image,&A24);
+
+}
+
+
+// // void eval_walk_rec(proj *A, proj *K, long len, bool advance, proj *P, long stacklen) {
+// void ec_eval_even_rec(ec_point_t *A24, ec_point_t *K, long len, bool advance, ec_point_t *P,long stacklen) {
+    
+
+//   if (len == 0)
+//     return;
+//   if (len == 1) {
+//     xisog_2(A24,*K);
+//     xeval_2(K,P,stacklen);
+//     // push points
+//     // for (int i = 0; i < stacklen; i++)
+//     //   two_isog(K, P+i);
+      
+//     // push curve
+//     // fp2_sq2(&A->z, &K->z);
+//     // fp2_sq2(&A->x, &K->x);
+//     // fp2_add2(&A->x, &A->x);
+//     // fp2_sub3(&A->x, &A->z, &A->x);
+//     // fp2_add2(&A->x, &A->x);
+//   } else {
+//     long right = len / 2;
+//     long left = len - right;
+//     P[stacklen] = *K;
+//     for (int i = 0; i < left; i++) {
+//         xDBLv2(K, K,A24);
+//     }
+      
+//     ec_eval_even_rec(A24, K, right, advance, P, stacklen+1);
+//     K[right*advance] = P[stacklen];
+//     ec_eval_even_rec(A24, K+right*advance, left, advance, P, stacklen);
+//   }
+// }
+
+
+
+// // void ec_eval_ev(const two_walk *phi, proj *B, proj *P, long cardinality) {
+// void ec_eval_even(ec_curve_t* image, const ec_isog_even_t* phi,
+//     ec_point_t* points, unsigned short length){
+//   *image = phi->curve;
+//   ec_point_t K = phi->kernel;
+//   long log, len = phi->length;
+//   for (log = 0; len > 1; len >>= 1) log++;
+//   ec_point_t stack[length+log];
+//   for (int i = 0; i < length; ++i) {
+//     stack[i] = points[i];
+//   }
+//   ec_point_t A24;
+//     AC_to_A24(&A24, image);
+//   ec_eval_even_rec(&A24, &K, phi->length, false, stack, length);
+//   for (int i = 0; i < length; ++i) {
+//     points[i] = stack[i];
+//   }
+// }
 
 
 void ec_eval_three_rec(ec_point_t* A24, unsigned int length_path, 

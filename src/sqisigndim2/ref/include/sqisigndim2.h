@@ -41,8 +41,12 @@
 
 
 typedef struct signature {
-    ec_curve_t E_com; /// commitment curve
-    ibz_mat_2x2_t mat_sigma_phichall; /// the matrix of sigma o phi_chall from canonical basis EA to canonical basis of E_com
+    ec_curve_t E_aux; /// the auxilliary curve
+    int backtracking;
+    int two_resp_length;
+    ibz_mat_2x2_t mat_Bchall_can_to_B_chall; /// the matrix of the desired basis 
+    ibz_t chall_coeff;
+    int chall_b;
 } signature_t;
 
 /** @brief Type for the public keys
@@ -78,6 +82,8 @@ typedef struct secret_key {
 
 void protocols_keygen(public_key_t *pk, secret_key_t *sk);
 int protocols_sign(signature_t *sig, const public_key_t *pk, const secret_key_t *sk, const unsigned char* m, size_t l, int verbose);
+int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned char* m, size_t l);
+
 
 void secret_key_init(secret_key_t *sk);
 void secret_key_finalize(secret_key_t *sk);

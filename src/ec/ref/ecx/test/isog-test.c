@@ -95,40 +95,7 @@ static void xTPL(ec_point_t* Q, const ec_point_t* P, const ec_point_t* A3)
     fp2_mul(&Q->z, &t1, &t0);
 }
 
-static void xisog_2_singular(ec_point_t* B24, ec_point_t A24){
-	fp2_t t0, four;
-	fp_mont_setone(four.re);
-	fp_set(four.im, 0);
-	fp2_add(&four, &four, &four);
-	fp2_add(&four, &four, &four);
-	fp2_add(&t0, &A24.x, &A24.x);
-	fp2_sub(&t0, &t0, &A24.z);
-	fp2_add(&t0, &t0, &t0);
-	fp2_inv(&A24.z);
-	fp2_mul(&t0, &t0, &A24.z);
-	fp2_copy(&K[0].x, &t0);
-	fp2_add(&B24->x, &t0, &t0);
-	fp2_sqr(&t0, &t0);
-	fp2_sub(&t0, &t0, &four);
-	fp2_sqrt(&t0);
-	fp2_neg(&K[0].z, &t0);
-	fp2_add(&B24->z, &t0, &t0);
-	fp2_add(&B24->x, &B24->x, &B24->z);
-	fp2_add(&B24->z, &B24->z, &B24->z);
-}
 
-static void xeval_2_singular(ec_point_t* R, const ec_point_t* Q, const int lenQ){
-	fp2_t t0, t1;
-	for(int i = 0; i < lenQ; i++){
-		fp2_mul(&t0, &Q[i].x, &Q[i].z);
-		fp2_mul(&t1, &K[0].x, &Q[i].z);
-		fp2_add(&t1, &t1, &Q[i].x);
-		fp2_mul(&t1, &t1, &Q[i].x);
-		fp2_sqr(&R[i].x, &Q[i].z);
-		fp2_add(&R[i].x, &R[i].x, &t1);
-		fp2_mul(&R[i].z, &t0, &K[0].z);
-	}
-}
 
 int main(int argc, char* argv[])
 {
@@ -163,7 +130,7 @@ int main(int argc, char* argv[])
 
 		// Construct basis for 2^f torsion
 		ec_basis_t B2;
-		ec_curve_to_basis_2(&B2, &E);
+		ec_curve_to_basis_2(&B2, &E,POWER_OF_2);
 
 		// Check that basis is rational
 		assert(ec_is_on_curve(&E, &B2.P));
@@ -424,7 +391,7 @@ int main(int argc, char* argv[])
 		// Compute a 2^e-basis with 2^(e-1)*Q=(0,0)
 		ec_basis_t B0, B1, B2;
 		ec_point_t P4, Q4, PmQ4, P2, Q2, PmQ2, tmp;
-		ec_curve_to_basis_2(&B2, &E);
+		ec_curve_to_basis_2(&B2, &E,POWER_OF_2);
 		copy_point(&P4, &B2.P);
 		copy_point(&Q4, &B2.Q);
 		copy_point(&PmQ4, &B2.PmQ);
@@ -538,7 +505,7 @@ int main(int argc, char* argv[])
 		// Compute a 2^e-basis with 2^(e-1)*Q=(0,0)
 		ec_basis_t B2;
 		ec_point_t P2, Q2, PmQ2;
-		ec_curve_to_basis_2(&B2, &E);
+		ec_curve_to_basis_2(&B2, &E,POWER_OF_2);
 		copy_point(&P2, &B2.P);
 		copy_point(&Q2, &B2.Q);
 		copy_point(&PmQ2, &B2.PmQ);
@@ -636,7 +603,7 @@ int main(int argc, char* argv[])
 
 		// Compute a 2^e-basis
 		ec_basis_t B2;
-		ec_curve_to_basis_2(&B2, &E);
+		ec_curve_to_basis_2(&B2, &E,POWER_OF_2);
 
 		// Generate 3^g-basis and a 2^f-kernel point
 		ec_basis_t B3;
@@ -723,7 +690,7 @@ int main(int argc, char* argv[])
 		ec_basis_t B2, B3;
 		fp_t k;
 		ec_point_t R;
-		ec_curve_to_basis_2(&B2, &E);
+		ec_curve_to_basis_2(&B2, &E,POWER_OF_2);
 		ec_curve_to_basis_3(&B3, &E);
 		random_scalar(k);
 		ladder3pt(&R, k, &B3.P, &B3.Q, &B3.PmQ, &A24);
@@ -796,7 +763,7 @@ int main(int argc, char* argv[])
 		// Compute a 2^f-basis
 		ec_basis_t B2;
 		ec_point_t R;
-		ec_curve_to_basis_2(&B2, &E);
+		ec_curve_to_basis_2(&B2, &E,POWER_OF_2);
 
 		// Compute kernel points
 		ec_point_t P, Q, PQ, R_plus, R_minus;
@@ -946,7 +913,7 @@ int main(int argc, char* argv[])
 
 		// Compute a basis
 		ec_basis_t B;
-		ec_curve_to_basis_2(&B, &E);
+		ec_curve_to_basis_2(&B, &E,POWER_OF_2);
 
 		// Push it through isomorphism
 		ec_basis_t Bnorm;

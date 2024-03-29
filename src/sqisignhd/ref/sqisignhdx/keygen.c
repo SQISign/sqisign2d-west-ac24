@@ -70,7 +70,7 @@ void protocols_keygen(public_key_t *pk, secret_key_t *sk) {
     copy_curve(&(pk->curve), &(sk->curve));
 
 
-    ec_curve_to_basis_2(&B_can_two, &(pk->curve)); // canonical 
+    ec_curve_to_basis_2(&B_can_two, &(pk->curve),TORSION_PLUS_EVEN_POWER); // canonical 
     assert(test_point_order_twof(&(B_can_two.P), &(sk->curve),TORSION_PLUS_EVEN_POWER));
     assert(test_point_order_twof(&(B_can_two.Q), &(sk->curve),TORSION_PLUS_EVEN_POWER));
     assert(test_point_order_twof(&(B_can_two.PmQ), &(sk->curve),TORSION_PLUS_EVEN_POWER));
@@ -78,7 +78,7 @@ void protocols_keygen(public_key_t *pk, secret_key_t *sk) {
     // point_print("pk->curve->basis_two->P = ", B_can_two.P);
     // point_print("pk->curve->basis_two->Q = ", B_can_two.Q);
     // point_print("pk->curve->basis_two->PmQ = ", B_can_two.PmQ);
-    change_of_basis_matrix_two(&(sk->mat_BAcan_to_BA0_two), &B_can_two, &B_0_two, &(sk->curve));
+    change_of_basis_matrix_two(&(sk->mat_BAcan_to_BA0_two), &B_can_two, &B_0_two, &(sk->curve),TORSION_PLUS_EVEN_POWER);
     
 
     ec_curve_to_basis_3(&B_can_three, &(pk->curve)); // canonical 

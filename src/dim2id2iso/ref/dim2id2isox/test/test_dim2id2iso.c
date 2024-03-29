@@ -83,13 +83,11 @@ int dim2id2iso_test_fixed_degree_isogeny() {
     assert(fp2_is_equal(&test_pow,&w1));
 
     if (fp2_is_equal(&test_pow,&w1)) {
-        // printf("first curve!  \n");
         ibz_to_digit_array(digit_u,&two_pow);
         fp2_pow(&test_pow,&w0,digit_u,NWORDS_ORDER);
         fp2_is_equal(&test_pow,&w2);
     }
     else if (fp2_is_equal(&test_pow,&w2)) {
-        // printf(" \n \n \n \n second curve! \n \n \n \n");
         assert(fp2_is_equal(&test_pow,&w2));
         ibz_to_digit_array(digit_u,&two_pow);
         fp2_pow(&test_pow,&w0,digit_u,NWORDS_ORDER);

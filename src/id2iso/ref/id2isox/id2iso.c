@@ -583,7 +583,7 @@ int id2iso_ideal_to_isogeny_two_long_power_of_2(id2iso_compressed_long_two_isog_
             // the first step is different for the compression
             if (ind == 0) {
                 // first we compute a new deterministic basis of the curve 
-                ec_curve_to_basis_2(&temp_two_basis,&temp_domain);
+                ec_curve_to_basis_2(&temp_two_basis,&temp_domain,TORSION_PLUS_EVEN_POWER);
 
                 // then we perform a dlp to express isog.kernel in this basis
                 ec_dlog_2(digit_a,digit_b,&temp_two_basis,&isog.kernel,&temp_domain);
@@ -822,7 +822,6 @@ void id2iso_ideal_to_kernel_dlogs_even(ibz_vec_2_t *vec, const quat_left_ideal_t
 }
 
 
-
 void id2iso_ideal_to_isogeny_even(ec_isog_even_t *isog, const quat_left_ideal_t *lideal_input)
 {
     // compute length
@@ -863,6 +862,41 @@ void id2iso_ideal_to_isogeny_even(ec_isog_even_t *isog, const quat_left_ideal_t 
 }
 
 
+void ec_mul_ibz(ec_point_t* res, const ec_curve_t* curve,
+    const ibz_t* scalarP,
+    const ec_point_t *P){
+
+    digit_t scalars[NWORDS_FIELD];
+    if (ibz_cmp(scalarP,&ibz_const_one)==0) {
+        copy_point(res,P);
+    }
+    else {
+        ibz_to_digit_array(scalars, scalarP);
+        ec_mul(res, curve, scalars, P);
+    }
+    
+}
+
+void ec_biscalar_mul_ibz(ec_point_t* res, const ec_curve_t* curve,
+    const ibz_t* scalarP, const ibz_t* scalarQ,
+    const ec_basis_t* PQ){
+
+    digit_t scalars[2][NWORDS_FIELD];
+
+    if (ibz_cmp(scalarP,&ibz_const_zero)==0) {
+        ec_mul_ibz(res,curve,scalarQ,&PQ->Q);
+    }
+    else if (ibz_cmp(scalarQ,&ibz_const_zero)==0) {
+        ec_mul_ibz(res,curve,scalarP,&PQ->P);
+    }
+    else {
+        ibz_to_digit_array(scalars[0], scalarP);
+        ibz_to_digit_array(scalars[1], scalarQ);
+        ec_biscalar_mul(res, curve, scalars[0], scalars[1], PQ);
+    }
+
+    
+}
 
 void id2iso_ideal_to_isogeny_even_dlogs(ec_isog_even_t *isog, ibz_vec_2_t *ker_dlog, const quat_left_ideal_t *lideal_input)
 {
@@ -906,28 +940,55 @@ void id2iso_ideal_to_isogeny_even_dlogs(ec_isog_even_t *isog, ibz_vec_2_t *ker_d
 
 }
 
-void ec_biscalar_mul_ibz(ec_point_t* res, const ec_curve_t* curve,
-    const ibz_t* scalarP, const ibz_t* scalarQ,
-    const ec_basis_t* PQ){
 
-    digit_t scalars[2][NWORDS_FIELD];
-    ibz_to_digit_array(scalars[0], scalarP);
-    ibz_to_digit_array(scalars[1], scalarQ);
-    ec_biscalar_mul(res, curve, scalars[0], scalars[1], PQ);
+
+
+// helper function to apply a matrix to a basis of E[2^f]
+// works in place 
+void matrix_application_even_basis(ec_basis_t *bas, const ec_curve_t *E,ibz_mat_2x2_t *mat,int f) {
+    digit_t scalars[2][NWORDS_FIELD] = {0};
+
+    ibz_t tmp,pow_two;
+    ibz_init(&tmp);
+    ibz_init(&pow_two);
+    ibz_pow(&pow_two,&ibz_const_two,f); 
+
+    ec_basis_t tmp_bas;
+    copy_point(&tmp_bas.P,&bas->P);
+    copy_point(&tmp_bas.Q,&bas->Q);
+    copy_point(&tmp_bas.PmQ,&bas->PmQ);
+
+    // reduction mod 2f
+    ibz_mod(&(*mat)[0][0],&(*mat)[0][0],&pow_two);
+    ibz_mod(&(*mat)[0][1],&(*mat)[0][1],&pow_two);
+    ibz_mod(&(*mat)[1][0],&(*mat)[1][0],&pow_two);
+    ibz_mod(&(*mat)[1][1],&(*mat)[1][1],&pow_two);
+
+    // first basis element
+    ibz_to_digit_array(scalars[0],&(*mat)[0][0]);
+    // ibz_set(&mat[0][1],0);
+    ibz_to_digit_array(scalars[1],&(*mat)[1][0]);
+    
+    ec_biscalar_mul(&bas->P,E,scalars[0],scalars[1],&tmp_bas);
+    ibz_to_digit_array(scalars[0],&(*mat)[0][1]);
+    ibz_to_digit_array(scalars[1],&(*mat)[1][1]);
+    ec_biscalar_mul(&bas->Q,E,scalars[0],scalars[1],&tmp_bas);
+
+    ibz_sub(&tmp,&(*mat)[0][0],&(*mat)[0][1]);
+    ibz_mod(&tmp,&tmp,&pow_two);
+    ibz_to_digit_array(scalars[0],&tmp);
+    ibz_sub(&tmp,&(*mat)[1][0],&(*mat)[1][1]);
+    ibz_mod(&tmp,&tmp,&pow_two);
+    ibz_to_digit_array(scalars[1],&tmp);
+    ec_biscalar_mul(&bas->PmQ,E,scalars[0],scalars[1],&tmp_bas);
+
+    ibz_finalize(&tmp);
+    ibz_finalize(&pow_two);
+
 }
 
-void ec_mul_ibz(ec_point_t* res, const ec_curve_t* curve,
-    const ibz_t* scalarP,
-    const ec_point_t *P){
 
-    digit_t scalars[NWORDS_FIELD];
-    ibz_to_digit_array(scalars, scalarP);
-    ec_mul(res, curve, scalars, P);
-}
-
-
-
-// helper function to apply some endomorphism of E0 on the precomputed basis of E0[2^f]
+// helper function to apply some endomorphism of E0 on the precomputed basis of E[2^f]
 // works in place 
 void endomorphism_application_even_basis(ec_basis_t *bas, const ec_curve_t *E,quat_alg_elem_t *theta,int f) {
     ibz_t tmp;
@@ -936,19 +997,11 @@ void endomorphism_application_even_basis(ec_basis_t *bas, const ec_curve_t *E,qu
     ibz_vec_4_init(&coeffs);
     ibz_mat_2x2_t mat;
     ibz_mat_2x2_init(&mat);
-    ibz_t twopow;
-    ibz_init(&twopow);
-    ibz_pow(&twopow,&ibz_const_two,f);
 
     ibz_t content;
     ibz_init(&content);
 
-    digit_t scalars[2][NWORDS_FIELD] = {0};
-
-    ec_basis_t tmp_bas;
-    copy_point(&tmp_bas.P,&bas->P);
-    copy_point(&tmp_bas.Q,&bas->Q);
-    copy_point(&tmp_bas.PmQ,&bas->PmQ);
+    
 
     // // decomposing theta on the basis 
     quat_alg_make_primitive(&coeffs,&content,theta,&MAXORD_O0,&QUATALG_PINFTY);
@@ -967,33 +1020,16 @@ void endomorphism_application_even_basis(ec_basis_t *bas, const ec_curve_t *E,qu
                 ibz_mul(&tmp, &ACTION_GEN4[i][j], &coeffs[3]);
                 ibz_add(&mat[i][j], &mat[i][j], &tmp);
                 ibz_mul(&mat[i][j],&mat[i][j],&content);
-                ibz_mod(&mat[i][j],&mat[i][j],&twopow);
+                // ibz_mod(&mat[i][j],&mat[i][j],&twopow);
             }
     }
 
     // and now we apply it
-     // first basis element
-    ibz_to_digit_array(scalars[0],&mat[0][0]);
-    // ibz_set(&mat[0][1],0);
-    ibz_to_digit_array(scalars[1],&mat[1][0]);
-    
-    ec_biscalar_mul(&bas->P,E,scalars[0],scalars[1],&tmp_bas);
-    ibz_to_digit_array(scalars[0],&mat[0][1]);
-    ibz_to_digit_array(scalars[1],&mat[1][1]);
-    ec_biscalar_mul(&bas->Q,E,scalars[0],scalars[1],&tmp_bas);
+    matrix_application_even_basis(bas,E,&mat,f);
+     
 
-    ibz_sub(&tmp,&mat[0][0],&mat[0][1]);
-    ibz_mod(&tmp,&tmp,&twopow);
-    ibz_to_digit_array(scalars[0],&tmp);
-    ibz_sub(&tmp,&mat[1][0],&mat[1][1]);
-    ibz_mod(&tmp,&tmp,&twopow);
-    ibz_to_digit_array(scalars[1],&tmp);
-    ec_biscalar_mul(&bas->PmQ,E,scalars[0],scalars[1],&tmp_bas);
-
-    ibz_finalize(&tmp);
     ibz_vec_4_finalize(&coeffs);
     ibz_mat_2x2_finalize(&mat);
-    ibz_finalize(&twopow);
     ibz_finalize(&content);
     
 }
@@ -1365,6 +1401,68 @@ void id2iso_kernel_dlogs_to_ideal(quat_left_ideal_t *lideal, const ibz_vec_2_t *
 }
 
 
+// compute the ideal whose kernel is generated by vec2[0]*BO[0] + vec2[1]*B0[1] where B0 is the canonical basis of E0
+void id2iso_kernel_dlogs_to_ideal_two(quat_left_ideal_t *lideal, const ibz_vec_2_t *vec2)
+{
+
+    // algorithm: apply endomorphisms 1 and j+(1+k)/2 to the kernel point,
+    // the result should form a basis of the respective torsion subgroup.
+    // then apply i to the kernel point and decompose over said basis.
+    // hence we have an equation a*P + b*[j+(1+k)/2]P == [i]P, which will
+    // easily reveal an endomorphism that kills P.
+
+    ibz_vec_2_t vec;
+    ibz_vec_2_init(&vec);
+
+    {
+        ibz_mat_2x2_t mat;
+        ibz_mat_2x2_init(&mat);
+
+        ibz_copy(&mat[0][0], &(*vec2)[0]);
+        ibz_copy(&mat[1][0], &(*vec2)[1]);
+
+        ibz_mat_2x2_eval(&vec, &ACTION_J, vec2);
+        ibz_copy(&mat[0][1], &vec[0]);
+        ibz_copy(&mat[1][1], &vec[1]);
+        ibz_mat_2x2_eval(&vec, &ACTION_GEN4, vec2);
+        ibz_add(&mat[0][1], &mat[0][1], &vec[0]);
+        ibz_add(&mat[1][1], &mat[1][1], &vec[1]);
+        ibz_mod(&mat[0][1], &mat[0][1], &TORSION_PLUS_2POWER);
+        ibz_mod(&mat[1][1], &mat[1][1], &TORSION_PLUS_2POWER);
+
+        ibz_mat_2x2_t inv;
+        ibz_mat_2x2_init(&inv);
+        {
+            int inv_ok = ibz_2x2_inv_mod(&inv, &mat, &TORSION_PLUS_2POWER);
+            assert(inv_ok);
+        }
+        ibz_mat_2x2_finalize(&mat);
+
+        ibz_mat_2x2_eval(&vec, &ACTION_I, vec2);
+        ibz_mat_2x2_eval(&vec, &inv, &vec);
+
+        ibz_mat_2x2_finalize(&inv);
+    }
+
+
+    // final result: a - i + b*(j+(1+k)/2)
+    quat_alg_elem_t gen;
+    quat_alg_elem_init(&gen);
+    ibz_set(&gen.denom, 2);
+    ibz_add(&gen.coord[0], &vec[0], &vec[0]);
+    ibz_set(&gen.coord[1], -2);
+    ibz_add(&gen.coord[2], &vec[1], &vec[1]);
+    ibz_copy(&gen.coord[3], &vec[1]);
+    ibz_add(&gen.coord[0], &gen.coord[0], &vec[1]);
+    ibz_vec_2_finalize(&vec);
+
+    quat_lideal_create_from_primitive(lideal, &gen, &TORSION_PLUS_2POWER, &MAXORD_O0, &QUATALG_PINFTY);
+
+    assert(0 == ibz_cmp(&lideal->norm, &TORSION_PLUS_2POWER));
+
+    quat_alg_elem_finalize(&gen);
+}
+
 
 
 void id2iso_kernel_dlogs_to_ideal_three(quat_left_ideal_t *lideal, const ibz_vec_2_t *vec3)
@@ -1491,22 +1589,20 @@ void id2iso_kernel_dlogs_to_ideal_three(quat_left_ideal_t *lideal, const ibz_vec
 // finds mat such that:
 // (mat*v).B2 = v.B1
 // where "." is the dot product, defined as (v1,v2).(P,Q) = v1*P + v2*Q
-void change_of_basis_matrix_two(ibz_mat_2x2_t *mat, ec_basis_t *B1, ec_basis_t *B2, ec_curve_t *E){
+// mat encodes the coordinates of the points of B1 in the basis B2
+void change_of_basis_matrix_two(ibz_mat_2x2_t *mat, ec_basis_t *B1, ec_basis_t *B2, ec_curve_t *E,int f){
     // TODO
     digit_t x1[NWORDS_ORDER] = {0},x2[NWORDS_ORDER] = {0},x3[NWORDS_ORDER] = {0},x4[NWORDS_ORDER] = {0};  
     digit_t x5[NWORDS_ORDER] = {0},x6[NWORDS_ORDER] = {0};  
     ibz_t i1,i2,i3,i4,i5,i6;
     ibz_init(&i1);ibz_init(&i2);ibz_init(&i3);ibz_init(&i4);ibz_init(&i5);ibz_init(&i6);
 
-    assert(test_point_order_twof(&(B1->P),E,TORSION_PLUS_EVEN_POWER));
-    assert(test_point_order_twof(&(B1->Q),E,TORSION_PLUS_EVEN_POWER));
-    assert(test_point_order_twof(&(B1->PmQ),E,TORSION_PLUS_EVEN_POWER));
-    assert(test_point_order_twof(&(B2->P),E,TORSION_PLUS_EVEN_POWER));
-    assert(test_point_order_twof(&(B2->Q),E,TORSION_PLUS_EVEN_POWER));
-    assert(test_point_order_twof(&(B2->PmQ),E,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&(B2->P),E,f));
+    assert(test_point_order_twof(&(B2->Q),E,f));
+    assert(test_point_order_twof(&(B2->PmQ),E,f));
 
 
-    ec_dlog_2_weil(x1,x2,x3,x4,B2,B1,E,TORSION_PLUS_EVEN_POWER);
+    ec_dlog_2_weil(x1,x2,x3,x4,B2,B1,E,f);
 
     // copying the digits
     ibz_copy_digit_array(&i1,x1);
@@ -1636,4 +1732,22 @@ void change_of_basis_matrix_three(ibz_mat_2x2_t *mat, const ec_basis_t *B1, cons
 }
 
 
+// function to sample a random left O0-ideal of given norm 
+void sampling_random_ideal_O0(quat_left_ideal_t *lideal,ibz_t *norm) {
 
+    ibz_t n_temp;
+    quat_alg_elem_t gen;
+    int found = 1;
+    ibz_init(&n_temp);
+    quat_alg_elem_init(&gen);
+
+    // TODO make a cleaner provable version of this
+    generate_random_prime(&n_temp,1,256);
+    ibz_mul(&n_temp,norm,&n_temp);
+    found = found && represent_integer(&gen,&n_temp,&QUATALG_PINFTY);
+    assert(found);
+    quat_lideal_create_from_primitive(lideal,&gen,norm,&MAXORD_O0,&QUATALG_PINFTY);
+
+    ibz_finalize(&n_temp);
+    quat_alg_elem_finalize(&gen);
+}

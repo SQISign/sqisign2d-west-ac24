@@ -36,9 +36,12 @@ void kps_s(uint64_t const i, ec_point_t const P, ec_point_t const A);	// svelu f
 void xisog_4(ec_point_t* B, ec_point_t const P);			// degree-4 isogeny construction
 void xisog_4_singular(ec_point_t* B24, ec_point_t const P, ec_point_t A24);
 void xisog_2(ec_point_t* B, ec_point_t const P);			// degree-2 isogeny construction
+void xisog_2_singular(ec_point_t* B24, ec_point_t A24);
+
 void xisog_t(ec_point_t* B, uint64_t const i, ec_point_t const A);	// tvelu formulae
 void xisog_s(ec_point_t* B, uint64_t const i, ec_point_t const A);	// svelu formulae
 
+void xeval_2_singular(ec_point_t* R, const ec_point_t* Q, const int lenQ);
 void xeval_4(ec_point_t* R, const ec_point_t* Q, const int lenQ);					// degree-4 isogeny evaluation
 void xeval_4_singular(ec_point_t* R, const ec_point_t* Q, const int lenQ, const ec_point_t P);
 void xeval_2(ec_point_t* R, ec_point_t* const Q, const int lenQ);	// degree-2 isogeny evaluation

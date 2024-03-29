@@ -54,7 +54,7 @@ int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *
  * @param d1 Output : integer 
  * @param d2 Output : integer
  * @param codomain the curve d1-isogenous to E0
- * @param basis Output : evaluation of the canonical basis of E0 through the ideal of norm d1 corresponding to lideal*Cong(beta1)/n(lideal)
+ * @param basis Output : evaluation of the canonical basis of E0 through the ideal corresponding to lideal
  * @param lideal : ideal in input 
  * @param Bpoo : the quaternion algebra
  * @returns a bit indicating if the computation succeeded
@@ -67,6 +67,15 @@ int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *
  */
 int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *beta1, quat_alg_elem_t *beta2, ibz_t *u, ibz_t *v, ibz_vec_4_t *coeffs, theta_chain_t *phiu, theta_chain_t *phiv,ibz_t *d1,ibz_t *d2, ec_curve_t *codomain, ec_basis_t *basis, const quat_left_ideal_t *lideal, const quat_alg_t *Bpoo);
 
+/**
+ * @brief Translating an ideal into a representation of the corresponding isogeny
+ *
+ * @param basis Output : evaluation of the canonical basis of E0 through the ideal corresponding to lideal
+ * @param lideal : ideal in input
+ * 
+ * This is a wrapper around the ideal to isogeny clapotis function 
+ */
+int dim2id2iso_arbitrary_isogeny_evaluation(ec_basis_t *basis, ec_curve_t *codomain,const quat_left_ideal_t *lideal);
 
 
 #endif

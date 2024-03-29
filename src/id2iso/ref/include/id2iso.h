@@ -128,9 +128,13 @@ void ec_mul_ibz(ec_point_t* res, const ec_curve_t* curve,
     const ibz_t* scalarP,
     const ec_point_t *P);
     
-// helper function to apply some endomorphism of E0 on a basis of E0[2^TORSION_PLUS_EVEN_POWER]
+// helper function to apply some 2x2 matrix on a basis of E[2^TORSION_PLUS_EVEN_POWER]
+// works in place 
+void matrix_application_even_basis(ec_basis_t *P,const ec_curve_t *E,ibz_mat_2x2_t *mat,int f);
+// helper function to apply some endomorphism of E on a basis of E[2^TORSION_PLUS_EVEN_POWER]
 // works in place 
 void endomorphism_application_even_basis(ec_basis_t *P,const ec_curve_t *E,quat_alg_elem_t *theta,int f);
+// same as above but for a basis given in x,y coordinates
 void endomorphism_application_even_jac_basis(jac_point_t *P,jac_point_t *Q,quat_alg_elem_t *theta,int f);
 
 
@@ -143,6 +147,7 @@ void endomorphism_application_even_jac_basis(jac_point_t *P,jac_point_t *Q,quat_
  *
  */
 void id2iso_kernel_dlogs_to_ideal(quat_left_ideal_t *lideal, const ibz_vec_2_t *vec2, const ibz_vec_2_t *vec3);
+void id2iso_kernel_dlogs_to_ideal_two(quat_left_ideal_t *lideal, const ibz_vec_2_t *vec2);
 void id2iso_kernel_dlogs_to_ideal_three(quat_left_ideal_t *lideal, const ibz_vec_2_t *vec3);
 
 /** @}
@@ -160,13 +165,16 @@ void matrix_of_endomorphism_even(ibz_mat_2x2_t *mat, const quat_alg_elem_t *alph
  *
  * @param mat the computed change of basis matrix
  * @param B1 the source basis
- * @param B1 the target basis
+ * @param B2 the target basis
  * @param E the elliptic curve
+ * 
+ * mat encodes the coordinates of the points of B1 in the basis B2
  */
-void change_of_basis_matrix_two(ibz_mat_2x2_t *mat, ec_basis_t *B1, ec_basis_t *B2, ec_curve_t *E);
+void change_of_basis_matrix_two(ibz_mat_2x2_t *mat, ec_basis_t *B1, ec_basis_t *B2, ec_curve_t *E, int f);
 
 void change_of_basis_matrix_three(ibz_mat_2x2_t *mat, const ec_basis_t *B1, const ec_basis_t *B2, const ec_curve_t *E);
 
-
+// function to sample a random left O0-ideal of given norm 
+void sampling_random_ideal_O0(quat_left_ideal_t *lideal,ibz_t *norm);
 
 #endif

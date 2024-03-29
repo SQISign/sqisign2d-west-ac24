@@ -76,7 +76,7 @@ static void difference_point(ec_point_t* PQ, const ec_point_t* P, const ec_point
     fp2_add(&PQ->x, &t0, &t1);
 }
 
-void ec_curve_to_basis_2(ec_basis_t *PQ2, const ec_curve_t *curve){
+void ec_curve_to_basis_2(ec_basis_t *PQ2, const ec_curve_t *curve,int f){
     fp2_t x, t0, t1, t2;
     ec_point_t P, Q, Q2, P2, A24;
 
@@ -110,10 +110,14 @@ void ec_curve_to_basis_2(ec_basis_t *PQ2, const ec_curve_t *curve){
 
         // Clear odd factors from the order
         xMULv2(&P, &P, p_cofactor_for_2f, P_COFACTOR_FOR_2F_BITLENGTH, &A24);
+        // clear the power of two
+        for (int i=0;i<POWER_OF_2-f;i++) {
+            xDBLv2(&P,&P,&A24);
+        }
 
         // Check if point has order 2^f
         copy_point(&P2, &P);
-        for(int i = 0; i < POWER_OF_2 - 1; i++)
+        for(int i = 0; i < f - 1; i++)
             xDBLv2(&P2, &P2, &A24);
         if(ec_is_zero(&P2))
             continue;
@@ -143,10 +147,14 @@ void ec_curve_to_basis_2(ec_basis_t *PQ2, const ec_curve_t *curve){
 
         // Clear odd factors from the order
         xMULv2(&Q, &Q, p_cofactor_for_2f, P_COFACTOR_FOR_2F_BITLENGTH, &A24);
+        // clear the power of two
+        for (int i=0;i<POWER_OF_2-f;i++) {
+            xDBLv2(&P,&P,&A24);
+        }
 
         // Check if point has order 2^f
         copy_point(&Q2, &Q);
-        for(int i = 0; i < POWER_OF_2 - 1; i++)
+        for(int i = 0; i < f - 1; i++)
             xDBLv2(&Q2, &Q2, &A24);
         if(ec_is_zero(&Q2))
             continue;
