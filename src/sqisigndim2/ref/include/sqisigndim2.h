@@ -41,12 +41,15 @@
 
 
 typedef struct signature {
-    ec_curve_t E_aux; /// the auxilliary curve
+    ec_curve_t E_aux; /// the montgomery A coefficient for the auxilliary curve
+
     int backtracking;
     int two_resp_length;
     ibz_mat_2x2_t mat_Bchall_can_to_B_chall; /// the matrix of the desired basis 
     ibz_t chall_coeff;
     int chall_b;
+    int *hint_aux;
+    int *hint_chall;
 } signature_t;
 
 /** @brief Type for the public keys
@@ -58,6 +61,7 @@ typedef struct signature {
 */
 typedef struct public_key {
 	ec_curve_t curve; /// the normalized A coefficient of the Montgomery curve
+    int *hint_pk;
 } public_key_t;
 
 /** @brief Type for the secret keys
@@ -68,7 +72,8 @@ typedef struct public_key {
  * 
 */
 typedef struct secret_key {
-	ec_curve_t curve; /// the public curve
+    ec_basis_t canonical_basis; // the canonical basis of the public key curve
+	ec_curve_t curve; /// the public curve, but with little precomputations
     quat_left_ideal_t secret_ideal;
     ibz_mat_2x2_t mat_BAcan_to_BA0_two; /// mat_BA0_to_BAcan*BA0 = BAcan, where BAcan is the canonical basis of EA[2^e], and BA0 the image of the basis of E0[2^e] through the secret isogeny
 } secret_key_t;
@@ -81,9 +86,12 @@ typedef struct secret_key {
 /*************************** Functions *****************************/
 
 void protocols_keygen(public_key_t *pk, secret_key_t *sk);
-int protocols_sign(signature_t *sig, const public_key_t *pk, const secret_key_t *sk, const unsigned char* m, size_t l, int verbose);
+int protocols_sign(signature_t *sig, const public_key_t *pk ,secret_key_t *sk, const unsigned char* m, size_t l, int verbose);
 int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned char* m, size_t l);
 
+
+void public_key_init(public_key_t *pk);
+void public_key_finalize(public_key_t *pk);
 
 void secret_key_init(secret_key_t *sk);
 void secret_key_finalize(secret_key_t *sk);

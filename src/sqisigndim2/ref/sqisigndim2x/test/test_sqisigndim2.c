@@ -56,6 +56,7 @@ int test_sqisign(int repeat)
     signature_t sig;
     unsigned char msg[32] = { 0 };
 
+    public_key_init(&pk);
     secret_key_init(&sk);
     secret_sig_init(&(sig));
     
@@ -79,9 +80,6 @@ int test_sqisign(int repeat)
         printf("\x1b[34mkeygen  took %'" PRIu64 " cycles\x1b[0m\n", t1-t0);
         t0 = rdtsc();
         int val = protocols_sign(&sig, &pk, &sk, msg, 32, 0);
-        if (!val) {
-            printf("signing failed ! \n");
-        }  
         t1 = rdtsc();
         printf("\x1b[34msigning took %'" PRIu64 " cycles\x1b[0m\n", t1-t0);
         t0 = rdtsc();
@@ -92,7 +90,7 @@ int test_sqisign(int repeat)
         t1 = rdtsc();
         printf("\x1b[34mverif   took %'" PRIu64 " cycles\x1b[0m\n", t1-t0);    
     
-        printf(" \x1b[35mfull\x1b[0m signature was: %s\n\n", res ? "\x1b[32mvalid\x1b[0m" : "\x1b[31minvalid\x1b[0m");
+        printf(" \x1b[35mfull\x1b[0m signature was: %s\n\n", check ? "\x1b[32mvalid\x1b[0m" : "\x1b[31minvalid\x1b[0m");
     }
 
 
@@ -111,7 +109,7 @@ int test_sqisign(int repeat)
 
     
 
-
+    public_key_finalize(&pk);
     secret_key_finalize(&sk);
     secret_sig_finalize(&sig);
 

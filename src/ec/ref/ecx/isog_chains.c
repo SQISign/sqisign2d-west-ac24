@@ -2,31 +2,23 @@
 #include <assert.h>
 // #include <intbig.h>
 
-static inline void AC_to_A24(ec_point_t *A24, ec_curve_t const *E)
-{
-    // A24 = (A+2C : 4C)
-    fp2_add(&A24->z, &E->C, &E->C);
-    fp2_add(&A24->x, &E->A, &A24->z);
-    fp2_add(&A24->z, &A24->z, &A24->z);
-}
 
-static inline void A24_to_AC(ec_curve_t *E, ec_point_t const *A24)
-{
-    // (A:C) = ((A+2C)*2-4C : 4C)
-    fp2_add(&E->A, &A24->x, &A24->x);
-    fp2_sub(&E->A, &E->A, &A24->z);
-    fp2_add(&E->A, &E->A, &E->A);
-    fp2_copy(&E->C, &A24->z);
-}
 
 void ec_eval_even(ec_curve_t* image, const ec_isog_even_t* phi,
     ec_point_t* points, unsigned short length){
+
+        ec_curve_t E;
         ec_point_t Q4, Q, A24;
+        copy_curve(&E,&phi->curve);
         copy_point(&Q4, &phi->kernel);
-        AC_to_A24(&A24, &phi->curve);
+        // AC_to_A24(&A24, &phi->curve);
+        ec_curve_normalize_A24(&E);   
+        copy_point(&A24,&E.A24);
+        
         for(int i = 0; i < phi->length - 2; i++)
-            xDBLv2(&Q4, &Q4, &A24);
-        xDBLv2(&Q, &Q4, &A24);
+            xDBLv2_normalized(&Q4, &Q4, &A24);
+        xDBLv2_normalized(&Q, &Q4, &A24);
+
         if(fp2_is_zero(&Q.x)){
             xisog_4_singular(&A24, Q4, A24);
             xeval_4_singular(points, points, length, Q4);
@@ -74,14 +66,30 @@ static void ec_eval_even_strategy(ec_curve_t* image, ec_point_t* points, unsigne
     current = 0;         // Number of points being carried
     int XDBLs[log2_of_e]; // Number of doubles performed
 
+
+    // if the length is long enough we normalize the first step
+    
+
     // If walk length is odd, we start with a 2-isogeny
     if(isog_len & 1){
+        if (isog_len > 50) {
+            ec_normalize(A24);
+        }
         copy_point(&SPLITTING_POINTS[1], &SPLITTING_POINTS[0]);
         for(i = 0; i < isog_len-1; i++)
-            xDBLv2(&SPLITTING_POINTS[1], &SPLITTING_POINTS[1], A24);
+            if (isog_len > 50) {
+                xDBLv2_normalized(&SPLITTING_POINTS[1], &SPLITTING_POINTS[1], A24);
+            }
+            else {
+                xDBLv2(&SPLITTING_POINTS[1], &SPLITTING_POINTS[1], A24);
+            }
+            
         xisog_2(A24, SPLITTING_POINTS[1]);
         xeval_2(SPLITTING_POINTS, SPLITTING_POINTS, 1);
         xeval_2(points, points, points_len);
+    }
+    if (isog_len > 50) {
+        ec_normalize(A24);
     }
     
     // Chain of 4-isogenies
@@ -95,7 +103,13 @@ static void ec_eval_even_strategy(ec_curve_t* image, ec_point_t* points, unsigne
             // We set the seed of the new split to be computed and saved
             copy_point(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current - 1]);
             for(i = 0; i < 2*STRATEGY4[TORSION_PLUS_EVEN_POWER-2-isog_len][strategy]; i++)
-                xDBLv2(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current], A24);
+                if (j==0) {
+                    xDBLv2_normalized(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current], A24);
+                }
+                else {
+                    xDBLv2(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current], A24);
+                }
+                
             XDBLs[current] = STRATEGY4[TORSION_PLUS_EVEN_POWER-2-isog_len][strategy];  // The number of doublings performed is saved
             BLOCK += STRATEGY4[TORSION_PLUS_EVEN_POWER-2-isog_len][strategy];          // BLOCK is increased by the number of doublings performed
             strategy += 1;                  // Next, we move to the next element of the strategy

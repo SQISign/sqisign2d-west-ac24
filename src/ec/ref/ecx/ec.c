@@ -5,6 +5,14 @@
 #include <stdio.h>
 
 
+void ec_curve_normalize_A24(ec_curve_t *E) {
+    if (E->is_A24_computed_and_normalized!=155){
+        AC_to_A24(&E->A24,E);
+        ec_normalize(&E->A24);
+        E->is_A24_computed_and_normalized = 155;
+    }
+}
+
 bool ec_is_zero(ec_point_t const* P)
 {
     return fp2_is_zero(&P->z);
@@ -30,6 +38,8 @@ void copy_curve(ec_curve_t* E1, ec_curve_t const* E2)
 {
     fp2_copy(&(E1->A), &(E2->A));
     fp2_copy(&(E1->C), &(E2->C));
+    E1->is_A24_computed_and_normalized = E2->is_A24_computed_and_normalized;
+    copy_point(&E1->A24,&E2->A24);
 }
 
 void xDBL(ec_point_t* Q, ec_point_t const* P, ec_point_t const* AC)
@@ -64,6 +74,24 @@ void xDBLv2(ec_point_t* Q, ec_point_t const* P, ec_point_t const* A24)
     fp2_sqr(&t1, &t1);
     fp2_sub(&t2, &t0, &t1);
     fp2_mul(&t1, &t1, &A24->z);
+    fp2_mul(&Q->x, &t0, &t1);
+    fp2_mul(&t0, &t2, &A24->x);
+    fp2_add(&t0, &t0, &t1);
+    fp2_mul(&Q->z, &t0, &t2);
+}
+
+
+void xDBLv2_normalized(ec_point_t* Q, ec_point_t const* P, ec_point_t const* A24)
+{
+    // This version receives the coefficient value A24 = (A+2C/4C:1) 
+    fp2_t t0, t1, t2;
+
+    fp2_add(&t0, &P->x, &P->z);
+    fp2_sqr(&t0, &t0);
+    fp2_sub(&t1, &P->x, &P->z);
+    fp2_sqr(&t1, &t1);
+    fp2_sub(&t2, &t0, &t1);
+    // fp2_mul(&t1, &t1, &A24->z);
     fp2_mul(&Q->x, &t0, &t1);
     fp2_mul(&t0, &t2, &A24->x);
     fp2_add(&t0, &t0, &t1);
@@ -266,7 +294,7 @@ void swap_ct(digit_t* a, digit_t* b, const digit_t option, const int nwords)
 }
 
 // Compute S = k*P + l*Q, with PQ = P+Q
-void xDBLMUL(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_point_t const* Q, digit_t const* l, ec_point_t const* PQ, ec_curve_t const* curve)
+void xDBLMUL(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_point_t const* Q, digit_t const* l, ec_point_t const* PQ, const ec_curve_t* curve)
 {
     int i;
     digit_t evens, mevens, bitk0, bitl0, maskk, maskl, temp, bs1_ip1, bs2_ip1, bs1_i, bs2_i, h;
@@ -339,9 +367,16 @@ void xDBLMUL(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_point_t co
     fp2_copy(&DIFF2b.x, &PQ->x);
     fp2_copy(&DIFF2b.z, &PQ->z);
 
-    fp2_add(&A24.x, &curve->C, &curve->C);    // Precomputation of A24=(A+2C:4C)
-    fp2_add(&A24.z, &A24.x, &A24.x);
-    fp2_add(&A24.x, &A24.x, &curve->A);
+    // fp2_add(&A24.x, &curve->C, &curve->C);    // Precomputation of A24=(A+2C:4C)
+    // fp2_add(&A24.z, &A24.x, &A24.x);
+    // fp2_add(&A24.x, &A24.x, &curve->A);
+
+
+    // normalizing
+    ec_curve_t E;
+    copy_curve(&E,curve);
+    ec_curve_normalize_A24(&E);
+    copy_point(&A24,&E.A24);
 
     // Main loop
     for (i = BITS-1; i>=0; i--) {
@@ -350,7 +385,7 @@ void xDBLMUL(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_point_t co
         select_ct((digit_t*)&T[0], (digit_t*)&R[0], (digit_t*)&R[1], maskk, 4*NWORDS_FIELD);
         maskk = 0 - (h >> 1);
         select_ct((digit_t*)&T[0], (digit_t*)&T[0], (digit_t*)&R[2], maskk, 4*NWORDS_FIELD);
-        xDBLv2(&T[0], &T[0], &A24);
+        xDBLv2_normalized(&T[0], &T[0], &A24);
 
         maskk = 0 - r[2*i+1];     // in {0, 1}
         select_ct((digit_t*)&T[1], (digit_t*)&R[0], (digit_t*)&R[1], maskk, 4*NWORDS_FIELD);
@@ -1569,50 +1604,6 @@ void lift_basis(jac_point_t *P, jac_point_t *Q, ec_basis_t *B, ec_curve_t *E) {
     fp2_mul(&Q->y,&Q->y,&v1);
     fp2_mul(&Q->x,&Q->x,&Q->z);
 
-        // jac_point_t test;
-        // fp2_copy(&test.z,&Q->z);
-        // fp2_sqr(&v1,&Q->z);
-        // fp2_mul(&test.y,&Q->y,&v1);
-        // fp2_mul(&test.x,&Q->x,&Q->z);
-
-    // fp2_copy(&v1,&Q->z);
-    // fp2_inv(&v1);
-    // fp2_mul(&Q->y,&Q->y,&v1);
-    // fp2_mul(&Q->x,&Q->x,&v1);
-    // fp2_setone(&Q->z);
-
-    // assert(is_jac_equal(&test,Q));
-    // fp2_copy(&Q->z,&test.z);
-    // fp2_copy(&Q->y,&test.y);
-    // fp2_copy(&Q->x,&test.x);
-
-    // fp2_t test1,test2,test3;
-    // fp2_copy(&test1,&Q->z);
-    // fp2_inv(&test1);
-    // fp2_mul(&test3,&Q->x,&test1);
-    // fp2_mul(&test1,&test1,&Q->y);
-    // recover_y(&test2,&test3,E);
-    // assert(fp2_is_equal(&test2,&Q->y));
-
-
-
-    // TODO we can spare this cost by using some formula
-    // recover_y(&Q->y,&Q->x,E);
-
-    // jac_point_t check;
-
-    // jac_neg(&check, Q);
-    // ADD(&check, P, &check, E);
-    // if (!is_jac_xz_equal(&check, &B->PmQ))
-    //     jac_neg(Q, Q);
-
-    // #ifndef NDEBUG
-    //     jac_neg(&check,Q); 
-    //     ADD(&check,P,&check,E);
-    //     assert(is_jac_xz_equal(&check, &B->PmQ));
-    // #endif
-
-
 }
 
 // WRAPPERS
@@ -1621,12 +1612,27 @@ void ec_dbl(ec_point_t* res, const ec_curve_t* curve, const ec_point_t* P){
     xDBL(res, P, (ec_point_t const*)curve);
 }
 
-void ec_dbl_iter(ec_point_t* res, int n, const ec_curve_t* curve, const ec_point_t* P) {
+void ec_dbl_iter(ec_point_t* res, int n, ec_curve_t* curve, const ec_point_t* P) {
     if (n>0) {
-        ec_dbl(res,curve,P);
-        for (int i=0;i<n-1;i++) {
-            ec_dbl(res,curve,res);
+
+        // then it's probably worth it to normalize
+        if (n>50) {
+            ec_curve_normalize_A24(curve);
+            xDBLv2(res,P,&curve->A24);
+            for (int i=0;i<n-1;i++) {
+                xDBLv2(res,res,&curve->A24);
+            }
         }
+        else {
+            
+            // TODO might still be worth it to compute the A24 and use xDBLv2
+            ec_dbl(res,curve,P);
+            for (int i=0;i<n-1;i++) {
+                ec_dbl(res,curve,res);
+            }
+        }
+
+        
     }
 
 }

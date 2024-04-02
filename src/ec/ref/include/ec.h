@@ -75,6 +75,8 @@ typedef struct ec_basis_t {
 typedef struct ec_curve_t {
     fp2_t A;
     fp2_t C; ///< cannot be 0
+    ec_point_t A24; // the point (A+2 : 4C)
+    bool is_A24_computed_and_normalized; // says if A24 has been computed and normalized
 } ec_curve_t;
 
 /** @brief An isogeny of degree a power of 2
@@ -135,6 +137,9 @@ typedef struct ec_isom_t {
 /** @defgroup ec_curve_t Curves and isomorphisms
  * @{
 */
+
+
+void ec_curve_normalize_A24(ec_curve_t *E);
 
 /**
  * @brief j-invariant.
@@ -241,7 +246,7 @@ void ec_dbl(ec_point_t* res, const ec_curve_t* curve, const ec_point_t* P);
  * @param P a point
  * @param n the number of double
  */
-void ec_dbl_iter(ec_point_t* res, int n, const ec_curve_t* curve, const ec_point_t* P);
+void ec_dbl_iter(ec_point_t* res, int n, ec_curve_t* curve, const ec_point_t* P);
 
 /**
  * @brief Point multiplication
@@ -304,7 +309,11 @@ void ec_biscalar_mul(ec_point_t* res, const ec_curve_t* curve,
  * @param PQ2 computed basis of the 2^f-torsion
  * @param curve the computed curve
  */
-void ec_curve_to_basis_2(ec_basis_t *PQ2, const ec_curve_t *curve,int f);
+void ec_curve_to_basis_2(ec_basis_t *PQ2, ec_curve_t *curve,int f);
+
+void ec_curve_to_basis_2_to_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int *hint);
+
+void ec_curve_to_basis_2_from_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int *hint);
 
 /**
  * @brief Complete a basis of the 2^f-torsion
@@ -509,6 +518,24 @@ static void curve_print(char *name, ec_curve_t E){
     fp2_print(name, a);
 }
 
+static inline void AC_to_A24(ec_point_t *A24, ec_curve_t const *E)
+{
+    // A24 = (A+2C : 4C)
+    fp2_add(&A24->z, &E->C, &E->C);
+    fp2_add(&A24->x, &E->A, &A24->z);
+    fp2_add(&A24->z, &A24->z, &A24->z);
+}
+
+static inline void A24_to_AC(ec_curve_t *E, ec_point_t const *A24)
+{
+    // (A:C) = ((A+2C)*2-4C : 4C)
+    fp2_add(&E->A, &A24->x, &A24->x);
+    fp2_sub(&E->A, &E->A, &A24->z);
+    fp2_add(&E->A, &E->A, &E->A);
+    fp2_copy(&E->C, &A24->z);
+}
+
+void xDBLv2_normalized(ec_point_t* Q, ec_point_t const* P, ec_point_t const* A24);
 
 /** @}
 */

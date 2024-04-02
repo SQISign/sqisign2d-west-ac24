@@ -105,6 +105,95 @@ int dim2id2iso_test_fixed_degree_isogeny() {
 
 }
 
+int dim2id2iso_test_find_uv() {
+    // var dec
+    int found =1;  
+    ibz_t temp,remainder,n1,n2;
+    ibq_t ibq_norm;
+    quat_alg_elem_t gen;
+
+    quat_left_ideal_t lideal_small;
+    quat_order_t right_order;
+    ibz_mat_4x4_t reduced,gram;
+    ibz_vec_4_t coeffs;
+    quat_alg_elem_t beta1,beta2;
+    ibz_t u,v,d1,d2,target;
+    // var init
+    ibz_init(&target);
+    ibq_init(&ibq_norm);
+    ibz_init(&temp);ibz_init(&remainder);ibz_init(&n1);ibz_init(&n2);
+    quat_alg_elem_init(&gen);
+    quat_left_ideal_init(&lideal_small);
+    quat_order_init(&right_order);
+    ibz_mat_4x4_init(&reduced);ibz_mat_4x4_init(&gram);
+    ibz_vec_4_init(&coeffs);
+
+    quat_alg_elem_init(&beta1);
+    quat_alg_elem_init(&beta2);
+
+    ibz_init(&u);
+    ibz_init(&v);
+    ibz_init(&d1);ibz_init(&d2);
+
+    // computation of lideal_small
+    generate_random_prime(&n1,1,128);
+    generate_random_prime(&n2,1,256);
+    ibz_mul(&temp,&n1,&n2);
+    found = found && represent_integer(&gen,&temp,&QUATALG_PINFTY);
+    assert(found);
+    quat_lideal_create_from_primitive(&lideal_small,&gen,&n1,&STANDARD_EXTREMAL_ORDER.order,&QUATALG_PINFTY);
+
+    int exp = TORSION_PLUS_EVEN_POWER;
+    ibz_pow(&target,&ibz_const_two,exp);
+
+    found = find_uv(&u,&v,&coeffs,&beta1,&beta2,&d1,&d2,&target,0,&lideal_small,&QUATALG_PINFTY);
+
+    // assert(found);
+    if (!found) {
+        printf("not found \n");
+        ibz_printf("%Zd %Zd %Zd %Zd \n",u,v,d1,d2);
+    }
+
+
+    quat_lattice_contains(&coeffs,&lideal_small.lattice,&beta1,&QUATALG_PINFTY);
+    quat_alg_norm(&ibq_norm,&beta1,&QUATALG_PINFTY);
+    ibq_to_ibz(&n1,&ibq_norm);
+    ibz_div(&n1,&remainder,&n1,&lideal_small.norm);
+    assert(ibz_cmp(&remainder,&ibz_const_zero)==0);
+    assert(ibz_cmp(&n1,&d1)==0);
+
+
+    quat_lattice_contains(&coeffs,&lideal_small.lattice,&beta2,&QUATALG_PINFTY);
+    quat_alg_norm(&ibq_norm,&beta2,&QUATALG_PINFTY);
+    ibq_to_ibz(&n2,&ibq_norm);
+    ibz_div(&n2,&remainder,&n2,&lideal_small.norm);
+    assert(ibz_cmp(&remainder,&ibz_const_zero)==0);
+    assert(ibz_cmp(&n2,&d2)==0);
+
+    ibz_pow(&remainder,&ibz_const_two,TORSION_PLUS_EVEN_POWER);
+
+    ibz_mul(&n1,&d1,&u);
+    ibz_mul(&temp,&d2,&v);
+    ibz_add(&n1,&temp,&n1);
+    assert(ibz_cmp(&remainder,&n1)==0);
+
+    ibq_finalize(&ibq_norm);
+    ibz_finalize(&temp);ibz_finalize(&remainder);ibz_finalize(&n1);ibz_finalize(&n2);
+    quat_alg_elem_finalize(&gen);
+    quat_left_ideal_finalize(&lideal_small);
+    quat_order_finalize(&right_order);
+    ibz_mat_4x4_finalize(&reduced);ibz_mat_4x4_finalize(&gram);
+    ibz_finalize(&u);
+    ibz_finalize(&v);
+    ibz_finalize(&d1);ibz_finalize(&d2);
+    ibz_vec_4_finalize(&coeffs);
+    ibz_finalize(&target);
+
+    quat_alg_elem_finalize(&beta1);
+    quat_alg_elem_finalize(&beta2);
+
+    return found;
+}
 
 int dim2id2iso_test_dimid2iso() {
 
@@ -181,6 +270,11 @@ int main() {
     randombytes_init((unsigned char *) "some", (unsigned char *) "string", 128);
 
     printf("\nRunning dim2id2iso module unit tests\n");
+
+    printf("Running find uv tests \n");
+    for (int i=0;i<100;i++) {
+        res=res & dim2id2iso_test_find_uv();
+    }
 
     printf("\nRunning fixed degree tests\n");
 

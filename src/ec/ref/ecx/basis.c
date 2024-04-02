@@ -76,14 +76,205 @@ static void difference_point(ec_point_t* PQ, const ec_point_t* P, const ec_point
     fp2_add(&PQ->x, &t0, &t1);
 }
 
-void ec_curve_to_basis_2(ec_basis_t *PQ2, const ec_curve_t *curve,int f){
-    fp2_t x, t0, t1, t2;
-    ec_point_t P, Q, Q2, P2, A24;
 
-    // Curve coefficient in the form A24 = (A+2C:4C)
-    fp2_add(&A24.z, &curve->C, &curve->C);
-    fp2_add(&A24.x, &curve->A, &A24.z);
-    fp2_add(&A24.z, &A24.z, &A24.z);
+void ec_curve_to_basis_2_to_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int *hint){
+    fp2_t x, t0, t1, t2;
+    ec_point_t P, Q, Q2, P2;
+
+    // normalize
+    ec_curve_normalize_A24(curve);
+
+    fp_mont_setone(x.re);
+    fp_set(x.im, 0);
+
+    int count=0; 
+
+    // Find P
+    while(1){
+        count++;
+        fp_add(x.im, x.re, x.im);
+
+        // Check if point is rational
+        fp2_sqr(&t0, &curve->C);
+        fp2_mul(&t1, &t0, &x);
+        fp2_mul(&t2, &curve->A, &curve->C);
+        fp2_add(&t1, &t1, &t2);
+        fp2_mul(&t1, &t1, &x);
+        fp2_add(&t1, &t1, &t0);
+        fp2_mul(&t1, &t1, &x);
+        if(fp2_is_square(&t1)){
+            fp2_copy(&P.x, &x);
+            fp_mont_setone(P.z.re);
+            fp_set(P.z.im, 0);
+        }
+        else
+            continue;
+
+        // Clear odd factors from the order
+        xMULv2(&P, &P, p_cofactor_for_2f, P_COFACTOR_FOR_2F_BITLENGTH, &curve->A24);
+        // clear the power of two
+        for (int i=0;i<POWER_OF_2-f;i++) {
+            xDBLv2_normalized(&P,&P,&curve->A24);
+        }
+
+        // Check if point has order 2^f
+        copy_point(&P2, &P);
+        for(int i = 0; i < f - 1; i++)
+            xDBLv2_normalized(&P2, &P2, &curve->A24);
+        if(ec_is_zero(&P2))
+            continue;
+        else
+            break;
+    }
+    
+    hint[0]=count;
+
+    count = 0;
+    // Find Q
+    while(1){
+        count++;
+        fp_add(x.im, x.re, x.im);
+
+        // Check if point is rational
+        fp2_sqr(&t0, &curve->C);
+        fp2_mul(&t1, &t0, &x);
+        fp2_mul(&t2, &curve->A, &curve->C);
+        fp2_add(&t1, &t1, &t2);
+        fp2_mul(&t1, &t1, &x);
+        fp2_add(&t1, &t1, &t0);
+        fp2_mul(&t1, &t1, &x);
+        if(fp2_is_square(&t1)){
+            fp2_copy(&Q.x, &x);
+            fp_mont_setone(Q.z.re);
+            fp_set(Q.z.im, 0);
+        }
+        else
+            continue;
+
+        // Clear odd factors from the order
+        xMULv2(&Q, &Q, p_cofactor_for_2f, P_COFACTOR_FOR_2F_BITLENGTH, &curve->A24);
+        // clear the power of two
+        for (int i=0;i<POWER_OF_2-f;i++) {
+            xDBLv2_normalized(&Q,&Q,&curve->A24);
+        }
+
+        // Check if point has order 2^f
+        copy_point(&Q2, &Q);
+        for(int i = 0; i < f - 1; i++)
+            xDBLv2_normalized(&Q2, &Q2, &curve->A24);
+        if(ec_is_zero(&Q2))
+            continue;
+
+        // Check if point is orthogonal to P
+        if(is_point_equal(&P2, &Q2))
+            continue;
+        else
+            break;
+    }
+
+
+    hint[1]=count;
+     
+    // Normalize points
+    ec_curve_t E;
+    fp2_mul(&t0, &P.z, &Q.z);
+    fp2_mul(&t1, &t0, &curve->C);
+    fp2_inv(&t1);
+    fp2_mul(&P.x, &P.x, &t1);
+    fp2_mul(&Q.x, &Q.x, &t1);
+    fp2_mul(&E.A, &curve->A, &t1);
+    fp2_mul(&P.x, &P.x, &Q.z);
+    fp2_mul(&P.x, &P.x, &curve->C);
+    fp2_mul(&Q.x, &Q.x, &P.z);
+    fp2_mul(&Q.x, &Q.x, &curve->C);
+    fp2_mul(&E.A, &E.A, &t0);
+    fp_mont_setone(P.z.re);
+    fp_set(P.z.im, 0);
+    fp2_copy(&Q.z, &P.z);
+    fp2_copy(&E.C, &P.z);
+
+    // Compute P-Q
+    difference_point(&PQ2->PmQ, &P, &Q, &E);
+    copy_point(&PQ2->P, &P);
+    copy_point(&PQ2->Q, &Q);
+}
+
+
+void ec_curve_to_basis_2_from_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int *hint){
+    fp2_t x, t0, t1, t2;
+    ec_point_t P, Q;
+
+    // normalize
+    ec_curve_normalize_A24(curve);
+
+    fp_mont_setone(x.re);
+    fp_set(x.im, 0);
+
+    int count=0; 
+
+    for (int i=0;i<hint[0];i++) {
+        fp_add(x.im, x.re, x.im);
+    }
+    fp2_copy(&P.x, &x);
+    fp_mont_setone(P.z.re);
+    fp_set(P.z.im, 0);
+
+    // getting the actual point 
+    // Clear odd factors from the order
+    xMULv2(&P, &P, p_cofactor_for_2f, P_COFACTOR_FOR_2F_BITLENGTH, &curve->A24);
+    // clear the power of two
+    for (int i=0;i<POWER_OF_2-f;i++) {
+        xDBLv2_normalized(&P,&P,&curve->A24);
+    
+    }
+    // second point 
+
+
+    for (int i=0;i<hint[1];i++) {
+        fp_add(x.im, x.re, x.im);
+    }
+
+    fp2_copy(&Q.x, &x);
+    fp_mont_setone(Q.z.re);
+    fp_set(Q.z.im, 0);
+
+    // Clear odd factors from the order
+    xMULv2(&Q, &Q, p_cofactor_for_2f, P_COFACTOR_FOR_2F_BITLENGTH, &curve->A24);
+    // clear the power of two
+    for (int i=0;i<POWER_OF_2-f;i++) {
+        xDBLv2_normalized(&Q,&Q,&curve->A24);
+    }
+     
+    // Normalize points
+    ec_curve_t E;
+    fp2_mul(&t0, &P.z, &Q.z);
+    fp2_mul(&t1, &t0, &curve->C);
+    fp2_inv(&t1);
+    fp2_mul(&P.x, &P.x, &t1);
+    fp2_mul(&Q.x, &Q.x, &t1);
+    fp2_mul(&E.A, &curve->A, &t1);
+    fp2_mul(&P.x, &P.x, &Q.z);
+    fp2_mul(&P.x, &P.x, &curve->C);
+    fp2_mul(&Q.x, &Q.x, &P.z);
+    fp2_mul(&Q.x, &Q.x, &curve->C);
+    fp2_mul(&E.A, &E.A, &t0);
+    fp_mont_setone(P.z.re);
+    fp_set(P.z.im, 0);
+    fp2_copy(&Q.z, &P.z);
+    fp2_copy(&E.C, &P.z);
+
+    // Compute P-Q
+    difference_point(&PQ2->PmQ, &P, &Q, &E);
+    copy_point(&PQ2->P, &P);
+    copy_point(&PQ2->Q, &Q);
+}
+
+void ec_curve_to_basis_2(ec_basis_t *PQ2, ec_curve_t *curve,int f){
+    fp2_t x, t0, t1, t2;
+    ec_point_t P, Q, Q2, P2;
+
+    // normalize
+    ec_curve_normalize_A24(curve);
 
     fp_mont_setone(x.re);
     fp_set(x.im, 0);
@@ -109,16 +300,16 @@ void ec_curve_to_basis_2(ec_basis_t *PQ2, const ec_curve_t *curve,int f){
             continue;
 
         // Clear odd factors from the order
-        xMULv2(&P, &P, p_cofactor_for_2f, P_COFACTOR_FOR_2F_BITLENGTH, &A24);
+        xMULv2(&P, &P, p_cofactor_for_2f, P_COFACTOR_FOR_2F_BITLENGTH, &curve->A24);
         // clear the power of two
         for (int i=0;i<POWER_OF_2-f;i++) {
-            xDBLv2(&P,&P,&A24);
+            xDBLv2_normalized(&P,&P,&curve->A24);
         }
 
         // Check if point has order 2^f
         copy_point(&P2, &P);
         for(int i = 0; i < f - 1; i++)
-            xDBLv2(&P2, &P2, &A24);
+            xDBLv2_normalized(&P2, &P2, &curve->A24);
         if(ec_is_zero(&P2))
             continue;
         else
@@ -146,16 +337,16 @@ void ec_curve_to_basis_2(ec_basis_t *PQ2, const ec_curve_t *curve,int f){
             continue;
 
         // Clear odd factors from the order
-        xMULv2(&Q, &Q, p_cofactor_for_2f, P_COFACTOR_FOR_2F_BITLENGTH, &A24);
+        xMULv2(&Q, &Q, p_cofactor_for_2f, P_COFACTOR_FOR_2F_BITLENGTH, &curve->A24);
         // clear the power of two
         for (int i=0;i<POWER_OF_2-f;i++) {
-            xDBLv2(&P,&P,&A24);
+            xDBLv2_normalized(&Q,&Q,&curve->A24);
         }
 
         // Check if point has order 2^f
         copy_point(&Q2, &Q);
         for(int i = 0; i < f - 1; i++)
-            xDBLv2(&Q2, &Q2, &A24);
+            xDBLv2_normalized(&Q2, &Q2, &curve->A24);
         if(ec_is_zero(&Q2))
             continue;
 

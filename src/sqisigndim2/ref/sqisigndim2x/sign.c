@@ -14,11 +14,15 @@ const clock_t time_change_of_basis_matrix = 0;
 void secret_sig_init(signature_t *sig) {
     ibz_mat_2x2_init(&(sig->mat_Bchall_can_to_B_chall));
     ibz_init(&sig->chall_coeff);
+    sig->hint_aux = (int*) malloc(2*sizeof(int));
+    sig->hint_chall = (int*) malloc(2*sizeof(int));
 }
 
 void secret_sig_finalize(signature_t *sig) {
     ibz_mat_2x2_finalize(&(sig->mat_Bchall_can_to_B_chall));
     ibz_finalize(&sig->chall_coeff);
+    free(sig->hint_aux);
+    free(sig->hint_chall);
 }
 
 static void ibz_vec_2_print2(char *name, const ibz_vec_2_t *vec){
@@ -331,7 +335,7 @@ void hash_to_challenge(ibz_vec_2_t *scalars, const ec_curve_t *com_curve, const 
     free(buf);
 }
 
-int protocols_sign(signature_t *sig, const public_key_t *pk, const secret_key_t *sk, const unsigned char* m, size_t l, int verbose) {
+int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, const unsigned char* m, size_t l, int verbose) {
     clock_t t = tic();
 
     ibz_t lattice_content;
@@ -452,7 +456,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, const secret_key_t 
     // computing the norm
     // TODO make a clean constant for this
     // possibly adjust with the value of exp_diadic_val_full_resp
-    pow_dim2_deg_resp = 150;
+    pow_dim2_deg_resp = 130;
     //pow_dim2_deg_resp = ibz_bitsize(&QUATALG_PINFTY.p)/2 +1 - exp_diadic_val_full_resp;
     ibz_pow(&remain,&ibz_const_two,pow_dim2_deg_resp);
     ibz_sub(&tmp,&remain,&degree_odd_resp);
@@ -539,7 +543,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, const secret_key_t 
 
     // computation of the dim2 isogeny
     // TODO potentially adjust the strategy used if we allow for a smaller value 
-    theta_chain_comput_strategy(&isog,pow_dim2_deg_resp,&EcomXEaux,&T1,&T2,&T1m2,special_small_strategy,extra_info);
+    theta_chain_comput_strategy(&isog,pow_dim2_deg_resp,&EcomXEaux,&T1,&T2,&T1m2,special_response_strategy,extra_info);
 
 
     // pushing the points of torsion to recover the kernel of the dual 
@@ -662,9 +666,15 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, const secret_key_t 
         ibz_set(&vec_chall[1],1);
     }
 
+
+    
+
+
     ec_isog_even_t phi_chall;
     ec_basis_t bas_sk;
-    ec_curve_to_basis_2(&bas_sk, &(sk->curve),TORSION_PLUS_EVEN_POWER); // canonical 
+    copy_point(&bas_sk.P,&sk->canonical_basis.P);
+    copy_point(&bas_sk.Q,&sk->canonical_basis.Q);
+    copy_point(&bas_sk.PmQ,&sk->canonical_basis.PmQ);
     phi_chall.curve = sk->curve;
     phi_chall.length = TORSION_PLUS_EVEN_POWER-backtracking;
     ec_biscalar_mul_ibz(&phi_chall.kernel,&sk->curve,&vec_chall[0],&vec_chall[1],&bas_sk);
@@ -710,18 +720,9 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, const secret_key_t 
     copy_point(&B_aux2.P,&Tev1.P1);
     copy_point(&B_aux2.Q,&Tev2.P1);
     copy_point(&B_aux2.PmQ,&Tev1m2.P1);
-    ec_curve_to_basis_2(&B_can_chall,&Echall,TORSION_PLUS_EVEN_POWER);
-    ec_curve_to_basis_2(&B_aux2_can,&E_aux2,TORSION_PLUS_EVEN_POWER);
+    ec_curve_to_basis_2_to_hint(&B_can_chall,&Echall,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp,sig->hint_chall);
+    ec_curve_to_basis_2_to_hint(&B_aux2_can,&E_aux2,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp,sig->hint_aux);
 
-    for (int i=0;i< TORSION_PLUS_EVEN_POWER - (pow_dim2_deg_resp+2 + exp_diadic_val_full_resp);i++)
-    {
-        ec_dbl(&B_aux2_can.P,&E_aux2,&B_aux2_can.P);
-        ec_dbl(&B_aux2_can.Q,&E_aux2,&B_aux2_can.Q);
-        ec_dbl(&B_aux2_can.PmQ,&E_aux2,&B_aux2_can.PmQ);
-        ec_dbl(&B_can_chall.P,&Echall,&B_can_chall.P);
-        ec_dbl(&B_can_chall.Q,&Echall,&B_can_chall.Q);
-        ec_dbl(&B_can_chall.PmQ,&Echall,&B_can_chall.PmQ);
-    }
     assert(test_point_order_twof(&B_aux2.P,&E_aux2,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp)); 
     assert(test_point_order_twof(&B_aux2.Q,&E_aux2,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp)); 
     assert(test_point_order_twof(&B_aux2.PmQ,&E_aux2,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp)); 
@@ -746,8 +747,15 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, const secret_key_t 
     // filling the output 
     sig->backtracking=backtracking;
     sig->two_resp_length=exp_diadic_val_full_resp;
-    copy_curve(&sig->E_aux,&E_aux2);
     ibz_mat_2x2_copy(&sig->mat_Bchall_can_to_B_chall,&mat_Bchall_can_to_Bchall);
+    // setting sig->E_aux 
+    fp2_t temp_fp2;
+    fp2_copy(&temp_fp2,&E_aux2.C);
+    fp2_inv(&temp_fp2);
+    fp2_mul(&sig->E_aux.A,&temp_fp2,&E_aux2.A);
+    fp2_set_one(&sig->E_aux.C);
+    ec_init(&sig->E_aux.A24);
+    sig->E_aux.is_A24_computed_and_normalized = 0;
 
     ibz_vec_2_finalize(&vec);
     ibz_vec_2_finalize(&vec_chall);
@@ -782,19 +790,29 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
 
     ibz_t tmp;
     ibz_vec_2_t vec_chall,check_vec_chall;
+    
 
     ibz_init(&tmp);
     ibz_vec_2_init(&vec_chall);
     ibz_vec_2_init(&check_vec_chall);
 
 
+    // checking that we are given A coefficients and no precomputation
+    assert(fp2_is_one(&pk->curve.C) && !pk->curve.is_A24_computed_and_normalized);
+    assert(fp2_is_one(&sig->E_aux.C) && !sig->E_aux.is_A24_computed_and_normalized);
+
+    clock_t t =tic();
+
     // computation of the challenge 
     ec_isog_even_t phi_chall;
     ec_basis_t bas_EA;
-    ec_curve_to_basis_2(&bas_EA, &(pk->curve),TORSION_PLUS_EVEN_POWER); // canonical 
-    phi_chall.curve = pk->curve;
+    ec_curve_t Epk;
+    copy_curve(&Epk,&pk->curve);
+    ec_curve_to_basis_2_from_hint(&bas_EA, &Epk,TORSION_PLUS_EVEN_POWER,pk->hint_pk); // canonical 
+    phi_chall.curve = Epk;
     phi_chall.length = TORSION_PLUS_EVEN_POWER-sig->backtracking;
-    
+
+
     // recovering the exact vec_chall 
     if (sig->chall_b) {
         ibz_copy(&vec_chall[0],&sig->chall_coeff);
@@ -805,35 +823,29 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
         ibz_set(&vec_chall[0],1);
     }
     
-    ec_biscalar_mul_ibz(&phi_chall.kernel,&pk->curve,&vec_chall[0],&vec_chall[1],&bas_EA);
-    for (int i=0;i<sig->backtracking;i++) {
-                ec_dbl(&phi_chall.kernel,&pk->curve,&phi_chall.kernel);
-    }
-    ec_curve_t Echall=pk->curve;
+    ec_biscalar_mul_ibz(&phi_chall.kernel,&Epk,&vec_chall[0],&vec_chall[1],&bas_EA);
+    ec_dbl_iter(&phi_chall.kernel,sig->backtracking,&Epk,&phi_chall.kernel);
+    
+    ec_curve_t Echall=Epk;
     ec_eval_even(&Echall,&phi_chall,&bas_EA.P,1);
+
+    // TODO make a clean constant for this
+    int pow_dim2_deg_resp = 130;
 
     ec_basis_t B_chall_can,B_aux_can;
 
     // recovering the canonical basis 
-    ec_curve_to_basis_2(&B_chall_can,&Echall,TORSION_PLUS_EVEN_POWER);
-    ec_curve_to_basis_2(&B_aux_can,&sig->E_aux,TORSION_PLUS_EVEN_POWER);
+    ec_curve_to_basis_2_from_hint(&B_chall_can,&Echall,pow_dim2_deg_resp+2 + sig->two_resp_length,sig->hint_chall);
+    ec_curve_to_basis_2_from_hint(&B_aux_can,&sig->E_aux,pow_dim2_deg_resp+2 + sig->two_resp_length,sig->hint_aux);
 
-    // TODO make a clean constant for this
-    int pow_dim2_deg_resp = 150;
+    // TOC_clock(t,"challenge and canonical basis");
+
+    t= tic();
 
     // setting to the right order 
-    
-    for (int i=0;i< TORSION_PLUS_EVEN_POWER - (pow_dim2_deg_resp+2);i++)
-    {
-        ec_dbl(&B_aux_can.P,&sig->E_aux,&B_aux_can.P);
-        ec_dbl(&B_aux_can.Q,&sig->E_aux,&B_aux_can.Q);
-        ec_dbl(&B_aux_can.PmQ,&sig->E_aux,&B_aux_can.PmQ);
-    }
-    for (int i=0;i< TORSION_PLUS_EVEN_POWER - (pow_dim2_deg_resp+2 + sig->two_resp_length);i++) {
-        ec_dbl(&B_chall_can.P,&Echall,&B_chall_can.P);
-        ec_dbl(&B_chall_can.Q,&Echall,&B_chall_can.Q);
-        ec_dbl(&B_chall_can.PmQ,&Echall,&B_chall_can.PmQ);
-    }
+    ec_dbl_iter(&B_aux_can.P,sig->two_resp_length,&sig->E_aux,&B_aux_can.P);
+    ec_dbl_iter(&B_aux_can.Q,sig->two_resp_length,&sig->E_aux,&B_aux_can.Q);
+    ec_dbl_iter(&B_aux_can.PmQ,sig->two_resp_length,&sig->E_aux,&B_aux_can.PmQ);
 
     assert(test_point_order_twof(&B_chall_can.P,&Echall,2+pow_dim2_deg_resp+sig->two_resp_length));
     assert(test_point_order_twof(&B_chall_can.Q,&Echall,2+pow_dim2_deg_resp+sig->two_resp_length));
@@ -865,14 +877,14 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
         copy_point(&points[0],&B_chall_can.P);
         copy_point(&points[1],&B_chall_can.Q);
         copy_point(&points[2],&B_chall_can.PmQ);
+        ec_dbl_iter(&ker,pow_dim2_deg_resp+2,&Echall,&ker);
         // we extract the kernel by multiplying by 2^(2+pow_dim2_deg_resp)
-        for (int i=0;i<pow_dim2_deg_resp+2;i++) {
-            ec_dbl(&ker,&Echall,&ker);
-        }
+        // for (int i=0;i<pow_dim2_deg_resp+2;i++) {
+        //     ec_dbl(&ker,&Echall,&ker);
+        // }
         assert(test_point_order_twof(&ker,&E_chall_2,sig->two_resp_length));
         ec_eval_small_chain(&E_chall_2,&ker,sig->two_resp_length,points,3);
 
-        
         assert(test_point_order_twof(&points[0],&E_chall_2,2+pow_dim2_deg_resp));
         assert(test_point_order_twof(&points[1],&E_chall_2,2+pow_dim2_deg_resp));
         assert(test_point_order_twof(&points[2],&E_chall_2,2+pow_dim2_deg_resp));
@@ -910,7 +922,10 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
 
     // computing the isogeny
     int extra_info =1;
-    theta_chain_comput_strategy(&isog,pow_dim2_deg_resp,&EchallxEaux,&T1,&T2,&T1m2,special_small_strategy,extra_info);
+    theta_chain_comput_strategy_faster_no_eval(&isog,pow_dim2_deg_resp,&EchallxEaux,&T1,&T2,&T1m2,special_response_strategy,extra_info);
+
+
+    // TOC_clock(t,"response isogeny");
 
     // computing the commitment curve
     // apparently its always the second one

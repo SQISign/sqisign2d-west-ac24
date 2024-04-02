@@ -277,7 +277,7 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
             assert(ibz_is_zero(&remain));
         }
     }
-
+    
     // reordering the basis if needed
     if (ibz_cmp(&gram[0][0],&gram[2][2])==0) {
         for (int i=0;i<4;i++) {
@@ -299,8 +299,36 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
         ibz_swap(&gram[3][2],&gram[1][2]);
         ibz_swap(&gram[3][3],&gram[1][1]);
     }
+    else if (ibz_cmp(&gram[1][1],&gram[3][3])==0) {
+        // in this case it seems that we need to swap the second and third element, and then recompute entirely the second element from the first
+        // printf("third case \n");
+        // ibz_printf("%Zd %Zd %Zd %Zd \n",gram[0][0],gram[1][1],gram[2][2],gram[3][3]);
+        
+        // first we swap the second and third element 
+        for (int i=0;i<4;i++) {
+            ibz_swap(&reduced[i][1],&reduced[i][2]);
+        }
+        ibz_swap(&gram[0][2],&gram[0][1]);
+        ibz_swap(&gram[2][0],&gram[1][0]);
+        ibz_swap(&gram[3][2],&gram[3][1]);
+        ibz_swap(&gram[2][3],&gram[1][3]);
+        ibz_swap(&gram[2][2],&gram[1][1]);
+        // and now we compute 
+        // assert(0);
+    }
+    
+    // if (ibz_cmp(&gram[0][0],&gram[1][1])!=0 || ibz_cmp(&gram[2][2],&gram[3][3])!=0) {
+        // ibz_printf("%Zd %Zd %Zd %Zd \n",gram[0][0],gram[1][1],gram[2][2],gram[3][3]);
+    // }
+    
     // TODO : sometimes this fail, needs to be fixed
-    assert(ibz_cmp(&gram[0][0],&gram[1][1])==0);
+    // assert(ibz_cmp(&gram[0][0],&gram[1][1])==0);
+    // assert(ibz_cmp(&gram[2][2],&gram[3][3])==0);
+    // TODO ensure this
+    // assert(ibz_cmp(&gram[0][0],&gram[2][2])<0);
+
+
+
     // adjusting the sign if needed 
     if (ibz_cmp(&reduced[0][0],&reduced[1][1])!=0) {
         for (int i=0;i<4;i++) {
@@ -308,7 +336,7 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
             ibz_neg(&gram[i][1],&gram[i][1]);
             ibz_neg(&gram[1][i],&gram[1][i]);
         }
-        assert(ibz_cmp(&reduced[0][0],&reduced[1][1])==0);
+        // assert(ibz_cmp(&reduced[0][0],&reduced[1][1])==0);
     }
     if (ibz_cmp(&reduced[0][2],&reduced[1][3])!=0) {
         for (int i=0;i<4;i++) {
@@ -316,7 +344,7 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
             ibz_neg(&gram[i][3],&gram[i][3]);
             ibz_neg(&gram[3][i],&gram[3][i]);
         }
-        assert(ibz_cmp(&reduced[0][2],&reduced[1][3])==0);
+        // assert(ibz_cmp(&reduced[0][2],&reduced[1][3])==0);
     }
 
      // printing the size of the elements
@@ -327,7 +355,7 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
     // we start by enumerating a set of small vectors 
     // global parameters for the enumerate
     // TODO may be overshot and we may improve this by sampling inside an hyperball instead 
-    int m = 2+2*number_sum_square;
+    int m =1+2+2*number_sum_square;
     int m4 = (2*m+1)*(2*m+1)*(2*m+1)*(2*m+1)-1;
     int m3 = (2*m+1)*(2*m+1)*(2*m+1);
     int m2 = (2*m+1)*(2*m+1);

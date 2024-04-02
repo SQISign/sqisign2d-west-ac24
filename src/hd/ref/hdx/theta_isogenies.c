@@ -1649,8 +1649,6 @@ void theta_chain_comput_balanced(theta_chain_t *out,int n, theta_couple_curve_t 
 
 void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t *E12,const theta_couple_point_t *T1,const theta_couple_point_t *T2, const theta_couple_point_t *T1m2,int *strategy, int eight_above) {
 
-    // printf("theta chain of length %d \n",n);
-
     theta_couple_point_t P1,P2,P1m2;
     theta_point_t R1,R2;
     theta_isogeny_t steps[n-1];
@@ -1684,7 +1682,7 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
         assert(test_point_order_twof(&bas1.P,&E12->E1,n));
     }
     
-    t = tic();
+    // t = tic();
     lift_basis(&xyT1.P1,&xyT2.P1,&bas1,&E12->E1);
     lift_basis(&xyT1.P2,&xyT2.P2,&bas2,&E12->E2);
     if (eight_above) {
@@ -1702,7 +1700,7 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
     int adjusting = 2*(1-eight_above);
     assert( (eight_above && adjusting==0) || (!eight_above && adjusting==2));
 
-    t = tic();
+    // t = tic();
 
     // prepare the points for the first step
     // first we must compute the length of the list
@@ -1714,7 +1712,6 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
     }
     int len_list = index + 1;
 
-    // TODO : compute more precisely the lenght that we will need
     theta_couple_jac_point_t points1[n];
     theta_couple_jac_point_t points2[n];
     theta_point_t Q1[n];
@@ -1729,7 +1726,7 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
     copy_jac_point(&points2[0].P2,&xyT2.P2);
     level[0]=0;
     // and then the rest
-    t= tic();
+    // t= tic();
     for (int i=1;i<len_list;i++) {
         double_couple_jac_point_iter(&points1[i],strategy[i-1],E12,&points1[i-1]);
         double_couple_jac_point_iter(&points2[i],strategy[i-1],E12,&points2[i-1]);
@@ -1742,7 +1739,10 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
     copy_jac_point(&xyK1.P2,&points1[len_list-1].P2);
     copy_jac_point(&xyK2.P1,&points2[len_list-1].P1);
     copy_jac_point(&xyK2.P2,&points2[len_list-1].P2);
-    // TOC_clock(t,"4 xyz doubling");
+    // TOC_clock(t,"lifting + xyz doubling");
+
+
+
 
     assert(test_jac_order_twof(&xyK1.P2,&E12->E2,3));
     assert(test_jac_order_twof(&xyK2.P1,&E12->E1,3));
@@ -1764,12 +1764,12 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
 
     // push the kernel through the gluing isogeny
     // need to setup the input before
-    t = tic();
+    // t = tic();
     for (int i=0;i<len_list;i++) {
         gluing_eval_basis(&Q1[i],&Q2[i],&points1[i],&points2[i],E12,&out->first_step);
     }
     // TOC_clock(t,"gluing eval");
-    t = tic();
+    // t = tic();
     // and now we do the remaining steps 
 
     for (int i=0;i<n-1 - adjusting;i++) {
@@ -1856,6 +1856,208 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
 
 }
 
+void theta_chain_comput_strategy_faster_no_eval(theta_chain_t *out,int n, theta_couple_curve_t *E12,const theta_couple_point_t *T1,const theta_couple_point_t *T2, const theta_couple_point_t *T1m2,int *strategy, int eight_above) {
+
+    theta_point_t R1,R2;
+    theta_isogeny_t steps[n-1];
+    theta_structure_t codomain;
+
+    // init of the isogeny chain
+    out->domain=*E12;
+    out->length=n;
+    out->T1=*T1;
+    out->T2=*T2;
+    out->steps=malloc((n-1)*sizeof(theta_isogeny_t));
+
+    clock_t t = tic();
+    // lift the basis 
+    theta_couple_jac_point_t xyT1,xyT2,xyK1,xyK2;
+    ec_basis_t bas1,bas2;
+    copy_point(&bas1.P,&T1->P1);
+    copy_point(&bas1.Q,&T2->P1);
+    copy_point(&bas1.PmQ,&T1m2->P1);
+
+    copy_point(&bas2.P,&T1->P2);
+    copy_point(&bas2.Q,&T2->P2);
+    copy_point(&bas2.PmQ,&T1m2->P2);
+
+    if (eight_above) {
+        assert(test_point_order_twof(&bas2.P,&E12->E2,n+2));
+        assert(test_point_order_twof(&bas1.P,&E12->E1,n+2));
+    }
+    else {
+        assert(test_point_order_twof(&bas2.P,&E12->E2,n));
+        assert(test_point_order_twof(&bas1.P,&E12->E1,n));
+    }
+    
+    // t = tic();
+    lift_basis(&xyT1.P1,&xyT2.P1,&bas1,&E12->E1);
+    lift_basis(&xyT1.P2,&xyT2.P2,&bas2,&E12->E2);
+    if (eight_above) {
+        assert(test_jac_order_twof(&xyT1.P2,&E12->E2,n+2));
+        assert(test_jac_order_twof(&xyT2.P1,&E12->E1,n+2));
+    }
+    else {
+        assert(test_jac_order_twof(&xyT1.P2,&E12->E2,n));
+        assert(test_jac_order_twof(&xyT2.P1,&E12->E1,n));
+    }
+
+    int adjusting = 2*(1-eight_above);
+    assert( (eight_above && adjusting==0) || (!eight_above && adjusting==2));
+
+    // t = tic();
+
+    // prepare the points for the first step
+    // first we must compute the length of the list
+    int len_count=0;
+    int index=0;
+    while (len_count!=n-1 - adjusting && index < n + 10 ) {
+        len_count = len_count + strategy[index];
+        index++;
+    }
+    int len_list = index + 1;
+
+    theta_couple_jac_point_t points1[n];
+    theta_couple_jac_point_t points2[n];
+    theta_point_t Q1[n];
+    theta_point_t Q2[n];
+    int level[n];
+
+
+    // the first point 
+    copy_jac_point(&points1[0].P1,&xyT1.P1);
+    copy_jac_point(&points1[0].P2,&xyT1.P2);
+    copy_jac_point(&points2[0].P1,&xyT2.P1);
+    copy_jac_point(&points2[0].P2,&xyT2.P2);
+    level[0]=0;
+    // and then the rest
+    // t= tic();
+    for (int i=1;i<len_list;i++) {
+        double_couple_jac_point_iter(&points1[i],strategy[i-1],E12,&points1[i-1]);
+        double_couple_jac_point_iter(&points2[i],strategy[i-1],E12,&points2[i-1]);
+        level[i] = strategy[i-1];
+    }
+
+
+    // prepare the kernel of the first step
+    copy_jac_point(&xyK1.P1,&points1[len_list-1].P1);
+    copy_jac_point(&xyK1.P2,&points1[len_list-1].P2);
+    copy_jac_point(&xyK2.P1,&points2[len_list-1].P1);
+    copy_jac_point(&xyK2.P2,&points2[len_list-1].P2);
+
+
+    assert(test_jac_order_twof(&xyK1.P2,&E12->E2,3));
+    assert(test_jac_order_twof(&xyK2.P1,&E12->E1,3));
+    assert(test_jac_order_twof(&xyK1.P1,&E12->E1,3));
+    assert(test_jac_order_twof(&xyK2.P2,&E12->E2,3));
+
+
+
+    // compute the gluing isogeny 
+    t = tic();
+    gluing_comput(&out->first_step,E12,&xyK1,&xyK2);
+    // TOC_clock(t,"gluing comput");
+
+    // set-up the theta_structure for the first codomain
+    codomain.null_point=out->first_step.codomain;
+    codomain.precomputation=0;
+    theta_precomputation(&codomain);
+
+    len_list--;
+
+    // push the kernel through the gluing isogeny
+    // need to setup the input before
+    // t = tic();
+    for (int i=0;i<len_list;i++) {
+        gluing_eval_basis(&Q1[i],&Q2[i],&points1[i],&points2[i],E12,&out->first_step);
+    }
+    // TOC_clock(t,"gluing eval");
+    // t = tic();
+    // and now we do the remaining steps 
+
+    for (int i=0;i<n-1 - adjusting;i++) {
+
+        len_count=0;
+        for (int j=0;j<len_list;j++) {
+            len_count=len_count+level[j];
+        }
+        while (len_count!=n- i - 2 -adjusting ) {
+            len_count = len_count + strategy[index];
+            double_iter(&Q1[len_list],&codomain,&Q1[len_list-1],strategy[index]);
+            double_iter(&Q2[len_list],&codomain,&Q2[len_list-1],strategy[index]);
+            level[len_list]=strategy[index];
+            index++;            
+            len_list++;
+        }
+
+
+        // computing the kernel of the next step
+        // double_iter(&R1,&codomain,&Q1,n-i-2);
+        // double_iter(&R2,&codomain,&Q2,n-i-2);
+        // TODO : proper copying here ? 
+        R1 = Q1[len_list-1];
+        R2 = Q2[len_list-1];
+    
+        // computing the next step
+        if (i==n-3) { 
+            if (eight_above) {
+                theta_isogeny_comput(&out->steps[i],&codomain,&R1,&R2,0,0);
+            }
+            
+        }
+        else if (i==n-2) {
+            if (eight_above) {
+                theta_isogeny_comput(&out->steps[i],&codomain,&R1,&R2,1,0);
+            }
+            
+        }
+        else {
+            theta_isogeny_comput(&out->steps[i],&codomain,&R1,&R2,0,1);
+        }
+        // updating the codomain
+        codomain=out->steps[i].codomain;
+        
+
+        len_list--;
+
+        // pushing the kernel
+        if (i< n-2) {
+            for (int j=0;j<len_list;j++) {
+                theta_isogeny_eval(&Q1[j],&out->steps[i],&Q1[j]);
+                theta_isogeny_eval(&Q2[j],&out->steps[i],&Q2[j]);
+            }
+            
+        }
+    
+    }
+
+    if (!eight_above) {
+        // the last two steps are done here
+        R1 = Q1[0];
+        R2 = Q2[0];
+        theta_isogeny_eval(&R1,&out->steps[n-4],&R1);
+        theta_isogeny_eval(&R2,&out->steps[n-4],&R2);
+        theta_isogeny_comput4(&out->steps[n-3],&codomain,&R1,&R2,0,0);
+        codomain=out->steps[n-3].codomain;
+        theta_isogeny_eval(&R1,&out->steps[n-3],&R1);
+        theta_isogeny_eval(&R2,&out->steps[n-3],&R2);
+        theta_isogeny_comput2(&out->steps[n-2],&codomain,&R1,&R2,1,0);
+        codomain=out->steps[n-2].codomain;
+    }
+
+    // TOC_clock(t,"middle steps");
+
+    t = tic();
+
+    //final splitting step
+    int is_split = splitting_comput(&out->last_step,&out->steps[n-2].codomain);
+    assert(is_split);
+
+    // computing the curves of the codomain
+    theta_product_structure_to_elliptic_product(&out->codomain,&out->last_step.B);
+    // TOC_clock(t,"splitting");
+
+}
 
 void theta_point_to_montgomery_point(theta_couple_point_t *P12, const theta_point_t *P, const theta_structure_t *A){
 

@@ -84,7 +84,7 @@ void doublepath(quat_alg_elem_t *gamma, quat_left_ideal_t *lideal_even, quat_lef
     int verbose);
 
 void protocols_keygen(public_key_t *pk, secret_key_t *sk);
-int protocols_sign(signature_t *sig, const public_key_t *pk, const secret_key_t *sk, const unsigned char* m, size_t l, int verbose);
+int protocols_sign(signature_t *sig, public_key_t *pk, secret_key_t *sk, const unsigned char* m, size_t l, int verbose);
 
 void secret_key_init(secret_key_t *sk);
 void secret_key_finalize(secret_key_t *sk);

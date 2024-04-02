@@ -363,7 +363,7 @@ void hash_to_challenge(ibz_vec_2_t *scalars, const ec_curve_t *curve, const unsi
     free(buf);
 }
 
-int protocols_sign(signature_t *sig, const public_key_t *pk, const secret_key_t *sk, const unsigned char* m, size_t l, int verbose) {
+int protocols_sign(signature_t *sig, public_key_t *pk, secret_key_t *sk, const unsigned char* m, size_t l, int verbose) {
     clock_t t = tic();
 
     ibz_t lattice_content;

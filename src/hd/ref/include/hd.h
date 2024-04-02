@@ -292,6 +292,8 @@ void theta_chain_comput_balanced(theta_chain_t *out,int n,theta_couple_curve_t *
    */
 void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t *E12,const theta_couple_point_t *T1,const theta_couple_point_t *T2, const theta_couple_point_t *T1m2,int *strategy, int eight_above);
 
+void theta_chain_comput_strategy_faster_no_eval(theta_chain_t *out,int n, theta_couple_curve_t *E12,const theta_couple_point_t *T1,const theta_couple_point_t *T2, const theta_couple_point_t *T1m2,int *strategy, int eight_above);
+
 /**
  * @brief Evaluate a (2,2) isogeny chain in dimension 2 between elliptic products in the theta_model
  *
