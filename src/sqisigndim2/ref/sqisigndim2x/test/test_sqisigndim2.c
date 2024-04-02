@@ -68,26 +68,36 @@ int test_sqisign(int repeat)
     // int val = protocols_sign(&sig, &pk, &sk, msg, 32, 1);
     setlocale(LC_NUMERIC, "");
     uint64_t t0, t1;
+    clock_t t;
+
 
     printf("\n\nTesting signatures\n");
     for (int i = 0; i < repeat; ++i)
     {   
 
         printf("#%d \n",i);
+        t = tic();
         t0=rdtsc();
         protocols_keygen(&pk, &sk);
         t1 = rdtsc();
+        TOC(t,"Keygen");
         printf("\x1b[34mkeygen  took %'" PRIu64 " cycles\x1b[0m\n", t1-t0);
+
+        t = tic();
         t0 = rdtsc();
         int val = protocols_sign(&sig, &pk, &sk, msg, 32, 0);
         t1 = rdtsc();
+        TOC(t,"Signing");
         printf("\x1b[34msigning took %'" PRIu64 " cycles\x1b[0m\n", t1-t0);
+
+        t = tic();
         t0 = rdtsc();
         int check = protocols_verif(&sig,&pk,msg,32);
         if (!check) {
             printf("verif failed ! \n");
         } 
         t1 = rdtsc();
+        TOC(t,"Verification");
         printf("\x1b[34mverif   took %'" PRIu64 " cycles\x1b[0m\n", t1-t0);    
     
         printf(" \x1b[35mfull\x1b[0m signature was: %s\n\n", check ? "\x1b[32mvalid\x1b[0m" : "\x1b[31minvalid\x1b[0m");

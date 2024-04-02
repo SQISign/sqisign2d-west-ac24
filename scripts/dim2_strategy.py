@@ -112,7 +112,7 @@ def optimised_strategy(n, M, S, I):
 # NOTE:
 # Costings are computed from the msi.rs benchmark
 # where the cost is the time in ns for one operation
-data_sml_half = [150, 74, 52, 3314]
+data_sml_half = [130, 74, 52, 3314]
 data_sml = [248, 74, 52, 3314]
 data_smlm2 = [246, 74, 52, 3314]
 data_smlm4 = [244, 74, 52, 3314]
@@ -123,7 +123,7 @@ data_smlm8 = [240, 74, 52, 3314]
 # data_big = [632, 2717, 2265, 54_823]
 
 strat_sml_half = optimised_strategy(*data_sml_half)
-print("strat for 140")
+print("strat for 130")
 print(strat_sml_half)
 print(len(strat_sml_half))
 print("strat for 248")
