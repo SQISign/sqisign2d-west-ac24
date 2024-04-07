@@ -164,3 +164,22 @@ void fp_sqrt(digit_t* a)
     fp_exp3div4(t, a);
     fp_mul(a, t, a);    // a^((p+1)/4)
 }
+
+// Square root computation, out = a^((p+1)/4) mod p
+// Uses that p+1 = 5*2**248
+void fp_sqrt_new(digit_t* a)
+{ 
+    int i;
+    fp_t t;
+
+    // Compute a^5
+    fp_copy(t, a);
+    fp_mul(a, a, a);
+    fp_mul(a, a, a);
+    fp_mul(a, a, t);
+
+    // Compute (a^(5)) ^ 2^246
+    for (i = 0; i < 246; i++){
+        fp_mul(a, a, a);
+    }
+}

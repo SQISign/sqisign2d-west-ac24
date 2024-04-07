@@ -32,6 +32,7 @@ void MUL(digit_t* out, const digit_t a, const digit_t b);
 void fp_inv(digit_t* x);
 bool fp_is_square(const digit_t* a);
 void fp_sqrt(digit_t* a);
+void fp_sqrt_new(digit_t* a);
 void fp_tomont(digit_t* out, const digit_t* a);
 void fp_frommont(digit_t* out, const digit_t* a);
 void fp_mont_setone(digit_t* out);
