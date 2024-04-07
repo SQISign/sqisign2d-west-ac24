@@ -205,7 +205,7 @@ bool fp_test()
         if ((compare_words(a, c, NWORDS_FIELD) != 0) && (compare_words(a, d, NWORDS_FIELD) != 0)) { passed = 0; break; }
     }
     if (passed == 1) printf("  New Square root, square tests.................................... PASSED");
-    else { printf("  Square root, square tests... FAILED"); printf("\n"); return false; }
+    else { printf("  New Square root, square tests... FAILED"); printf("\n"); return false; }
     printf("\n");
  
     return OK;
@@ -360,6 +360,9 @@ bool fp_jack_bench()
     printf("  GF(p) subtraction runs in ....................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] / 6000, a[0]);
 
     // GF(p) multiplication
+    fprandom_test(a);
+    fprandom_test(b);
+
     for (i=0; i<10; i++){
         cycles = 0;
         cycles1 = cpucycles(); 
@@ -379,6 +382,9 @@ bool fp_jack_bench()
     printf("  GF(p) multiplication runs in .................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] / 6000, a[0]);
 
     // GF(p) inversion
+    fprandom_test(a);
+    fprandom_test(b);
+
     for (i=0; i<10; i++){
         cycles = 0;
         cycles1 = cpucycles(); 
@@ -394,6 +400,9 @@ bool fp_jack_bench()
     printf("  GF(p) inversion runs in ......................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] / 1000, a[0]);
 
     // GF(p) sqrt
+    fprandom_test(a);
+    fprandom_test(b);
+
     for (i=0; i<10; i++){
         cycles = 0;
         cycles1 = cpucycles(); 
@@ -409,6 +418,9 @@ bool fp_jack_bench()
     printf("  GF(p) sqrt runs in .............................................. %ld cycles, (%llu ignore me)\n", cycle_runs[4] / 1000, a[0]);
 
     // GF(p) sqrt
+    fprandom_test(a);
+    fprandom_test(b);
+
     for (i=0; i<10; i++){
         cycles = 0;
         cycles1 = cpucycles(); 
@@ -424,6 +436,9 @@ bool fp_jack_bench()
     printf("  GF(p) new sqrt runs in .......................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] / 1000, a[0]);
 
     // GF(p) is_square
+    fprandom_test(a);
+    fprandom_test(b);
+    
     for (i=0; i<10; i++){
         cycles = 0;
         cycles1 = cpucycles(); 
