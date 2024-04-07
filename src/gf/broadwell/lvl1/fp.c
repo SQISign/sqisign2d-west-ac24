@@ -174,12 +174,12 @@ void fp_sqrt_new(digit_t* a)
 
     // Compute a^5
     fp_copy(t, a);
-    fp_mul(a, a, a);
-    fp_mul(a, a, a);
+    fp_sqr(a, a);
+    fp_sqr(a, a);
     fp_mul(a, a, t);
 
     // Compute (a^(5)) ^ 2^246
     for (i = 0; i < 246; i++){
-        fp_mul(a, a, a);
+        fp_sqr(a, a);
     }
 }
