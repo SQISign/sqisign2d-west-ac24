@@ -187,6 +187,27 @@ bool fp2_test()
     else { printf("  Square root, square tests... FAILED"); printf("\n"); return false; }
     printf("\n");
 
+    // New Square root and square detection in GF(p^2)
+    passed = 1;
+    for (n=0; n<TEST_LOOPS; n++)
+    {
+        fp2random_test(&a);
+
+        fp2_tomont(&ma, &a);
+        fp2_sqr(&mc, &ma);
+        fp2_frommont(&c, &mc);                                      // c = a^2
+        if (fp2_is_square(&mc) != 1) { passed = 0; break; }        
+
+        fp2_sqrt(&mc);                                              // c = a = sqrt(c) 
+        fp2_neg(&md, &mc);
+        fp2_frommont(&c, &mc);
+        fp2_frommont(&d, &md);
+        if ((compare_words((digit_t*)&a, (digit_t*)&c, 2*NWORDS_FIELD) != 0) & (compare_words((digit_t*)&a, (digit_t*)&d, 2*NWORDS_FIELD) != 0)) { passed = 0; break; }
+    }
+    if (passed == 1) printf("  New Square root, square tests...................................... PASSED");
+    else { printf("  New Square root, square tests... FAILED"); printf("\n"); return false; }
+    printf("\n");
+
     return OK;
 }
 
@@ -289,6 +310,165 @@ bool fp2_run()
     return OK;
 }
 
+
+// https://cplusplus.com/reference/cstdlib/qsort/
+int compare (const void * a, const void * b)
+{
+  return ( *(long*)a - *(long*)b );
+}
+
+bool fp2_jack_bench()
+{
+    bool OK = true;
+    int n, i;
+    unsigned long long cycles, cycles1, cycles2;
+    fp2_t a, b;
+        
+    printf("\n--------------------------------------------------------------------------------------------------------\n\n"); 
+    printf("Benchmarking field arithmetic (jack): \n\n"); 
+
+    // GF(p^2) addition
+    fp2random_test(&a);
+    fp2random_test(&b);
+    long cycle_runs[10];
+
+    for (i=0; i<10; i++){
+        cycles = 0;
+        cycles1 = cpucycles(); 
+        for (n=0; n<1000; n++)
+        {
+            fp2_add(&a, &a, &b);
+            fp2_add(&b, &b, &a);
+            fp2_add(&a, &a, &b);
+            fp2_add(&b, &b, &a);
+            fp2_add(&a, &a, &b);
+            fp2_add(&b, &b, &a);
+        }
+        cycles2 = cpucycles();
+        cycle_runs[i] = cycles2-cycles1;
+    }
+    qsort(cycle_runs, 10, sizeof(long), compare);
+    printf("  GF(p) addition runs in .......................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] / 6000, a.re[0]);
+
+    // GF(p^2) subtraction
+    fp2random_test(&a);
+    fp2random_test(&b);
+
+    for (i=0; i<10; i++){
+        cycles = 0;
+        cycles1 = cpucycles(); 
+        for (n=0; n<1000; n++)
+        {
+            fp2_sub(&a, &a, &b);
+            fp2_sub(&b, &b, &a);
+            fp2_sub(&a, &a, &b);
+            fp2_sub(&b, &b, &a);
+            fp2_sub(&a, &a, &b);
+            fp2_sub(&b, &b, &a);
+        }
+        cycles2 = cpucycles();
+        cycle_runs[i] = cycles2-cycles1;
+    }
+    qsort(cycle_runs, 10, sizeof(long), compare);
+    printf("  GF(p) subtraction runs in ....................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] / 6000, a.re[0]);
+
+    // GF(p^2) multiplication
+    fp2random_test(&a);
+    fp2random_test(&b);
+
+    for (i=0; i<10; i++){
+        cycles = 0;
+        cycles1 = cpucycles(); 
+        for (n=0; n<1000; n++)
+        {
+            fp2_mul(&a, &a, &b);
+            fp2_mul(&b, &b, &a);
+            fp2_mul(&a, &a, &b);
+            fp2_mul(&b, &b, &a);
+            fp2_mul(&a, &a, &b);
+            fp2_mul(&b, &b, &a);
+        }
+        cycles2 = cpucycles();
+        cycle_runs[i] = cycles2-cycles1;
+    }
+    qsort(cycle_runs, 10, sizeof(long), compare);
+    printf("  GF(p) multiplication runs in .................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] / 6000, a.re[0]);
+
+    // GF(p^2) inversion
+    fp2random_test(&a);
+    fp2random_test(&b);
+
+    for (i=0; i<10; i++){
+        cycles = 0;
+        cycles1 = cpucycles(); 
+        for (n=0; n<1000; n++)
+        {
+            fp2_inv(&a);
+            fp2_add(&a, &b, &a);
+        }
+        cycles2 = cpucycles();
+        cycle_runs[i] = cycles2-cycles1;
+    }
+    qsort(cycle_runs, 10, sizeof(long), compare);
+    printf("  GF(p) inversion runs in ......................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] / 1000, a.re[0]);
+
+    // GF(p^2) sqrt
+    fp2random_test(&a);
+    fp2random_test(&b);
+
+    for (i=0; i<10; i++){
+        cycles = 0;
+        cycles1 = cpucycles(); 
+        for (n=0; n<1000; n++)
+        {
+            fp2_sqrt(&a);
+            fp2_add(&a, &b, &a);
+        }
+        cycles2 = cpucycles();
+        cycle_runs[i] = cycles2-cycles1;
+    }
+    qsort(cycle_runs, 10, sizeof(long), compare);
+    printf("  GF(p) sqrt runs in .............................................. %ld cycles, (%llu ignore me)\n", cycle_runs[4] / 1000, a.re[0]);
+
+    // GF(p^2) sqrt
+    fp2random_test(&a);
+    fp2random_test(&b);
+
+    for (i=0; i<10; i++){
+        cycles = 0;
+        cycles1 = cpucycles(); 
+        for (n=0; n<1000; n++)
+        {
+            fp2_sqrt_new(&a);
+            fp2_add(&a, &b, &a);
+        }
+        cycles2 = cpucycles();
+        cycle_runs[i] = cycles2-cycles1;
+    }
+    qsort(cycle_runs, 10, sizeof(long), compare);
+    printf("  GF(p) new sqrt runs in .......................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] / 1000, a.re[0]);
+
+    // GF(p^2) is_square
+    fp2random_test(&a);
+    fp2random_test(&b);
+
+    for (i=0; i<10; i++){
+        cycles = 0;
+        cycles1 = cpucycles(); 
+        for (n=0; n<1000; n++)
+        {
+            fp2_is_square(&a);
+            fp2_add(&a, &b, &a);
+        }
+        cycles2 = cpucycles();
+        cycle_runs[i] = cycles2-cycles1;
+    }
+    qsort(cycle_runs, 10, sizeof(long), compare);
+    printf("  Square checking runs in ......................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] / 1000, a.re[0]);
+
+    return OK;
+}
+
 int main(int argc, char* argv[])
 {
     if (argc < 3) {
@@ -301,6 +481,8 @@ int main(int argc, char* argv[])
     } else if (!strcmp(argv[1], "bench")) {
         BENCH_LOOPS = atoi(argv[2]);
         return !fp2_run();
+    } else if (!strcmp(argv[1], "jackbench")) {
+        return !fp2_jack_bench();  
     } else {
         exit(1);
     }

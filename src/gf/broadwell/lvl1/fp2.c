@@ -222,6 +222,52 @@ void fp2_sqrt(fp2_t* x)
     memcpy((digit_t*)x->re, (digit_t*)re, NWORDS_FIELD*RADIX/8);
 }
 
+
+// NOTE: old, non-constant-time implementation. Could be optimized
+// Only does the above but with the new sqrt, needs better is_square
+void fp2_sqrt_new(fp2_t* x)
+{
+    fp_t sdelta, re, tmp1, tmp2, inv2, im;
+
+    if (fp_is_zero(x->im)) {
+        if (fp_is_square(x->re)) {
+            fp_sqrt_new(x->re);
+            return;
+        } else {
+            fp_neg(x->im, x->re);
+            fp_sqrt_new(x->im);
+            fp_set(x->re, 0);
+            return;
+        }
+    }
+
+    // sdelta = sqrt(re^2 + im^2)
+    fp_sqr(sdelta, x->re);
+    fp_sqr(tmp1, x->im);
+    fp_add(sdelta, sdelta, tmp1);
+    fp_sqrt_new(sdelta);
+
+    fp_set(inv2, 2);
+    fp_tomont(inv2, inv2);     // inv2 <- 2
+    fp_inv(inv2);
+    fp_add(re, x->re, sdelta);
+    fp_mul(re, re, inv2);
+    memcpy((digit_t*)tmp2, (digit_t*)re, NWORDS_FIELD*RADIX/8);
+
+    if (!fp_is_square(tmp2)) {
+        fp_sub(re, x->re, sdelta);
+        fp_mul(re, re, inv2);
+    }
+
+    fp_sqrt_new(re);
+    memcpy((digit_t*)im, (digit_t*)re, NWORDS_FIELD*RADIX/8);
+
+    fp_inv(im);
+    fp_mul(im, im, inv2);
+    fp_mul(x->im, im, x->im);    
+    memcpy((digit_t*)x->re, (digit_t*)re, NWORDS_FIELD*RADIX/8);
+}
+
 // Lexicographic comparison of two field elements. Returns +1 if x > y, -1 if x < y, 0 if x = y
 int fp2_cmp(fp2_t* x, fp2_t* y){
     fp2_t a, b;

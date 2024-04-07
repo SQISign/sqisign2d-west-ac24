@@ -25,6 +25,7 @@ void fp2_inv(fp2_t* x);
 bool fp2_is_square(const fp2_t* x);
 void fp2_frob(fp2_t* x, const fp2_t* y);
 void fp2_sqrt(fp2_t* x);
+void fp_sqrt_new(digit_t* a);
 void fp2_tomont(fp2_t* x, const fp2_t* y);
 void fp2_frommont(fp2_t* x, const fp2_t* y);
 int fp2_cmp(fp2_t* x, fp2_t* y);
