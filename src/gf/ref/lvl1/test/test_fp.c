@@ -7,7 +7,7 @@
 extern const digit_t p[NWORDS_FIELD];
 
 // Benchmark and test parameters  
-static int BENCH_LOOPS = 100000;       // Number of iterations per bench
+static int BENCH_LOOPS = 10000;       // Number of iterations per bench
 static int TEST_LOOPS  = 100000;       // Number of iterations per test
 
 
@@ -190,89 +190,143 @@ bool fp_test()
     return OK;
 }
 
+// https://cplusplus.com/reference/cstdlib/qsort/
+// For sorting arrays during the benchmarks
+int compare (const void * a, const void * b)
+{
+  return ( *(long*)a - *(long*)b );
+}
+
 bool fp_run()
 {
     bool OK = true;
-    int n;
+    int n, i;
     unsigned long long cycles, cycles1, cycles2;
-    fp_t a, b, c;
+    fp_t a, b;
         
     printf("\n--------------------------------------------------------------------------------------------------------\n\n"); 
-    printf("Benchmarking field arithmetic: \n\n"); 
-        
-    fprandom_test(a); fprandom_test(b); fprandom_test(c);
+    printf("Benchmarking GF(p) field arithmetic: \n\n"); 
 
     // GF(p) addition
-    cycles = 0;
-    for (n=0; n<BENCH_LOOPS; n++)
-    {
+    fprandom_test(a);
+    fprandom_test(b);
+    long cycle_runs[10];
+
+    for (i=0; i<10; i++){
+        cycles = 0;
         cycles1 = cpucycles(); 
-        fp_add(c, a, b);
+        for (n=0; n<BENCH_LOOPS; n++)
+        {
+            fp_add(a, a, b);
+            fp_add(b, b, a);
+            fp_add(a, a, b);
+            fp_add(b, b, a);
+            fp_add(a, a, b);
+            fp_add(b, b, a);
+        }
         cycles2 = cpucycles();
-        cycles = cycles+(cycles2-cycles1);
+        cycle_runs[i] = cycles2-cycles1;
     }
-    printf("  GF(p) addition runs in .......................................... %7lld cycles", cycles/BENCH_LOOPS);
-    printf("\n");
+    qsort(cycle_runs, 10, sizeof(long), compare);
+    printf("  GF(p) addition runs in .......................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] / (6 * BENCH_LOOPS), a[0]);
 
     // GF(p) subtraction
-    cycles = 0;
-    for (n=0; n<BENCH_LOOPS; n++)
-    {
+    fprandom_test(a);
+    fprandom_test(b);
+
+    for (i=0; i<10; i++){
+        cycles = 0;
         cycles1 = cpucycles(); 
-        fp_sub(c, a, b);
+        for (n=0; n<BENCH_LOOPS; n++)
+        {
+            fp_sub(a, a, b);
+            fp_sub(b, b, a);
+            fp_sub(a, a, b);
+            fp_sub(b, b, a);
+            fp_sub(a, a, b);
+            fp_sub(b, b, a);
+        }
         cycles2 = cpucycles();
-        cycles = cycles+(cycles2-cycles1);
+        cycle_runs[i] = cycles2-cycles1;
     }
-    printf("  GF(p) subtraction runs in ....................................... %7lld cycles", cycles/BENCH_LOOPS);
-    printf("\n");
+    qsort(cycle_runs, 10, sizeof(long), compare);
+    printf("  GF(p) subtraction runs in ....................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] /  (6 * BENCH_LOOPS), a[0]);
 
     // GF(p) multiplication
-    cycles = 0;
-    for (n=0; n<BENCH_LOOPS; n++)
-    {
+    fprandom_test(a);
+    fprandom_test(b);
+
+    for (i=0; i<10; i++){
+        cycles = 0;
         cycles1 = cpucycles(); 
-        fp_mul(c, a, b);
+        for (n=0; n<BENCH_LOOPS; n++)
+        {
+            fp_mul(a, a, b);
+            fp_mul(b, b, a);
+            fp_mul(a, a, b);
+            fp_mul(b, b, a);
+            fp_mul(a, a, b);
+            fp_mul(b, b, a);
+        }
         cycles2 = cpucycles();
-        cycles = cycles+(cycles2-cycles1);
+        cycle_runs[i] = cycles2-cycles1;
     }
-    printf("  GF(p) multiplication runs in .................................... %7lld cycles", cycles/BENCH_LOOPS);
-    printf("\n");
+    qsort(cycle_runs, 10, sizeof(long), compare);
+    printf("  GF(p) multiplication runs in .................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] /  (6 * BENCH_LOOPS), a[0]);
 
     // GF(p) inversion
-    cycles = 0;
-    for (n = 0; n < BENCH_LOOPS; n++)
-    {
-        cycles1 = cpucycles();
-        fp_inv(a);
-        cycles2 = cpucycles();
-        cycles = cycles + (cycles2 - cycles1);
-    }
-    printf("  GF(p) inversion runs in ......................................... %7lld cycles", cycles/BENCH_LOOPS);
-    printf("\n");
+    fprandom_test(a);
+    fprandom_test(b);
 
-    // GF(p) square root
-    cycles = 0;
-    for (n = 0; n < BENCH_LOOPS; n++)
-    {
-        cycles1 = cpucycles();
-        fp_sqrt(a);
+    for (i=0; i<10; i++){
+        cycles = 0;
+        cycles1 = cpucycles(); 
+        for (n=0; n<BENCH_LOOPS; n++)
+        {
+            fp_inv(a);
+            fp_add(a, b, a);
+        }
         cycles2 = cpucycles();
-        cycles = cycles + (cycles2 - cycles1);
+        cycle_runs[i] = cycles2-cycles1;
     }
-    printf("  GF(p) square root runs in ....................................... %7lld cycles", cycles/BENCH_LOOPS);
-    printf("\n");
+    qsort(cycle_runs, 10, sizeof(long), compare);
+    printf("  GF(p) inversion runs in ......................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] /  BENCH_LOOPS, a[0]);
 
-    // Square checking
-    cycles = 0;
-    for (n = 0; n < BENCH_LOOPS; n++)
-    {
-        cycles1 = cpucycles();
-        fp_is_square(a);
+    // GF(p) sqrt
+    fprandom_test(a);
+    fprandom_test(b);
+
+    for (i=0; i<10; i++){
+        cycles = 0;
+        cycles1 = cpucycles(); 
+        for (n=0; n<BENCH_LOOPS; n++)
+        {
+            fp_sqrt(a);
+            fp_add(a, b, a);
+        }
         cycles2 = cpucycles();
-        cycles = cycles + (cycles2 - cycles1);
+        cycle_runs[i] = cycles2-cycles1;
     }
-    printf("  Square checking runs in ......................................... %7lld cycles", cycles/BENCH_LOOPS);
-    printf("\n");
+    qsort(cycle_runs, 10, sizeof(long), compare);
+    printf("  GF(p) sqrt runs in .............................................. %ld cycles, (%llu ignore me)\n", cycle_runs[4] / BENCH_LOOPS, a[0]);
+
+    // GF(p) is_square
+    fprandom_test(a);
+    fprandom_test(b);
+    
+    for (i=0; i<10; i++){
+        cycles = 0;
+        cycles1 = cpucycles(); 
+        for (n=0; n<BENCH_LOOPS; n++)
+        {
+            fp_is_square(a);
+            fp_add(a, b, a);
+        }
+        cycles2 = cpucycles();
+        cycle_runs[i] = cycles2-cycles1;
+    }
+    qsort(cycle_runs, 10, sizeof(long), compare);
+    printf("  Square checking runs in ......................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] / BENCH_LOOPS, a[0]);
 
     return OK;
 }
