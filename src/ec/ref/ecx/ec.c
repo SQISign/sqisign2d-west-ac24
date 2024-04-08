@@ -296,6 +296,7 @@ void swap_ct(digit_t* a, digit_t* b, const digit_t option, const int nwords)
 // Compute S = k*P + l*Q, with PQ = P+Q
 void xDBLMUL(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_point_t const* Q, digit_t const* l, ec_point_t const* PQ, const ec_curve_t* curve)
 {
+
     int i;
     digit_t evens, mevens, bitk0, bitl0, maskk, maskl, temp, bs1_ip1, bs2_ip1, bs1_i, bs2_i, h;
     digit_t sigma[2] = {0}, pre_sigma = 0;
@@ -1643,4 +1644,3 @@ void ec_mul(ec_point_t* res, const ec_curve_t* curve, const digit_t* scalar, con
 void ec_biscalar_mul(ec_point_t* res, const ec_curve_t* curve, const digit_t* scalarP, const digit_t* scalarQ, const ec_basis_t* PQ){
     xDBLMUL(res, &PQ->P, scalarP, &PQ->Q, scalarQ, &PQ->PmQ, curve);
 }
-

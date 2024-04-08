@@ -9,6 +9,8 @@ import math
 # importing sage
 from sage.all import *
 
+import functools
+
 # The following benchmarks are required for computing optimal strategies.
 # The costs can be specified in arbitrary units and can be obtained by
 # runing src/ec/ref/lvl1/test/mont.test or left as "None" to use a
@@ -88,6 +90,103 @@ def config():
     Mfactors = [factor[0] for factor in factorization[1:] if factor[0] <= B]
     return p,POWER_OF_2,POWER_OF_3,Pfactors,Mfactors
 
+
+sys.setrecursionlimit(1500)
+
+# n = length of chain
+# M = Cost of Multiplication
+# S = Cost of Squaring
+# I = Cost of Inversion
+# data = [n, M, S, I]
+def optimised_strategy(n, M, S, I):
+    """
+    A modification of
+
+    Algorithm 60: https://sike.org/files/SIDH-spec.pdf Shown to be appropriate
+    for (l,l)-chains in https://ia.cr/2023/508
+
+    Which allows the leftmost branch to have a different cost for the rest of
+    the tree. This is partiularly useful for (2,2) isogenies, where the gluing
+    doubling and images have a much higher cost than the rest of the tree.
+
+    Thanks to Robin Jadoul for helping with the implementation of this function 
+    via personal communication
+    """
+
+    # Define the costs and initalise the nodes which we store during doubling
+    left_cost = (8*M + 8*S, 12*M + 12*S)       # (regular_cost, left_branch_cost) Double
+    right_cost = (4*M + 4*S, 84*M + 18*S)  # (regular_cost, first_right_cost) Images
+    checkpoints = ({}, {})  # (inner, left edge)
+
+    @functools.cache
+    def cost(n, leftmost):
+        """
+        The minimal cost to get to all children of a height `n` tree.
+        If `leftmost` is true, we're still on the leftmost edge of the "outermost" tree
+
+        Updates a global "Check points" which are the points along a branch which we 
+        keep for later
+        """
+        if n <= 1:
+            return 0  # no cost here
+
+        c = float("inf")
+        for i in range(1, n):  # where to branch off
+            # We need `i` moves on the left branch and `n - i` on the right branch
+            # to make sure the corresponding subtrees don't overlap and everything
+            # is covered exactly once
+            thiscost = sum([
+                cost(n - i, leftmost),    # We still need to finish off our walk to the left
+                i * left_cost[leftmost],  # The cost for the moves on the left branch
+                cost(i, False),           # The tree on the right side, now definitely not leftmost
+                right_cost[leftmost] + (n - i - 1) * right_cost[False],  # The cost of moving right, maybe one at the first right cost
+            ])
+            # If a new lower cost has been found, update values
+            if thiscost < c:
+                c = thiscost
+                checkpoints[leftmost][n] = i
+        return c
+
+    def convert(n, checkpoints):
+        """
+        Given a list of checkpoints, convert this to a list of
+        the number of doublings to compute and keep before 
+        pushing everything through an isogeny. This forces the
+        output to match the more usual implementation, e.g.
+        https://crypto.stackexchange.com/a/58377
+
+        Warning! Everything about this function is very hacky, but does the job!
+        """
+        kernels = [n]
+        doubles = []
+        leftmost = 1
+
+        # We always select the last point in our kernel
+        while kernels != []:
+            point = kernels[-1]
+            if point == 1:
+                # Remove this point and push everything through the isogeny
+                kernels.pop()
+                kernels = [k - 1 for k in kernels]
+                leftmost = 0
+            else:
+                # checkpoints tells us to double this d times
+                d = checkpoints[leftmost][point]
+                # Remember that we did this
+                doubles.append(d)
+                kernels.append(point - d)
+        return doubles
+
+    # Compute the cost and populate the checkpoints
+    c = cost(n, True)
+
+    # Use the checkpoints to compute the list
+    l = convert(n, checkpoints)
+
+    return l
+
+
+
 if __name__ == '__main__':
     p,POWER_OF_2,POWER_OF_3,Pfactors,Mfactors = config()
     PMfactors = Pfactors + Mfactors
@@ -99,6 +198,10 @@ if __name__ == '__main__':
     sizeI = [ceil(sqrt((l-1)/4)) for l in PMfactors]
     sizeJ = [floor((l-1)/4/ceil(sqrt((l-1)/4))) for l in PMfactors]
     sizeK = [int((l-1)/2 - 2*ceil(sqrt((l-1)/4))*floor((l-1)/4/ceil(sqrt((l-1)/4)))) for l in PMfactors]
+
+    number_strategy_4_isog = POWER_OF_2//2+10
+    number_strategy_dim2_isog = POWER_OF_2//2+10
+
 
     f = open('ec_params.h', 'w')
     f.write('#ifndef EC_PARAMS_H\n')
@@ -137,8 +240,8 @@ if __name__ == '__main__':
     f.write(f'#define P_COFACTOR_FOR_6FG_BITLENGTH {((p+1)//3**POWER_OF_3//2**POWER_OF_2).bit_length()}\n')
     f.write('\n')
     f.write('// Strategy for 4-isogenies\n')
-    f.write(f'static int STRATEGY4[{15}][{POWER_OF_2//2-1}]='+'{\n')
-    for i in range(0,15):
+    f.write(f'static int STRATEGY4[{number_strategy_dim2_isog}][{POWER_OF_2//2-1}]='+'{\n')
+    for i in range(0,number_strategy_4_isog):
         f.write(f'{list2str(strategy((POWER_OF_2-i)//2-1, 2*p2, q4)+[0]*((i+1)//2))},\n')
     f.write(f''+'};')
     f.write('\n')
@@ -154,8 +257,12 @@ if __name__ == '__main__':
     f.write(f'#define ceil_log_sI_max {ceil(log(max(sizeI),2))}\n')
     f.write(f'#define ceil_log_sJ_max {ceil(log(max(sizeJ),2))}\n')
     f.write('\n')
+    f.write('// Strategies for dim2 isogenies\n')
+    f.write(f'static int strategies[{number_strategy_dim2_isog}][{POWER_OF_2-1}]='+'{\n')
+    for i in range(0,number_strategy_dim2_isog):
+        f.write(f'{list2str(optimised_strategy(POWER_OF_2-i,75,52,3314)+[0]*(i))},\n')
+    f.write(f''+'};')
+    f.write('\n')
     f.write('#endif\n')
 
     f.close()
-
-

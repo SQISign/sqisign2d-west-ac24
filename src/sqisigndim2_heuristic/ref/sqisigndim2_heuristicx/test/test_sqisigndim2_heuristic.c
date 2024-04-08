@@ -5,7 +5,7 @@
 #include <locale.h>
 #include <time.h>
 
-#include "test_sqisigndim2.h"
+#include "test_sqisigndim2_heuristic.h"
 #include <tools.h>
 
 static inline int64_t cpucycles(void) {
@@ -44,50 +44,6 @@ bool curve_is_canonical(ec_curve_t const *E)
     fp2_mul(&rhs, &E->C, &EE.A);
     return fp2_is_equal(&lhs, &rhs);
 }
-
-int bench_fp2_operations(int repeat) {
-
-    uint64_t t0, t1;
-
-    fp2_t a = BASIS_EVEN.P.x;
-    fp2_t b = BASIS_EVEN.PmQ.x;
-    t0 = rdtsc();
-    for (int i=0;i<repeat;i++) {
-        fp2_add(&a,&b,&a);
-    }
-    t1=  rdtsc();
-    printf("\x1b[34m fp2_add %'" PRIu64 " cycles\x1b[0m\n", (t1-t0)/repeat );
-
-    a = BASIS_EVEN.P.x;
-    b = BASIS_EVEN.Q.x;
-
-    t0 = rdtsc();
-    for (int i=0;i<repeat;i++) {
-        fp2_sqr(&a,&a);
-    }
-    t1=  rdtsc();
-    printf("\x1b[34m fp2_sqr %'" PRIu64 " cycles\x1b[0m\n", (t1-t0)/repeat );
-
-    a = BASIS_EVEN.P.x;
-    b = BASIS_EVEN.PmQ.x;
-    
-    t0 = rdtsc();
-    for (int i=0;i<repeat;i++) {
-        fp2_mul(&a,&b,&a);
-    }
-    t1=  rdtsc();
-    printf("\x1b[34m fp2_mul %'" PRIu64 " cycles\x1b[0m\n", (t1-t0)/repeat);
-
-    t0 = rdtsc();
-    for (int i=0;i<repeat;i++) {
-        fp2_inv(&a);
-        fp2_mul(&a,&b,&a);
-    }
-    t1=  rdtsc();
-    printf("\x1b[34m fp2_inv %'" PRIu64 " cycles\x1b[0m\n", (t1-t0)/repeat);
-
-}
-
 
 int test_sqisign(int repeat)
 {
@@ -179,9 +135,7 @@ int main(){
     // printf("\nRunning encoding tests\n");
     // res &= test_encode();
 
-    printf("\nRunning sqisigndim2 tests\n \n");
-
-    bench_fp2_operations(10000);
+    printf("\nRunning sqisigndim2_heuristic tests\n \n");
 
     res &= test_sqisign(3);
 

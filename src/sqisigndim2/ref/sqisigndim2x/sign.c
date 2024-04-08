@@ -397,7 +397,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     ibz_mat_2x2_eval(&vec, &(sk->mat_BAcan_to_BA0_two), &vec_chall);
 
     // lideal_chall_two is the pullback of the ideal challenge through the secret key ideal
-    id2iso_kernel_dlogs_to_ideal_two(&lideal_chall_two, &vec);
+    id2iso_kernel_dlogs_to_ideal_two(&lideal_chall_two, &vec,TORSION_PLUS_EVEN_POWER);
     assert(ibz_cmp(&lideal_chall_two.norm, &TORSION_PLUS_2POWER) == 0);
 
     // lideal_chall_secret = lideal_secret * lideal_chall_two
@@ -455,9 +455,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     // now we compute the ideal_aux
     // computing the norm
     // TODO make a clean constant for this
-    // possibly adjust with the value of exp_diadic_val_full_resp
     pow_dim2_deg_resp = 130;
-    //pow_dim2_deg_resp = ibz_bitsize(&QUATALG_PINFTY.p)/2 +1 - exp_diadic_val_full_resp;
     ibz_pow(&remain,&ibz_const_two,pow_dim2_deg_resp);
     ibz_sub(&tmp,&remain,&degree_odd_resp);
 
@@ -465,18 +463,14 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     ibz_mul(&remain,&remain,&ibz_const_two);
     ibz_mul(&remain,&remain,&ibz_const_two);
     
+    // sampling the ideal at random 
     // TODO replace these two steps with a clean function that samples random ideals from a right order
     sampling_random_ideal_O0(&lideal_aux,&tmp);
     // pushing forward 
     quat_lideal_inter(&lideal_aux_resp_com,&lideal_com_resp,&lideal_aux,&QUATALG_PINFTY);
 
-
-
     // now we evaluate this isogeny on the basis of E0 
     dim2id2iso_arbitrary_isogeny_evaluation(&Baux0,&E_aux,&lideal_aux_resp_com);
-
-    // ibz_printf("norm resp aux com %Zd \n",lideal_aux_resp_com.norm);
-    
 
     // notational conventions:
     // B0 = canonical basis of E0
@@ -495,14 +489,12 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
 
     // applying the matrix to compute Baux
     // first, we copy and reduce to the relevant order 
-    for (int i=0;i<TORSION_PLUS_EVEN_POWER-pow_dim2_deg_resp-exp_diadic_val_full_resp-2;i++) {
-        ec_dbl(&Baux0.P,&E_aux,&Baux0.P);
-        ec_dbl(&Baux0.Q,&E_aux,&Baux0.Q);
-        ec_dbl(&Baux0.PmQ,&E_aux,&Baux0.PmQ);
-        ec_dbl(&Bcom0.P,&E_com,&Bcom0.P);
-        ec_dbl(&Bcom0.Q,&E_com,&Bcom0.Q);
-        ec_dbl(&Bcom0.PmQ,&E_com,&Bcom0.PmQ);
-    }
+    ec_dbl_iter(&Baux0.P,TORSION_PLUS_EVEN_POWER-pow_dim2_deg_resp-exp_diadic_val_full_resp-2,&E_aux,&Baux0.P);
+    ec_dbl_iter(&Baux0.Q,TORSION_PLUS_EVEN_POWER-pow_dim2_deg_resp-exp_diadic_val_full_resp-2,&E_aux,&Baux0.Q);
+    ec_dbl_iter(&Baux0.PmQ,TORSION_PLUS_EVEN_POWER-pow_dim2_deg_resp-exp_diadic_val_full_resp-2,&E_aux,&Baux0.PmQ);
+    ec_dbl_iter(&Bcom0.P,TORSION_PLUS_EVEN_POWER-pow_dim2_deg_resp-exp_diadic_val_full_resp-2,&E_com,&Bcom0.P);
+    ec_dbl_iter(&Bcom0.Q,TORSION_PLUS_EVEN_POWER-pow_dim2_deg_resp-exp_diadic_val_full_resp-2,&E_com,&Bcom0.Q);
+    ec_dbl_iter(&Bcom0.PmQ,TORSION_PLUS_EVEN_POWER-pow_dim2_deg_resp-exp_diadic_val_full_resp-2,&E_com,&Bcom0.PmQ);
 
     // now, we compute the isogeny Phi : Ecom x Eaux -> Echl' x Eaux' 
     // where Echl' is 2^exp_diadic_val_full_resp isogenous to Echal 
@@ -530,21 +522,17 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     ec_mul_ibz(&T1m2.P2,&E_aux,&tmp,&T1m2.P2);
 
     // and multiplying by 2^exp_diadic...
-    for (int i=0;i<exp_diadic_val_full_resp;i++) {
-        ec_dbl(&T1.P1,&E_com,&T1.P1);
-        ec_dbl(&T2.P1,&E_com,&T2.P1);
-        ec_dbl(&T1m2.P1,&E_com,&T1m2.P1);
-        ec_dbl(&T1.P2,&E_aux,&T1.P2);
-        ec_dbl(&T2.P2,&E_aux,&T2.P2);
-        ec_dbl(&T1m2.P2,&E_aux,&T1m2.P2);
-    }
+    ec_dbl_iter(&T1.P1,exp_diadic_val_full_resp,&E_com,&T1.P1);
+    ec_dbl_iter(&T1.P2,exp_diadic_val_full_resp,&E_aux,&T1.P2);
+    ec_dbl_iter(&T2.P1,exp_diadic_val_full_resp,&E_com,&T2.P1);
+    ec_dbl_iter(&T2.P2,exp_diadic_val_full_resp,&E_aux,&T2.P2);
+    ec_dbl_iter(&T1m2.P1,exp_diadic_val_full_resp,&E_com,&T1m2.P1);
+    ec_dbl_iter(&T1m2.P2,exp_diadic_val_full_resp,&E_aux,&T1m2.P2);
 
     int extra_info = 1;
 
     // computation of the dim2 isogeny
-    // TODO potentially adjust the strategy used if we allow for a smaller value 
-    theta_chain_comput_strategy(&isog,pow_dim2_deg_resp,&EcomXEaux,&T1,&T2,&T1m2,special_response_strategy,extra_info);
-
+    theta_chain_comput_strategy(&isog,pow_dim2_deg_resp,&EcomXEaux,&T1,&T2,&T1m2,strategies[TORSION_PLUS_EVEN_POWER-pow_dim2_deg_resp],extra_info);
 
     // pushing the points of torsion to recover the kernel of the dual 
     jac_point_t temp_jac;
@@ -584,11 +572,6 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
         ibz_pow(&tmp,&ibz_const_two,exp_diadic_val_full_resp);
 
         // we compute the generator of the challenge ideal 
-        // quat_lideal_generator(&elem_tmp,&lideal_chall_two,&QUATALG_PINFTY,0);
-        // quat_alg_conj(&elem_tmp,&elem_tmp);
-        // assert(quat_alg_is_primitive(&elem_tmp,&MAXORD_O0,&QUATALG_PINFTY));
-        // quat_alg_mul(&elem_tmp,&resp_quat,&elem_tmp,&QUATALG_PINFTY);
-        // quat_alg_mul(&elem_tmp,&elem_tmp,&resp_quat,&QUATALG_PINFTY);
         quat_lideal_create_from_primitive(&lideal_resp_two,&resp_quat,&tmp,&MAXORD_O0,&QUATALG_PINFTY);
 
         // computing the coefficients of the kernel in terms of the basis of O0 
@@ -608,11 +591,10 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
         copy_point(&points[2],&B_resp_two.PmQ);
 
         // getting down to the right order and applying the matrix
-        for (int i=0;i<pow_dim2_deg_resp + 2;i++){
-            ec_dbl(&B_resp_two.P,&isog.codomain.E2,&B_resp_two.P);
-            ec_dbl(&B_resp_two.Q,&isog.codomain.E2,&B_resp_two.Q);
-            ec_dbl(&B_resp_two.PmQ,&isog.codomain.E2,&B_resp_two.PmQ);
-        }
+        ec_dbl_iter(&B_resp_two.P,pow_dim2_deg_resp+2,&isog.codomain.E2,&B_resp_two.P);
+        ec_dbl_iter(&B_resp_two.Q,pow_dim2_deg_resp+2,&isog.codomain.E2,&B_resp_two.Q);
+        ec_dbl_iter(&B_resp_two.PmQ,pow_dim2_deg_resp+2,&isog.codomain.E2,&B_resp_two.PmQ);
+        
         assert(test_point_order_twof(&B_resp_two.P,&isog.codomain.E2,exp_diadic_val_full_resp));
         assert(test_point_order_twof(&B_resp_two.Q,&isog.codomain.E2,exp_diadic_val_full_resp));
         assert(test_point_order_twof(&B_resp_two.PmQ,&isog.codomain.E2,exp_diadic_val_full_resp));
@@ -665,10 +647,6 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
         ibz_mul(&sig->chall_coeff,&vec_chall[0],&sig->chall_coeff);
         ibz_set(&vec_chall[1],1);
     }
-
-
-    
-
 
     ec_isog_even_t phi_chall;
     ec_basis_t bas_sk;
@@ -733,7 +711,6 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
             weil(&w0,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp,&B_aux2.P,&B_aux2.Q,&B_aux2.PmQ,&A24);
             weil(&w0,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp,&B_aux2_can.P,&B_aux2_can.Q,&B_aux2_can.PmQ,&A24);
     #endif
-
 
     // compute the matrix to go from B_aux2 to B_aux2_can
     change_of_basis_matrix_two(&mat_Baux2_to_Baux2_can,&B_aux2_can,&B_aux2,&E_aux2,pow_dim2_deg_resp+ 2 + exp_diadic_val_full_resp); 
@@ -854,6 +831,10 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     // applying the change matrix on the basis of E_chall
     matrix_application_even_basis(&B_chall_can,&Echall,&sig->mat_Bchall_can_to_B_chall,pow_dim2_deg_resp+2 + sig->two_resp_length);
 
+    // TOC_clock(t,"matrix application");
+
+    t = tic();
+
     ec_curve_t E_chall_2;
     ec_curve_t mem;
     copy_curve(&E_chall_2,&Echall);
@@ -922,7 +903,7 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
 
     // computing the isogeny
     int extra_info =1;
-    theta_chain_comput_strategy_faster_no_eval(&isog,pow_dim2_deg_resp,&EchallxEaux,&T1,&T2,&T1m2,special_response_strategy,extra_info);
+    theta_chain_comput_strategy_faster_no_eval(&isog,pow_dim2_deg_resp,&EchallxEaux,&T1,&T2,&T1m2,strategies[TORSION_PLUS_EVEN_POWER-pow_dim2_deg_resp],extra_info);
 
 
     // TOC_clock(t,"response isogeny");

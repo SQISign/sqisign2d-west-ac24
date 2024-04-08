@@ -124,7 +124,7 @@ int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *
         printf("represent integer failed \n");
         return 0;
     }
-    quat_lideal_create_from_primitive(lideal,&theta,u,&STANDARD_EXTREMAL_ORDER.order,&QUATALG_PINFTY);
+    quat_lideal_create_from_primitive(lideal,&theta,u,&MAXORD_O0,&QUATALG_PINFTY);
 
 
     ec_basis_t B0_two;
@@ -184,18 +184,35 @@ int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *
     assert(test_point_order_twof(&T1.P1,&E01.E1,length+2));
     assert(test_point_order_twof(&T2.P2,&E01.E2,length+2));
 
-    if (!small) {
-        // computing the isogeny
-        theta_chain_comput_strategy(isog,length,&E01,&T1,&T2,&T1m2,strategies[TORSION_PLUS_EVEN_POWER-length],extra_info);
-    }
-    else {
 
-        // need to adjust 
-        // t = tic();
-        assert(TORSION_PLUS_EVEN_POWER - length >= 2);
-        theta_chain_comput_strategy(isog,length,&E01,&T1,&T2,&T1m2,special_small_strategy,extra_info);
-        // TOC(t,"theta chain inside fixed");
-    }
+    theta_chain_comput_strategy(isog,length,&E01,&T1,&T2,&T1m2,strategies[TORSION_PLUS_EVEN_POWER-length],extra_info);
+    #ifndef NDEBUG 
+        theta_chain_t second_isog;
+        ec_dbl_iter(&T1.P1,2,&E01.E1,&T1.P1);
+        ec_dbl_iter(&T2.P1,2,&E01.E1,&T2.P1);
+        ec_dbl_iter(&T1m2.P1,2,&E01.E1,&T1m2.P1);
+        ec_dbl_iter(&T1.P2,2,&E01.E2,&T1.P2);
+        ec_dbl_iter(&T2.P2,2,&E01.E2,&T2.P2);
+        ec_dbl_iter(&T1m2.P2,2,&E01.E2,&T1m2.P2);
+
+
+        assert(test_point_order_twof(&T1.P1,&E01.E1,length));
+        assert(test_point_order_twof(&T2.P2,&E01.E2,length));
+        theta_chain_comput_strategy(&second_isog,length,&E01,&T1,&T2,&T1m2,strategies[TORSION_PLUS_EVEN_POWER-length+2],0);
+    #endif
+
+    // if (!small) {
+    //     // computing the isogeny
+        
+    // }
+    // else {
+
+    //     // need to adjust 
+    //     // t = tic();
+    //     assert(TORSION_PLUS_EVEN_POWER - length >= 2);
+    //     theta_chain_comput_strategy(isog,length,&E01,&T1,&T2,&T1m2,special_small_strategy,extra_info);
+    //     // TOC(t,"theta chain inside fixed");
+    // }
 
 
     // var finalize

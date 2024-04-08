@@ -147,7 +147,7 @@ void endomorphism_application_even_jac_basis(jac_point_t *P,jac_point_t *Q,quat_
  *
  */
 void id2iso_kernel_dlogs_to_ideal(quat_left_ideal_t *lideal, const ibz_vec_2_t *vec2, const ibz_vec_2_t *vec3);
-void id2iso_kernel_dlogs_to_ideal_two(quat_left_ideal_t *lideal, const ibz_vec_2_t *vec2);
+void id2iso_kernel_dlogs_to_ideal_two(quat_left_ideal_t *lideal, const ibz_vec_2_t *vec2,int f);
 void id2iso_kernel_dlogs_to_ideal_three(quat_left_ideal_t *lideal, const ibz_vec_2_t *vec3);
 
 /** @}
