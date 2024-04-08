@@ -1,5 +1,6 @@
 #include "include/fp.h"
 
+// TODO: move to prime specific file
 const uint64_t p[NWORDS_FIELD] = { 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x4ffffffffffffff };
 
 void fp_set(digit_t* x, const digit_t val)
@@ -132,6 +133,7 @@ void fp_n_sqr(digit_t* out, digit_t* in, int n)
     }
 }
 
+// TODO: move to prime specific file
 static void fp_exp3div4(digit_t* out, const digit_t* a)
 { // Fixed exponentiation out = a^((p-3)/4) mod p
   // Input: a in [0, p-1] 
@@ -237,11 +239,11 @@ bool fp_is_square(const digit_t* a)
     return fp_is_equal(t, one);
 }
 
-// Square root computation, out = a^((p+1)/4) mod p
-// Uses that p+1 = 5*2**248 so we can compute the
-// sqrt with only 248 squares and one multiplication
+// TODO: move to prime specific file
 void fp_sqrt(digit_t* a)
-{
+{ // Square root computation, out = a^((p+1)/4) mod p
+  // Uses that p+1 = 5*2**248 so we can compute the
+  // sqrt with only 248 squares and one multiplication
     int i;
     fp_t t;
 
