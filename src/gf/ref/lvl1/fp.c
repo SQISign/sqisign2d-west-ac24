@@ -176,10 +176,22 @@ bool fp_is_square(const digit_t* a)
     return fp_is_equal(t, one);
 }
 
+// Square root computation, out = a^((p+1)/4) mod p
+// Uses that p+1 = 5*2**248 so we can compute the
+// sqrt with only 248 squares and one multiplication
 void fp_sqrt(digit_t* a)
-{ // Square root computation, out = a^((p+1)/4) mod p
+{
+    int i;
     fp_t t;
 
-    fp_exp3div4(t, a);
-    fp_mul(a, t, a);    // a^((p+1)/4)
+    // Compute a^5
+    fp_copy(t, a);
+    fp_sqr(a, a);
+    fp_sqr(a, a);
+    fp_mul(a, a, t);
+
+    // Compute (a^(5)) ^ 2^246
+    for (i = 0; i < 246; i++){
+        fp_sqr(a, a);
+    }
 }
