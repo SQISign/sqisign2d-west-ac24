@@ -805,6 +805,8 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     
     ec_curve_t Echall=Epk;
     ec_eval_even(&Echall,&phi_chall,&bas_EA.P,1);
+    // printf("challenge computation length : %d ",phi_chall.length);
+    // TOC_clock(t,"");
 
     // TODO make a clean constant for this
     int pow_dim2_deg_resp = 130;

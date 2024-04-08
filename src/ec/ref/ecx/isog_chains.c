@@ -4,33 +4,7 @@
 
 
 
-void ec_eval_even(ec_curve_t* image, const ec_isog_even_t* phi,
-    ec_point_t* points, unsigned short length){
 
-        ec_curve_t E;
-        ec_point_t Q4, Q, A24;
-        copy_curve(&E,&phi->curve);
-        copy_point(&Q4, &phi->kernel);
-        // AC_to_A24(&A24, &phi->curve);
-        ec_curve_normalize_A24(&E);   
-        copy_point(&A24,&E.A24);
-        
-        for(int i = 0; i < phi->length - 2; i++)
-            xDBLv2_normalized(&Q4, &Q4, &A24);
-        xDBLv2_normalized(&Q, &Q4, &A24);
-
-        if(fp2_is_zero(&Q.x)){
-            xisog_4_singular(&A24, Q4, A24);
-            xeval_4_singular(points, points, length, Q4);
-            xeval_4_singular(&Q, &phi->kernel, 1, Q4);
-        }
-        else{
-            xisog_4(&A24, Q4);
-            xeval_4(points, points, length);
-            xeval_4(&Q, &phi->kernel, 1);
-        }
-        ec_eval_even_strategy(image, points, length, &A24, &Q, phi->length-2);
-    }
 
 void ec_eval_even_nonzero(ec_curve_t* image, const ec_isog_even_t* phi,
     ec_point_t* points, unsigned short length){
@@ -45,10 +19,10 @@ void ec_eval_even_nonzero(ec_curve_t* image, const ec_isog_even_t* phi,
         ec_eval_even_strategy(image, points, length, &A24, &Q4, phi->length-2);
     }
 
+// since we use degree 4 isogeny steps, we need to handle the odd case with care
 static void ec_eval_even_strategy(ec_curve_t* image, ec_point_t* points, unsigned short points_len,
     ec_point_t* A24, const ec_point_t *kernel, const int isog_len){
     
-    // assert(isog_len == POWER_OF_2-2);
         
     uint8_t log2_of_e, tmp;
     fp2_t t0;
@@ -66,28 +40,14 @@ static void ec_eval_even_strategy(ec_curve_t* image, ec_point_t* points, unsigne
     current = 0;         // Number of points being carried
     int XDBLs[log2_of_e]; // Number of doubles performed
 
+    if (isog_len > 50) {
+            ec_normalize(A24);
+    }
 
     // if the length is long enough we normalize the first step
-    
+    int is_odd = isog_len%2;
 
     // If walk length is odd, we start with a 2-isogeny
-    if(isog_len & 1){
-        if (isog_len > 50) {
-            ec_normalize(A24);
-        }
-        copy_point(&SPLITTING_POINTS[1], &SPLITTING_POINTS[0]);
-        for(i = 0; i < isog_len-1; i++)
-            if (isog_len > 50) {
-                xDBLv2_normalized(&SPLITTING_POINTS[1], &SPLITTING_POINTS[1], A24);
-            }
-            else {
-                xDBLv2(&SPLITTING_POINTS[1], &SPLITTING_POINTS[1], A24);
-            }
-            
-        xisog_2(A24, SPLITTING_POINTS[1]);
-        xeval_2(SPLITTING_POINTS, SPLITTING_POINTS, 1);
-        xeval_2(points, points, points_len);
-    }
     if (isog_len > 50) {
         ec_normalize(A24);
     }
@@ -102,36 +62,115 @@ static void ec_eval_even_strategy(ec_curve_t* image, ec_point_t* points, unsigne
             current += 1;
             // We set the seed of the new split to be computed and saved
             copy_point(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current - 1]);
-            for(i = 0; i < 2*STRATEGY4[TORSION_PLUS_EVEN_POWER-2-isog_len][strategy]; i++)
+            // if we copied from the very first element, then we perform one additional doubling
+            if (is_odd && current==1) {
                 if (j==0) {
                     xDBLv2_normalized(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current], A24);
                 }
                 else {
                     xDBLv2(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current], A24);
                 }
-                
-            XDBLs[current] = STRATEGY4[TORSION_PLUS_EVEN_POWER-2-isog_len][strategy];  // The number of doublings performed is saved
-            BLOCK += STRATEGY4[TORSION_PLUS_EVEN_POWER-2-isog_len][strategy];          // BLOCK is increased by the number of doublings performed
+            } 
+            for(i = 0; i < 2*STRATEGY4[TORSION_PLUS_EVEN_POWER-isog_len][strategy]; i++)
+                if (j==0) {
+                    xDBLv2_normalized(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current], A24);
+                }
+                else {
+                    xDBLv2(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current], A24);
+                }
+            XDBLs[current] = STRATEGY4[TORSION_PLUS_EVEN_POWER-isog_len][strategy];  // The number of doublings performed is saved
+            BLOCK += STRATEGY4[TORSION_PLUS_EVEN_POWER-isog_len][strategy];          // BLOCK is increased by the number of doublings performed
             strategy += 1;                  // Next, we move to the next element of the strategy
         }
+        if (j==0) {
+            assert(current>0);
+            ec_point_t T;
+            xDBLv2_normalized(&T,&SPLITTING_POINTS[current],A24);
+            if(fp2_is_zero(&T.x)){
+                xisog_4_singular(A24, SPLITTING_POINTS[current], *A24);
+                xeval_4_singular(SPLITTING_POINTS, SPLITTING_POINTS, current, SPLITTING_POINTS[current]);
+                xeval_4_singular(points, points, points_len, SPLITTING_POINTS[current]);
+            }
+            else{
+                xisog_4(A24, SPLITTING_POINTS[current]);
+                xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current);
+                xeval_4(points, points, points_len);
+            }
+        }
+        else {
+            if (is_odd && current==0) {
+                xDBLv2(&SPLITTING_POINTS[current],&SPLITTING_POINTS[current],A24);
+            }
+            #ifndef NDEBUG 
+                // printf("%d \n",current);
+                assert(!fp2_is_zero(&SPLITTING_POINTS[current].z));
+                ec_point_t test;
+                copy_point(&test,&SPLITTING_POINTS[current]);
+                xDBLv2(&test,&test,A24);
+                assert(!fp2_is_zero(&test.z));
+                xDBLv2(&test,&test,A24);
+                assert(fp2_is_zero(&test.z));
 
-        // Evaluate 4-isogeny
-        xisog_4(A24, SPLITTING_POINTS[current]);
-        xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current);
-        xeval_4(points, points, points_len);
+            #endif
+            // Evaluate 4-isogeny
+            xisog_4(A24, SPLITTING_POINTS[current]);
+            xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current);
+            xeval_4(points, points, points_len);
+        }
+        
 
         BLOCK -= XDBLs[current];  
         XDBLs[current] = 0;      
         current -= 1;            
     }
-
     // Final 4-isogeny
+    if (is_odd) {
+        current = 1;
+        copy_point(&SPLITTING_POINTS[1],&SPLITTING_POINTS[0]);
+        xDBLv2(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current], A24);
+    }
     xisog_4(A24, SPLITTING_POINTS[current]);
     xeval_4(points, points, points_len);
+    
+    // current-=1;
+    // final 2-isogeny
+    if (is_odd) {
+        xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, 1);
+
+        #ifndef NDEBUG 
+                assert(!fp2_is_zero(&SPLITTING_POINTS[0].z));
+                ec_point_t test;
+                copy_point(&test,&SPLITTING_POINTS[0]);
+                xDBLv2(&test,&test,A24);
+                assert(fp2_is_zero(&test.z));
+
+        #endif
+        
+        xisog_2(A24, SPLITTING_POINTS[0]);
+        xeval_2(points, points, points_len);
+    }
+    
 
     // Output curve in the form (A:C)
     A24_to_AC(image, A24);
 }
+
+
+void ec_eval_even(ec_curve_t* image, const ec_isog_even_t* phi,
+    ec_point_t* points, unsigned short length){
+
+        ec_curve_t E;
+        ec_point_t Q4, Q, A24;
+        copy_curve(&E,&phi->curve);
+        copy_point(&Q4, &phi->kernel);
+        copy_point(&Q, &phi->kernel);
+        // AC_to_A24(&A24, &phi->curve);
+        ec_curve_normalize_A24(&E);   
+        copy_point(&A24,&E.A24);
+        
+        ec_eval_even_strategy(image, points, length, &A24, &Q, phi->length);
+    }
+
 
 // naive implementation
 void ec_eval_small_chain(ec_curve_t *image, const ec_point_t *kernel, int len,ec_point_t *points,int len_points) {
