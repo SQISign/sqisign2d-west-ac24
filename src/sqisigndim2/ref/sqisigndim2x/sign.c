@@ -601,7 +601,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
 
         ec_point_t ker;
         // applyling the vector to find the kernel 
-        ec_biscalar_mul_ibz(&ker,&isog.codomain.E2,&vec_resp_two[0],&vec_resp_two[1],&B_resp_two);
+        ec_biscalar_mul_ibz(&ker,&isog.codomain.E2,&vec_resp_two[0],&vec_resp_two[1],&B_resp_two,exp_diadic_val_full_resp);
         #ifndef NDEBUG
             if (ibz_cmp(&vec_resp_two[0],&ibz_const_zero)==0 && ibz_cmp(&vec_resp_two[1],&ibz_const_one)==0 ) {
                 assert(ec_is_equal(&ker,&B_resp_two.Q));
@@ -655,7 +655,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     copy_point(&bas_sk.PmQ,&sk->canonical_basis.PmQ);
     phi_chall.curve = sk->curve;
     phi_chall.length = TORSION_PLUS_EVEN_POWER-backtracking;
-    ec_biscalar_mul_ibz(&phi_chall.kernel,&sk->curve,&vec_chall[0],&vec_chall[1],&bas_sk);
+    ec_biscalar_mul_ibz(&phi_chall.kernel,&sk->curve,&vec_chall[0],&vec_chall[1],&bas_sk,TORSION_PLUS_EVEN_POWER);
     for (int i=0;i<backtracking;i++) {
                 ec_dbl(&phi_chall.kernel,&sk->curve,&phi_chall.kernel);
     }
@@ -785,6 +785,7 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     ec_basis_t bas_EA;
     ec_curve_t Epk;
     copy_curve(&Epk,&pk->curve);
+    // ec_curve_normalize_A24(&Epk);
     ec_curve_to_basis_2_from_hint(&bas_EA, &Epk,TORSION_PLUS_EVEN_POWER,pk->hint_pk); // canonical 
     phi_chall.curve = Epk;
     phi_chall.length = TORSION_PLUS_EVEN_POWER-sig->backtracking;
@@ -799,8 +800,15 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
         ibz_copy(&vec_chall[1],&sig->chall_coeff);
         ibz_set(&vec_chall[0],1);
     }
-    
-    ec_biscalar_mul_ibz(&phi_chall.kernel,&Epk,&vec_chall[0],&vec_chall[1],&bas_EA);
+    digit_t scal[NWORDS_ORDER] = {0};
+    ibz_to_digit_array(scal,&sig->chall_coeff);
+    if (sig->chall_b) {
+        ec_ladder3pt(&phi_chall.kernel,scal,&bas_EA.Q,&bas_EA.P,&bas_EA.PmQ,&Epk);
+    }
+    else {
+       ec_ladder3pt(&phi_chall.kernel,scal,&bas_EA.P,&bas_EA.Q,&bas_EA.PmQ,&Epk); 
+    }
+
     ec_dbl_iter(&phi_chall.kernel,sig->backtracking,&Epk,&phi_chall.kernel);
     
     ec_curve_t Echall=Epk;

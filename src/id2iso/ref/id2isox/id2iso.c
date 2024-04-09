@@ -879,7 +879,7 @@ void ec_mul_ibz(ec_point_t* res, const ec_curve_t* curve,
 
 void ec_biscalar_mul_ibz(ec_point_t* res, const ec_curve_t* curve,
     const ibz_t* scalarP, const ibz_t* scalarQ,
-    const ec_basis_t* PQ){
+    const ec_basis_t* PQ,int f){
 
     digit_t scalars[2][NWORDS_FIELD];
 
@@ -892,7 +892,7 @@ void ec_biscalar_mul_ibz(ec_point_t* res, const ec_curve_t* curve,
     else {
         ibz_to_digit_array(scalars[0], scalarP);
         ibz_to_digit_array(scalars[1], scalarQ);
-        ec_biscalar_mul(res, curve, scalars[0], scalars[1], PQ);
+        ec_biscalar_mul_bounded(res, curve, scalars[0], scalars[1], PQ,f);
 
     }
 
@@ -970,10 +970,10 @@ void matrix_application_even_basis(ec_basis_t *bas, const ec_curve_t *E,ibz_mat_
     // ibz_set(&mat[0][1],0);
     ibz_to_digit_array(scalars[1],&(*mat)[1][0]);
     
-    ec_biscalar_mul(&bas->P,E,scalars[0],scalars[1],&tmp_bas);
+    ec_biscalar_mul_bounded(&bas->P,E,scalars[0],scalars[1],&tmp_bas,f);
     ibz_to_digit_array(scalars[0],&(*mat)[0][1]);
     ibz_to_digit_array(scalars[1],&(*mat)[1][1]);
-    ec_biscalar_mul(&bas->Q,E,scalars[0],scalars[1],&tmp_bas);
+    ec_biscalar_mul_bounded(&bas->Q,E,scalars[0],scalars[1],&tmp_bas,f);
 
     ibz_sub(&tmp,&(*mat)[0][0],&(*mat)[0][1]);
     ibz_mod(&tmp,&tmp,&pow_two);
@@ -981,7 +981,7 @@ void matrix_application_even_basis(ec_basis_t *bas, const ec_curve_t *E,ibz_mat_
     ibz_sub(&tmp,&(*mat)[1][0],&(*mat)[1][1]);
     ibz_mod(&tmp,&tmp,&pow_two);
     ibz_to_digit_array(scalars[1],&tmp);
-    ec_biscalar_mul(&bas->PmQ,E,scalars[0],scalars[1],&tmp_bas);
+    ec_biscalar_mul_bounded(&bas->PmQ,E,scalars[0],scalars[1],&tmp_bas,f);
 
     ibz_finalize(&tmp);
     ibz_finalize(&pow_two);

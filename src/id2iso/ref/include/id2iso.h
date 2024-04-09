@@ -122,7 +122,7 @@ void id2iso_ideal_to_isogeny_even_dlogs(ec_isog_even_t *isog, ibz_vec_2_t *ker_d
 
 void ec_biscalar_mul_ibz(ec_point_t* res, const ec_curve_t* curve,
     const ibz_t* scalarP, const ibz_t* scalarQ,
-    const ec_basis_t* PQ);
+    const ec_basis_t* PQ, int f);
 
 void ec_mul_ibz(ec_point_t* res, const ec_curve_t* curve,
     const ibz_t* scalarP,

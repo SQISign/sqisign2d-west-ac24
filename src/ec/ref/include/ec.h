@@ -294,6 +294,8 @@ void ec_biscalar_mul(ec_point_t* res, const ec_curve_t* curve,
     const digit_t* scalarP, const digit_t* scalarQ,
     const ec_basis_t* PQ);
 
+// same as above but points are expected to have order 2^f
+void ec_biscalar_mul_bounded(ec_point_t* res, const ec_curve_t* curve, const digit_t* scalarP, const digit_t* scalarQ, const ec_basis_t* PQ,int f);
 /** @}
 */
 

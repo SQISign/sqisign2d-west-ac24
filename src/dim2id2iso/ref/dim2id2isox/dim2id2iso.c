@@ -1049,12 +1049,12 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         // multiplication by u*d1 
         // we mught have a more efficient way to do this
         ibz_mul(&target,u,d1);
-        ec_biscalar_mul_ibz(&T1.P1,&E0,&target,&ibz_const_zero,&bas);
-        ec_biscalar_mul_ibz(&T2.P1,&E0,&ibz_const_zero,&target,&bas);
+        ec_biscalar_mul_ibz(&T1.P1,&E0,&target,&ibz_const_zero,&bas,TORSION_PLUS_EVEN_POWER);
+        ec_biscalar_mul_ibz(&T2.P1,&E0,&ibz_const_zero,&target,&bas,TORSION_PLUS_EVEN_POWER);
         ibz_neg(&tmp,&target);
         ibz_pow(&two_pow,&ibz_const_two,exp);
         ibz_mod(&tmp,&tmp,&two_pow);
-        ec_biscalar_mul_ibz(&T1m2.P1,&E0,&target,&tmp,&bas);
+        ec_biscalar_mul_ibz(&T1m2.P1,&E0,&target,&tmp,&bas,TORSION_PLUS_EVEN_POWER);
 
         // phiu 
         ibz_set(&quat_tmp.denom,1);

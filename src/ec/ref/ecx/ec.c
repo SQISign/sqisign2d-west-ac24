@@ -144,6 +144,34 @@ void xDBLADD(ec_point_t* R, ec_point_t* S, ec_point_t const* P, ec_point_t const
     fp2_mul(&S->x, &S->x, &PQ->z);
 }
 
+// assume that A24 has been normalized
+void xDBLADD_normalized(ec_point_t* R, ec_point_t* S, ec_point_t const* P, ec_point_t const* Q, ec_point_t const* PQ, ec_point_t const* A24)
+{
+    // Requires precomputation of A24 = (A+2C:4C)
+    fp2_t t0, t1, t2;
+
+    fp2_add(&t0, &P->x, &P->z);
+    fp2_sub(&t1, &P->x, &P->z);
+    fp2_sqr(&R->x, &t0);
+    fp2_sub(&t2, &Q->x, &Q->z);
+    fp2_add(&S->x, &Q->x, &Q->z);
+    fp2_mul(&t0, &t0, &t2);
+    fp2_sqr(&R->z, &t1);
+    fp2_mul(&t1, &t1, &S->x);
+    fp2_sub(&t2, &R->x, &R->z);
+    // fp2_mul(&R->z, &R->z, &A24->z);
+    fp2_mul(&R->x, &R->x, &R->z);
+    fp2_mul(&S->x, &A24->x, &t2);
+    fp2_sub(&S->z, &t0, &t1);
+    fp2_add(&R->z, &R->z, &S->x);
+    fp2_add(&S->x, &t0, &t1);
+    fp2_mul(&R->z, &R->z, &t2);
+    fp2_sqr(&S->z, &S->z);
+    fp2_sqr(&S->x, &S->x);
+    fp2_mul(&S->z, &S->z, &PQ->x);
+    fp2_mul(&S->x, &S->x, &PQ->z);
+}
+
 bool is_point_equal(const ec_point_t* P, const ec_point_t* Q)
 { // Evaluate if two points in Montgomery coordinates (X:Z) are equal
   // Returns 1 (true) if P=Q, 0 (false) otherwise
@@ -409,15 +437,173 @@ void xDBLMUL(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_point_t co
     select_ct((digit_t*)S, (digit_t*)&R[0], (digit_t*)&R[1], mevens, 4*NWORDS_FIELD);
     maskk = 0 - (bitk0 & bitl0);
     select_ct((digit_t*)S, (digit_t*)S, (digit_t*)&R[2], maskk, 4*NWORDS_FIELD);
+
 }
+
+
+void xDBLMUL_bounded(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_point_t const* Q, digit_t const* l, ec_point_t const* PQ, const ec_curve_t* curve,int f)
+{
+
+    int i;
+    digit_t evens, mevens, bitk0, bitl0, maskk, maskl, temp, bs1_ip1, bs2_ip1, bs1_i, bs2_i, h;
+    digit_t sigma[2] = {0}, pre_sigma = 0;
+    digit_t k_t[NWORDS_ORDER], l_t[NWORDS_ORDER], one[NWORDS_ORDER] = {0}, r[2*BITS] = {0};            
+    ec_point_t A24, DIFF1a, DIFF1b, DIFF2a, DIFF2b, R[3] = {0}, T[3];
+
+    // Derive sigma according to parity
+    bitk0 = (k[0] & 1);
+    bitl0 = (l[0] & 1);
+    maskk = 0 - bitk0;               // Parity masks: 0 if even, otherwise 1...1
+    maskl = 0 - bitl0;
+    sigma[0] = (bitk0 ^ 1);
+    sigma[1] = (bitl0 ^ 1);
+    evens = sigma[0] + sigma[1];     // Count number of even scalars
+    mevens = 0 - (evens & 1);        // Mask mevens <- 0 if # even scalars = 0 or 2, otherwise mevens = 1...1
+
+    // If k and l are both even or both odd, pick sigma = (0,1)
+    sigma[0] = (sigma[0] & mevens);
+    sigma[1] = (sigma[1] & mevens) | (1 & ~mevens);
+
+    // Convert even scalars to odd
+    one[0] = 1;
+    mp_sub(k_t, k, one, NWORDS_ORDER);
+    mp_sub(l_t, l, one, NWORDS_ORDER);
+    select_ct(k_t, k_t, k, maskk, NWORDS_ORDER);                                        
+    select_ct(l_t, l_t, l, maskl, NWORDS_ORDER);
+
+    // Scalar recoding
+    for (i = 0; i < BITS; i++) {
+        // If sigma[0] = 1 swap k_t and l_t
+        maskk = 0 - (sigma[0] ^ pre_sigma);
+        swap_ct(k_t, l_t, maskk, NWORDS_ORDER);
+        
+        if (i == BITS-1) {
+            bs1_ip1 = 0;
+            bs2_ip1 = 0;
+        } else {
+            bs1_ip1 = mp_shiftr(k_t, 1, NWORDS_ORDER);
+            bs2_ip1 = mp_shiftr(l_t, 1, NWORDS_ORDER);
+        }
+        bs1_i = k_t[0] & 1;
+        bs2_i = l_t[0] & 1;
+
+        r[2*i]   = bs1_i ^ bs1_ip1;
+        r[2*i+1] = bs2_i ^ bs2_ip1;
+
+        // Revert sigma if second bit, r_(2i+1), is 1 
+        pre_sigma = sigma[0];
+        maskk = 0 - r[2*i+1];
+        select_ct(&temp, &sigma[0], &sigma[1], maskk, 1);
+        select_ct(&sigma[1], &sigma[1], &sigma[0], maskk, 1);
+        sigma[0] = temp;
+    }
+
+    // Point initialization
+    ec_init(&R[0]);
+    maskk = 0 - sigma[0];
+    select_ct((digit_t*)&R[1], (digit_t*)P, (digit_t*)Q, maskk, 4*NWORDS_FIELD);
+    select_ct((digit_t*)&R[2], (digit_t*)Q, (digit_t*)P, maskk, 4*NWORDS_FIELD);
+    fp2_copy(&DIFF1a.x, &R[1].x);
+    fp2_copy(&DIFF1a.z, &R[1].z);
+    fp2_copy(&DIFF1b.x, &R[2].x);
+    fp2_copy(&DIFF1b.z, &R[2].z);
+
+    // Initialize DIFF2a <- P+Q, DIFF2b <- P-Q
+    xADD(&R[2], &R[1], &R[2], PQ);
+    fp2_copy(&DIFF2a.x, &R[2].x);
+    fp2_copy(&DIFF2a.z, &R[2].z);
+    fp2_copy(&DIFF2b.x, &PQ->x);
+    fp2_copy(&DIFF2b.z, &PQ->z);
+
+    // fp2_add(&A24.x, &curve->C, &curve->C);    // Precomputation of A24=(A+2C:4C)
+    // fp2_add(&A24.z, &A24.x, &A24.x);
+    // fp2_add(&A24.x, &A24.x, &curve->A);
+    // normalizing
+    ec_curve_t E;
+    copy_curve(&E,curve);
+    ec_curve_normalize_A24(&E);
+    copy_point(&A24,&E.A24);
+
+    // T <- R
+    memcpy((digit_t*)&T[0], (digit_t*)&R[0], NWORDS_FIELD*RADIX*4/8);
+    memcpy((digit_t*)&T[1], (digit_t*)&R[1], NWORDS_FIELD*RADIX*4/8);
+    memcpy((digit_t*)&T[2], (digit_t*)&R[2], NWORDS_FIELD*RADIX*4/8);
+
+    // Main loop
+    for (i = BITS-1; i>=0; i--) {
+
+        // TODO : clean this
+        // this is an ugly fix to avoid unnecessary operations
+        bool apply =(i<=f+10);
+
+        h = r[2*i] + r[2*i+1];    // in {0, 1, 2}
+        maskk = 0 - (h & 1);
+        if (apply) {
+            select_ct((digit_t*)&T[0], (digit_t*)&R[0], (digit_t*)&R[1], maskk, 4*NWORDS_FIELD);
+        }
+        
+        maskk = 0 - (h >> 1);
+        
+        if (apply) {
+            select_ct((digit_t*)&T[0], (digit_t*)&T[0], (digit_t*)&R[2], maskk, 4*NWORDS_FIELD);
+            xDBLv2_normalized(&T[0], &T[0], &A24);
+        }
+        
+
+        maskk = 0 - r[2*i+1];     // in {0, 1}
+        if (apply) {
+            select_ct((digit_t*)&T[1], (digit_t*)&R[0], (digit_t*)&R[1], maskk, 4*NWORDS_FIELD);
+            select_ct((digit_t*)&T[2], (digit_t*)&R[1], (digit_t*)&R[2], maskk, 4*NWORDS_FIELD);
+        }
+        
+        swap_points(&DIFF1a, &DIFF1b, maskk);
+        if (apply) {
+            xADD(&T[1], &T[1], &T[2], &DIFF1a);
+            xADD(&T[2], &R[0], &R[2], &DIFF2a);
+        }
+        
+        
+        // If hw (mod 2) = 1 then swap DIFF2a and DIFF2b
+        maskk = 0 - (h & 1);
+        swap_points(&DIFF2a, &DIFF2b, maskk);
+
+        // R <- T
+        memcpy((digit_t*)&R[0], (digit_t*)&T[0], NWORDS_FIELD*RADIX*4/8);
+        memcpy((digit_t*)&R[1], (digit_t*)&T[1], NWORDS_FIELD*RADIX*4/8);
+        memcpy((digit_t*)&R[2], (digit_t*)&T[2], NWORDS_FIELD*RADIX*4/8);
+        
+        // fp2_copy(&t1,&R[0].z);
+        // fp2_inv(&t1);
+        // fp2_mul(&t1,&t1,&R[0].x);
+        // fp2_copy(&t2,&R[1].z);
+        // fp2_inv(&t2);
+        // fp2_mul(&t2,&t2,&R[1].x);
+        // fp2_copy(&t3,&R[2].z);
+        // fp2_inv(&t3);
+        // fp2_mul(&t3,&t3,&R[2].x);
+        
+        // printf("%d %d %d %ld\n",f,BITS,i,h);
+        // fp2_print("",t1);
+        // fp2_print("",t2);
+        // fp2_print("",t3);
+    }
+
+    // Output R[evens]
+    select_ct((digit_t*)S, (digit_t*)&R[0], (digit_t*)&R[1], mevens, 4*NWORDS_FIELD);
+    maskk = 0 - (bitk0 & bitl0);
+    select_ct((digit_t*)S, (digit_t*)S, (digit_t*)&R[2], maskk, 4*NWORDS_FIELD);
+
+}
+
 
 void ec_ladder3pt(ec_point_t *R, fp_t const m, ec_point_t const *P, ec_point_t const *Q, ec_point_t const *PQ, ec_curve_t const *A)
 {
+
     // Curve constant in the form A24=(A+2C:4C)
-    ec_point_t A24;
-    fp2_add(&A24.z, &A->C, &A->C);
-    fp2_add(&A24.x, &A->A, &A24.z);
-    fp2_add(&A24.z, &A24.z, &A24.z);
+    // ec_point_t A24;
+    // fp2_add(&A24.z, &A->C, &A->C);
+    // fp2_add(&A24.x, &A->A, &A24.z);
+    // fp2_add(&A24.z, &A24.z, &A24.z);
 
 	ec_point_t X0, X1, X2;
 	copy_point(&X0, Q);
@@ -432,7 +618,7 @@ void ec_ladder3pt(ec_point_t *R, fp_t const m, ec_point_t const *P, ec_point_t c
 		for (j = 0 ; j < 64; j++)
 		{
 			swap_points(&X1, &X2, -((t & m[i]) == 0));
-			xDBLADD(&X0, &X1, &X0, &X1, &X2, &A24);
+			xDBLADD_normalized(&X0, &X1, &X0, &X1, &X2, &A->A24);
 			swap_points(&X1, &X2, -((t & m[i]) == 0));
 			t <<= 1;
 		};
@@ -1644,3 +1830,8 @@ void ec_mul(ec_point_t* res, const ec_curve_t* curve, const digit_t* scalar, con
 void ec_biscalar_mul(ec_point_t* res, const ec_curve_t* curve, const digit_t* scalarP, const digit_t* scalarQ, const ec_basis_t* PQ){
     xDBLMUL(res, &PQ->P, scalarP, &PQ->Q, scalarQ, &PQ->PmQ, curve);
 }
+
+void ec_biscalar_mul_bounded(ec_point_t* res, const ec_curve_t* curve, const digit_t* scalarP, const digit_t* scalarQ, const ec_basis_t* PQ,int f){
+    xDBLMUL_bounded(res, &PQ->P, scalarP, &PQ->Q, scalarQ, &PQ->PmQ, curve, f);
+}
+

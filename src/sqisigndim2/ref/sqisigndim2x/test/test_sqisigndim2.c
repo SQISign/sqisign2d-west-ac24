@@ -181,7 +181,7 @@ int main(){
 
     printf("\nRunning sqisigndim2 tests\n \n");
 
-    bench_fp2_operations(10000);
+    bench_fp2_operations(1000);
 
     res &= test_sqisign(3);
 

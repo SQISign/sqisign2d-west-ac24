@@ -191,7 +191,7 @@ void doublepath(quat_alg_elem_t *gamma, quat_left_ideal_t *lideal_even, quat_lef
     copy_point(&(basis_three.PmQ), list_points + 2);
 
     ec_biscalar_mul_ibz(list_points + 0, &F1,
-    &(primal_three_ker_dlog[0]), &(primal_three_ker_dlog[1]), &basis_three);
+    &(primal_three_ker_dlog[0]), &(primal_three_ker_dlog[1]), &basis_three,TORSION_PLUS_EVEN_POWER);
     isog_init_three(&primal_three_pushed, &F1, list_points + 0, EXPONENT_THREE);
 
     ec_point_t ker_primal_three_pushed_dual;
@@ -215,7 +215,7 @@ void doublepath(quat_alg_elem_t *gamma, quat_left_ideal_t *lideal_even, quat_lef
     copy_point(&(basis_two.PmQ), list_points + 2);
 
     ec_biscalar_mul_ibz(list_points + 0, &F2,
-    &(dual_two_ker_dlog[0]), &(dual_two_ker_dlog[1]), &basis_two);
+    &(dual_two_ker_dlog[0]), &(dual_two_ker_dlog[1]), &basis_two,TORSION_PLUS_EVEN_POWER);
 
     isog_init_two(&dual_two_pushed, &F2, list_points + 0, EXPONENT_TWO);
 
