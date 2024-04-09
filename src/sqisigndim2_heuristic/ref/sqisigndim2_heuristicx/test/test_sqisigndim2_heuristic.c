@@ -127,7 +127,7 @@ int test_sqisign(int repeat, int bench)
     // ms = tac();
     ms = (1000. * (float) (clock() - t) / CLOCKS_PER_SEC);
     printf("Average keygen time [%.2f ms]\n", (float) (ms/bench));
-    printf("\x1b[34mAvg keygen: %'" PRIu64 " cycles\x1b[0m\n", t1-t0);
+    printf("\x1b[34mAvg keygen: %'" PRIu64 " cycles\x1b[0m\n", (t1-t0)/bench);
 
     t = tic();
     t0 = rdtsc();
@@ -139,7 +139,7 @@ int test_sqisign(int repeat, int bench)
     // ms = tac();
     ms = (1000. * (float) (clock() - t) / CLOCKS_PER_SEC);
     printf("Average signature time [%.2f ms]\n", (float) (ms/bench));
-    printf("\x1b[34mAvg signature: %'" PRIu64 " cycles\x1b[0m\n", t1-t0);
+    printf("\x1b[34mAvg signature: %'" PRIu64 " cycles\x1b[0m\n", (t1-t0)/bench);
 
     t = tic();
     t0 = rdtsc();
@@ -154,7 +154,7 @@ int test_sqisign(int repeat, int bench)
     // ms = tac();
     ms = (1000. * (float) (clock() - t) / CLOCKS_PER_SEC);
     printf("Average verification time [%.2f ms]\n", (float) (ms/bench));
-    printf("\x1b[34mAvg verification: %'" PRIu64 " cycles\x1b[0m\n", t1-t0);
+    printf("\x1b[34mAvg verification: %'" PRIu64 " cycles\x1b[0m\n", (t1-t0)/bench);
 
     public_key_finalize(&pk);
     secret_key_finalize(&sk);

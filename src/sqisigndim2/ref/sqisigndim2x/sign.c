@@ -820,19 +820,21 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     int pow_dim2_deg_resp = 130;
 
     ec_basis_t B_chall_can,B_aux_can;
+    ec_curve_t E_aux;
+    copy_curve(&E_aux,&sig->E_aux);
 
     // recovering the canonical basis 
     ec_curve_to_basis_2_from_hint(&B_chall_can,&Echall,pow_dim2_deg_resp+2 + sig->two_resp_length,sig->hint_chall);
-    ec_curve_to_basis_2_from_hint(&B_aux_can,&sig->E_aux,pow_dim2_deg_resp+2 + sig->two_resp_length,sig->hint_aux);
+    ec_curve_to_basis_2_from_hint(&B_aux_can,&E_aux,pow_dim2_deg_resp+2 + sig->two_resp_length,sig->hint_aux);
 
     // TOC_clock(t,"challenge and canonical basis");
 
     t= tic();
 
     // setting to the right order 
-    ec_dbl_iter(&B_aux_can.P,sig->two_resp_length,&sig->E_aux,&B_aux_can.P);
-    ec_dbl_iter(&B_aux_can.Q,sig->two_resp_length,&sig->E_aux,&B_aux_can.Q);
-    ec_dbl_iter(&B_aux_can.PmQ,sig->two_resp_length,&sig->E_aux,&B_aux_can.PmQ);
+    ec_dbl_iter(&B_aux_can.P,sig->two_resp_length,&E_aux,&B_aux_can.P);
+    ec_dbl_iter(&B_aux_can.Q,sig->two_resp_length,&E_aux,&B_aux_can.Q);
+    ec_dbl_iter(&B_aux_can.PmQ,sig->two_resp_length,&E_aux,&B_aux_can.PmQ);
 
     assert(test_point_order_twof(&B_chall_can.P,&Echall,2+pow_dim2_deg_resp+sig->two_resp_length));
     assert(test_point_order_twof(&B_chall_can.Q,&Echall,2+pow_dim2_deg_resp+sig->two_resp_length));
@@ -890,9 +892,9 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     assert(test_point_order_twof(&B_chall_can.P,&E_chall_2,2+pow_dim2_deg_resp));    
     assert(test_point_order_twof(&B_chall_can.Q,&E_chall_2,2+pow_dim2_deg_resp));
     assert(test_point_order_twof(&B_chall_can.PmQ,&E_chall_2,2+pow_dim2_deg_resp));
-    assert(test_point_order_twof(&B_aux_can.P,&sig->E_aux,2+pow_dim2_deg_resp));    
-    assert(test_point_order_twof(&B_aux_can.Q,&sig->E_aux,2+pow_dim2_deg_resp));
-    assert(test_point_order_twof(&B_aux_can.PmQ,&sig->E_aux,2+pow_dim2_deg_resp));
+    assert(test_point_order_twof(&B_aux_can.P,&E_aux,2+pow_dim2_deg_resp));    
+    assert(test_point_order_twof(&B_aux_can.Q,&E_aux,2+pow_dim2_deg_resp));
+    assert(test_point_order_twof(&B_aux_can.PmQ,&E_aux,2+pow_dim2_deg_resp));
 
 
     // now compute the dim2 isogeny from E_chall_2 x E_aux -> E_com x E_aux'
@@ -903,7 +905,7 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     theta_couple_point_t T1,T2,T1m2;
     theta_chain_t isog;
     copy_curve(&EchallxEaux.E1,&E_chall_2);
-    copy_curve(&EchallxEaux.E2,&sig->E_aux);
+    copy_curve(&EchallxEaux.E2,&E_aux);
     copy_point(&T1.P2,&B_aux_can.P);
     copy_point(&T2.P2,&B_aux_can.Q);
     copy_point(&T1m2.P2,&B_aux_can.PmQ);
