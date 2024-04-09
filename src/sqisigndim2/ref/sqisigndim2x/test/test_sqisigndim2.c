@@ -89,7 +89,7 @@ int bench_fp2_operations(int repeat) {
 }
 
 
-int test_sqisign(int repeat)
+int test_sqisign(int repeat, int bench)
 {
     int res = 1;
 
@@ -103,9 +103,7 @@ int test_sqisign(int repeat)
     public_key_init(&pk);
     secret_key_init(&sk);
     secret_sig_init(&(sig));
-    
 
-    
 
 
     // printf("Printing details of first signature\n");
@@ -118,7 +116,6 @@ int test_sqisign(int repeat)
     printf("\n\nTesting signatures\n");
     for (int i = 0; i < repeat; ++i)
     {   
-
         printf("#%d \n",i);
         t = tic();
         t0=rdtsc();
@@ -161,7 +158,47 @@ int test_sqisign(int repeat)
     // ms = (1000. * (float) (clock() - t_verif) / CLOCKS_PER_SEC);
     // printf("average verif time [%.2f ms]\n", (float) (ms/repeat));
 
-    
+    float ms;
+
+    printf("\n\nBenchmarking signatures\n");
+    t = tic();
+    t0 = rdtsc();
+    for (int i = 0; i < bench; ++i)
+    {
+        protocols_keygen(&pk, &sk);
+    }
+    t1 = rdtsc();
+    // ms = tac();
+    ms = (1000. * (float) (clock() - t) / CLOCKS_PER_SEC);
+    printf("Average keygen time [%.2f ms]\n", (float) (ms/bench));
+    printf("\x1b[34mAvg keygen: %'" PRIu64 " cycles\x1b[0m\n", t1-t0);
+
+    t = tic();
+    t0 = rdtsc();
+    for (int i = 0; i < bench; ++i)
+    {
+        int val = protocols_sign(&sig, &pk, &sk, msg, 32, 0);
+    }
+    t1 = rdtsc();
+    // ms = tac();
+    ms = (1000. * (float) (clock() - t) / CLOCKS_PER_SEC);
+    printf("Average signature time [%.2f ms]\n", (float) (ms/bench));
+    printf("\x1b[34mAvg signature: %'" PRIu64 " cycles\x1b[0m\n", t1-t0);
+
+    t = tic();
+    t0 = rdtsc();
+    for (int i = 0; i < bench; ++i)
+    {
+        int check = protocols_verif(&sig,&pk,msg,32);
+        if (!check) {
+            printf("verif failed ! \n");
+        } 
+    }
+    t1 = rdtsc();
+    // ms = tac();
+    ms = (1000. * (float) (clock() - t) / CLOCKS_PER_SEC);
+    printf("Average verification time [%.2f ms]\n", (float) (ms/bench));
+    printf("\x1b[34mAvg verification: %'" PRIu64 " cycles\x1b[0m\n", t1-t0);
 
     public_key_finalize(&pk);
     secret_key_finalize(&sk);
@@ -183,7 +220,7 @@ int main(){
 
     bench_fp2_operations(1000);
 
-    res &= test_sqisign(3);
+    res &= test_sqisign(3, 100);
 
     if(!res){
         printf("\nSome tests failed!\n");
