@@ -319,7 +319,7 @@ void fp_sqr(fp_t *out, const fp_t *a){
   out->w[3] = d3;
 }
 
-void fp_n_sqr(fp_t * out, fp_t * x, int n) {
+void fp_n_sqr(fp_t * out, const fp_t * x, int n) {
   int i;
   
   fp_sqr(out, x);
@@ -401,7 +401,7 @@ void fp_to_mont(fp_t *out, const fp_t *a) {
   fp_mul(out, a, (fp_t *)&R2);
 }
 
-void fp_set(fp_t *out, const fp_t *a){
+void fp_copy(fp_t *out, const fp_t *a){
   out->w[0] = a->w[0];
   out->w[1] = a->w[1];
   out->w[2] = a->w[2];
@@ -527,7 +527,7 @@ void fp_sqrt(fp_t* a)
     fp_t t;
 
     // Compute a^5
-    fp_set(&t, a);
+    fp_copy(&t, a);
     fp_sqr(a, a);
     fp_sqr(a, a);
     fp_mul(a, a, &t);

@@ -165,7 +165,7 @@ bool fp_test(void)
     {
         fp_random_test(&a);
         
-        fp_set(&b, &a);
+        fp_copy(&b, &a);
         fp_inv(&b);
         fp_mul(&c, &a, &b);                               // c = a*a^-1 
         if (fp_equal(&c, (fp_t*)&ONE) == 0) { passed=0; break; } 
@@ -188,7 +188,7 @@ bool fp_test(void)
         fp_sqr(&c, &a);                       // c = a^2
         if (fp_is_square(&c) != 1) { passed = 0; break; }
 
-        fp_sqrt(&c);                           // c, d = ±sqrt(c) 
+        fp_sqrt(&c);                      // c, d = ±sqrt(c) 
         fp_neg(&d, &c);
         if ((fp_equal(&a, &c) == 0) && (fp_equal(&a, &d) == 0)) { passed = 0; break; }
     }

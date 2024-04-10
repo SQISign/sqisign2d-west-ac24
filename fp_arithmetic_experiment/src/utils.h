@@ -4,25 +4,38 @@
 // unsigned 128-bit type integer
 typedef unsigned __int128 uint128_t;
 
-#include <stdint.h>
+#if defined(TARGET_x86)
+  #include <x86intrin.h>
+  /// Addition of (x + y + c) where x, y < 2**64, c < 2**8
+  /// Output r, cc where (x + y + c) = 2**64 * cc + r
+  inline uint8_t addcarry_u64(uint64_t *r, uint64_t x, uint64_t y, uint8_t c) {
+    return _addcarry_u64(c, x, y, r);
+  }
 
-/// Addition of (x + y + c) where x, y < 2**64, c < 2**8
-/// Output r, cc where (x + y + c) = 2**64 * cc + r
-inline uint8_t addcarry_u64(uint64_t *r, uint64_t x, uint64_t y, uint8_t c) {
-  uint128_t z;
-  z = (uint128_t)x + (uint128_t)y + (uint128_t)c;
-  *r = (uint64_t)z;
-  return (uint8_t)(z >> 64);
-}
+  /// Computation of (x - y - c) where x, y < 2**64, c < 2**8
+  /// Output r, cc where (x - y - c) = 2**64 * cc + r
+  inline uint8_t subborrow_u64(uint64_t *r, uint64_t x, uint64_t y, uint8_t c) {
+    return _subborrow_u64(c, x, y, r);
+  }
+#else
+  /// Addition of (x + y + c) where x, y < 2**64, c < 2**8
+  /// Output r, cc where (x + y + c) = 2**64 * cc + r
+  inline uint8_t addcarry_u64(uint64_t *r, uint64_t x, uint64_t y, uint8_t c) {
+    uint128_t z;
+    z = (uint128_t)x + (uint128_t)y + (uint128_t)c;
+    *r = (uint64_t)z;
+    return (uint8_t)(z >> 64);
+  }
 
-/// Computation of (x - y - c) where x, y < 2**64, c < 2**8
-/// Output r, cc where (x - y - c) = 2**64 * cc + r
-inline uint8_t subborrow_u64(uint64_t *r, uint64_t x, uint64_t y, uint8_t c) {
-  uint128_t z;
-  z = ((uint128_t)x - (uint128_t)y) - (uint128_t)c;
-  *r = (uint64_t)z;
-  return (uint8_t)(z >> 127);
-}
+  /// Computation of (x - y - c) where x, y < 2**64, c < 2**8
+  /// Output r, cc where (x - y - c) = 2**64 * cc + r
+  inline uint8_t subborrow_u64(uint64_t *r, uint64_t x, uint64_t y, uint8_t c) {
+    uint128_t z;
+    z = ((uint128_t)x - (uint128_t)y) - (uint128_t)c;
+    *r = (uint64_t)z;
+    return (uint8_t)(z >> 127);
+  }
+#endif
 
 /// Computation of x * y where x, y < 2**64
 /// Output hi, low where x * y = 2**64 * hi + low

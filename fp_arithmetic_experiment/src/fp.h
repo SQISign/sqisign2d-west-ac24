@@ -60,13 +60,13 @@ void fp_add(fp_t *out, const fp_t *a, const fp_t *b);
 void fp_sub(fp_t *out, const fp_t *a, const fp_t *b);
 void fp_mul(fp_t *out, const fp_t *a, const fp_t *b);
 void fp_sqr(fp_t *out, const fp_t *a);
-void fp_n_sqr(fp_t * out, fp_t * x, int n);
-
+void fp_n_sqr(fp_t * out, const fp_t * x, int n);
 
 void fp_to_mont(fp_t *out, const fp_t *a);
 void fp_from_mont(fp_t *out, const fp_t *a);
 
-void fp_set(fp_t *out, const fp_t *a);
+void fp_copy(fp_t *out, const fp_t *a);
+
 void fp_set_zero(fp_t *out);
 void fp_set_one(fp_t *out);
 
