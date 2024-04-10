@@ -45,7 +45,7 @@ bool curve_is_canonical(ec_curve_t const *E)
     return fp2_is_equal(&lhs, &rhs);
 }
 
-int test_sqisign(int repeat, int bench)
+int test_sqisign(int repeat, uint64_t bench)
 {
     int res = 1;
 

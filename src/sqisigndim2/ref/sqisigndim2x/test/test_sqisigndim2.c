@@ -89,7 +89,7 @@ int bench_fp2_operations(int repeat) {
 }
 
 
-int test_sqisign(int repeat, int bench)
+int test_sqisign(int repeat, uint64_t bench)
 {
     int res = 1;
 
