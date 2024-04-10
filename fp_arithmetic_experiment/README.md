@@ -45,15 +45,15 @@ Jack: fp_arithmetic_experiment % ./fp_testing bench 10000
 
 --------------------------------------------------------------------------------------------------------
 
-Benchmarking GF(p) field arithmetic: 
+Benchmarking GF(p) field arithmetic:
 
-  GF(p) addition runs in .......................................... 5 cycles, (5901499188998290977 ignore me)
-  GF(p) subtraction runs in ....................................... 11 cycles, (12179369125404802345 ignore me)
-  GF(p) multiplication runs in .................................... 24 cycles, (3586068188944577399 ignore me)
-  GF(p) squaring runs in .......................................... 22 cycles, (3876598179343484886 ignore me)
-  GF(p) inversion runs in ......................................... 5902 cycles, (17670238964497910354 ignore me)
-  GF(p) sqrt runs in .............................................. 5624 cycles, (5452856236907160256 ignore me)
-  Square checking runs in ......................................... 5890 cycles, (8869800425310996852 ignore me)
+  GF(p) addition runs in .......................................... 6 cycles, (5901499188998290977 ignore me)
+  GF(p) subtraction runs in ....................................... 6 cycles, (12179369125404802345 ignore me)
+  GF(p) multiplication runs in .................................... 20 cycles, (3586068188944577399 ignore me)
+  GF(p) squaring runs in .......................................... 15 cycles, (3876598179343484886 ignore me)
+  GF(p) inversion runs in ......................................... 4200 cycles, (17670238964497910354 ignore me)
+  GF(p) sqrt runs in .............................................. 4056 cycles, (5452856236907160256 ignore me)
+  Square checking runs in ......................................... 4190 cycles, (8869800425310996852 ignore me)
 ```
 
 As a comparison, the following timings from the current repo
