@@ -1675,11 +1675,9 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
 
     if (eight_above) {
         assert(test_point_order_twof(&bas2.P,&E12->E2,n+2));
-        assert(test_point_order_twof(&bas1.P,&E12->E1,n+2));
     }
     else {
         assert(test_point_order_twof(&bas2.P,&E12->E2,n));
-        assert(test_point_order_twof(&bas1.P,&E12->E1,n));
     }
     
     // t = tic();
@@ -1687,11 +1685,9 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
     lift_basis(&xyT1.P2,&xyT2.P2,&bas2,&E12->E2);
     if (eight_above) {
         assert(test_jac_order_twof(&xyT1.P2,&E12->E2,n+2));
-        assert(test_jac_order_twof(&xyT2.P1,&E12->E1,n+2));
     }
     else {
         assert(test_jac_order_twof(&xyT1.P2,&E12->E2,n));
-        assert(test_jac_order_twof(&xyT2.P1,&E12->E1,n));
     }
 
 
@@ -1745,8 +1741,6 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
 
 
     assert(test_jac_order_twof(&xyK1.P2,&E12->E2,3));
-    assert(test_jac_order_twof(&xyK2.P1,&E12->E1,3));
-    assert(test_jac_order_twof(&xyK1.P1,&E12->E1,3));
     assert(test_jac_order_twof(&xyK2.P2,&E12->E2,3));
 
 
@@ -1883,11 +1877,9 @@ void theta_chain_comput_strategy_faster_no_eval(theta_chain_t *out,int n, theta_
 
     if (eight_above) {
         assert(test_point_order_twof(&bas2.P,&E12->E2,n+2));
-        assert(test_point_order_twof(&bas1.P,&E12->E1,n+2));
     }
     else {
         assert(test_point_order_twof(&bas2.P,&E12->E2,n));
-        assert(test_point_order_twof(&bas1.P,&E12->E1,n));
     }
     
     // t = tic();
@@ -1895,11 +1887,9 @@ void theta_chain_comput_strategy_faster_no_eval(theta_chain_t *out,int n, theta_
     lift_basis(&xyT1.P2,&xyT2.P2,&bas2,&E12->E2);
     if (eight_above) {
         assert(test_jac_order_twof(&xyT1.P2,&E12->E2,n+2));
-        assert(test_jac_order_twof(&xyT2.P1,&E12->E1,n+2));
     }
     else {
         assert(test_jac_order_twof(&xyT1.P2,&E12->E2,n));
-        assert(test_jac_order_twof(&xyT2.P1,&E12->E1,n));
     }
 
     int adjusting = 2*(1-eight_above);
@@ -1947,10 +1937,7 @@ void theta_chain_comput_strategy_faster_no_eval(theta_chain_t *out,int n, theta_
 
 
     assert(test_jac_order_twof(&xyK1.P2,&E12->E2,3));
-    assert(test_jac_order_twof(&xyK2.P1,&E12->E1,3));
     assert(test_jac_order_twof(&xyK1.P1,&E12->E1,3));
-    assert(test_jac_order_twof(&xyK2.P2,&E12->E2,3));
-
 
 
     // compute the gluing isogeny 

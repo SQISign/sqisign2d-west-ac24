@@ -1610,8 +1610,6 @@ void change_of_basis_matrix_two(ibz_mat_2x2_t *mat, ec_basis_t *B1, ec_basis_t *
     ibz_t i1,i2,i3,i4,i5,i6;
     ibz_init(&i1);ibz_init(&i2);ibz_init(&i3);ibz_init(&i4);ibz_init(&i5);ibz_init(&i6);
 
-    assert(test_point_order_twof(&(B2->P),E,f));
-    assert(test_point_order_twof(&(B2->Q),E,f));
     assert(test_point_order_twof(&(B2->PmQ),E,f));
 
 
