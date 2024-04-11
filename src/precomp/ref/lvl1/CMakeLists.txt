@@ -20,6 +20,7 @@ add_custom_command(
         "${CMAKE_CURRENT_SOURCE_DIR}/include/quaternion_data.h"
         "${CMAKE_CURRENT_SOURCE_DIR}/endomorphism_action.c"
         "${CMAKE_CURRENT_SOURCE_DIR}/include/endomorphism_action.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/ec_params.h"
     COMMAND
         echo "Please run manually: make precomp"
 )
@@ -38,6 +39,8 @@ add_custom_target(precomp_${SVARIANT_LOWER}
         "${SAGEMATH}" "${PROJECT_SOURCE_DIR}/scripts/precompute_quaternion_data.sage"
     COMMAND
         "${SAGEMATH}" "${PROJECT_SOURCE_DIR}/scripts/precompute_endomorphism_action.sage"
+    COMMAND
+        "${SAGEMATH}" "${PROJECT_SOURCE_DIR}/scripts/ec_params.py"
     WORKING_DIRECTORY
         "${CMAKE_CURRENT_SOURCE_DIR}"
 )

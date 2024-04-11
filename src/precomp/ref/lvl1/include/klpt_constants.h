@@ -1,7 +1,7 @@
 #include <intbig.h>
 #define KLPT_equiv_bound_coeff 6
 #define KLPT_equiv_num_iter 28561
-#define KLPT_primality_num_iter 24
+#define KLPT_primality_num_iter 32
 #define KLPT_signing_klpt_length 1240
 #define KLPT_signing_num_gamma_trial 64
 #define KLPT_gamma_exponent_interval_size 0

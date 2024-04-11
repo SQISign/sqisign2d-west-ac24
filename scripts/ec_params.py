@@ -203,7 +203,7 @@ if __name__ == '__main__':
     number_strategy_dim2_isog = POWER_OF_2//2+10
 
 
-    f = open('ec_params.h', 'w')
+    f = open('include/ec_params.h', 'w')
     f.write('#ifndef EC_PARAMS_H\n')
     f.write('#define EC_PARAMS_H\n')
     f.write('\n')
