@@ -179,10 +179,20 @@ void fp2_frommont(fp2_t* x, const fp2_t* y)
     fp_frommont(x->im, y->im);
 }
 
+// TODO: here we hard-code 1/2 mod p, but we could instead have a
+//       half method, but this probably means also writing this in
+//       assembly... so I just haven't! It would be good to do tho
+//       as halving is cheaper than regular multiplication as two
+//       words are zero.
+// TODO: this const should also probably be moved. I tried adding
+//       it into fp.h, but there was recursive imports from testing 
+//       which caused a crash.
+const uint64_t HALF[NWORDS_FIELD] = {25, 0, 0, 216172782113783808};
+
 // NOTE: old, non-constant-time implementation. Could be optimized
 void fp2_sqrt(fp2_t* x)
 {
-    fp_t sdelta, re, tmp1, tmp2, inv2, im;
+    fp_t sdelta, re, tmp1, tmp2, im;
 
     if (fp_is_zero(x->im)) {
         if (fp_is_square(x->re)) {
@@ -202,26 +212,24 @@ void fp2_sqrt(fp2_t* x)
     fp_add(sdelta, sdelta, tmp1);
     fp_sqrt(sdelta);
 
-    fp_set(inv2, 2);
-    fp_tomont(inv2, inv2);     // inv2 <- 2
-    fp_inv(inv2);
     fp_add(re, x->re, sdelta);
-    fp_mul(re, re, inv2);
-    memcpy((digit_t*)tmp2, (digit_t*)re, NWORDS_FIELD*RADIX/8);
+    fp_mul(re, re, (digit_t*)HALF);
+    fp_copy(tmp2, re);
 
     if (!fp_is_square(tmp2)) {
         fp_sub(re, x->re, sdelta);
-        fp_mul(re, re, inv2);
+        fp_mul(re, re, (digit_t*)HALF);
     }
 
     fp_sqrt(re);
-    memcpy((digit_t*)im, (digit_t*)re, NWORDS_FIELD*RADIX/8);
+    fp_copy(im, re);
 
     fp_inv(im);
-    fp_mul(im, im, inv2);
-    fp_mul(x->im, im, x->im);    
-    memcpy((digit_t*)x->re, (digit_t*)re, NWORDS_FIELD*RADIX/8);
+    fp_mul(im, im, (digit_t*)HALF);
+    fp_mul(x->im, im, x->im);   
+    fp_copy(x->re, re); 
 }
+
 
 // Lexicographic comparison of two field elements. Returns +1 if x > y, -1 if x < y, 0 if x = y
 int fp2_cmp(fp2_t* x, fp2_t* y){

@@ -275,6 +275,24 @@ bool fp2_run()
     qsort(cycle_runs, 10, sizeof(long), compare);
     printf("  GF(p^2) multiplication runs in .................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] / (6 * BENCH_LOOPS), a.re[0]);
 
+    // GF(p^2) squaring
+    fp2random_test(&a);
+    fp2random_test(&b);
+
+    for (i=0; i<10; i++){
+        cycles = 0;
+        cycles1 = cpucycles(); 
+        for (n=0; n<BENCH_LOOPS; n++)
+        {
+            fp2_sqr(&a, &a);
+            fp_add(&a.re, &a.im, &b.re);
+        }
+        cycles2 = cpucycles();
+        cycle_runs[i] = cycles2-cycles1;
+    }
+    qsort(cycle_runs, 10, sizeof(long), compare);
+    printf("  GF(p^2) squaring runs in .......................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] / (BENCH_LOOPS), a.re[0]);
+
     // GF(p^2) inversion
     fp2random_test(&a);
     fp2random_test(&b);
