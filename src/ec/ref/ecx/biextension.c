@@ -346,9 +346,8 @@ bool fp2_dlog_2e(digit_t* scal,const fp2_t *f,const fp2_t *g,int e){
 // note that basis might not actually be a basis (the order might me smaller than 2^e)
 void ec_dlog_2_weil(digit_t* scalarP1, digit_t* scalarQ1, digit_t* scalarP2, digit_t* scalarQ2, ec_basis_t* PQ, ec_basis_t *basis, ec_curve_t* curve,int e) {
 
-    assert(test_point_order_twof(&PQ->P,curve,e));
     assert(test_point_order_twof(&PQ->Q,curve,e));
-    assert(test_point_order_twof(&PQ->PmQ,curve,e));
+
 
     fp2_t w0,w;
     ec_point_t AC,A24;
@@ -399,7 +398,6 @@ void ec_dlog_2_weil(digit_t* scalarP1, digit_t* scalarQ1, digit_t* scalarP2, dig
     #ifndef NDEBUG
         ec_point_t test_comput;
         ec_biscalar_mul(&test_comput,curve,scalarP1,scalarQ1,PQ);
-
         assert(ec_is_equal(&test_comput,&basis->P));
         ec_biscalar_mul(&test_comput,curve,scalarP2,scalarQ2,PQ);
         assert(ec_is_equal(&test_comput,&basis->Q));

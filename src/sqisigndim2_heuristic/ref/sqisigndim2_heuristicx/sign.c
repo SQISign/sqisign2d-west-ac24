@@ -12,17 +12,25 @@ const clock_t time_sample_response = 0;
 const clock_t time_change_of_basis_matrix = 0;
 
 void secret_sig_init(signature_t *sig) {
-    ibz_mat_2x2_init(&(sig->mat_pk_can_to_B_pk));
-    ibz_init(&sig->chall_coeff);
     sig->hint_aux = (int*) malloc(2*sizeof(int));
-    sig->hint_chall = (int*) malloc(2*sizeof(int));
+    ibz_init(&sig->x);
+    ibz_init(&sig->b0);
+    ibz_init(&sig->d0);
+    ibz_init(&sig->b1);
+    ibz_init(&sig->d1);
+    ibz_init(&sig->e0_adjust);
+    ibz_init(&sig->c0_adjust);
 }
 
 void secret_sig_finalize(signature_t *sig) {
-    ibz_mat_2x2_finalize(&(sig->mat_pk_can_to_B_pk));
-    ibz_finalize(&sig->chall_coeff);
     free(sig->hint_aux);
-    free(sig->hint_chall);
+    ibz_finalize(&sig->x);
+    ibz_finalize(&sig->b0);
+    ibz_finalize(&sig->d0);
+    ibz_finalize(&sig->b1);
+    ibz_finalize(&sig->d1);
+    ibz_finalize(&sig->e0_adjust);
+    ibz_finalize(&sig->c0_adjust);
 }
 
 static void ibz_vec_2_print2(char *name, const ibz_vec_2_t *vec){
@@ -268,7 +276,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     quat_lattice_t lattice_hom_chall_to_com, lat_commit;
     quat_alg_elem_t resp_quat;
     quat_alg_elem_t elem_tmp;
-    ibz_mat_2x2_t mat_Baux0_to_Baux_can, mat_Bchall_can_to_Bchall,mat;
+    ibz_mat_2x2_t mat_Baux0_to_Baux_can, mat_Bchall_can_to_Bchall,mat,sig_mat_pk_can_to_B_pk;
     // ibz_mat_2x2_t mat_sigma_phichall_BA_to_Bcomcan, mat_sigma_phichall_BA0_to_Bcom0;
     ibz_t degree_com_isogeny, tmp, remain;
     ibz_t degree_full_resp,degree_odd_resp;
@@ -288,6 +296,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
 
     ibz_mat_2x2_init(&mat_Bchall_can_to_Bchall); 
     ibz_mat_2x2_init(&mat_Baux0_to_Baux_can);
+    ibz_mat_2x2_init(&sig_mat_pk_can_to_B_pk);
     ibz_mat_2x2_init(&mat);
     ibz_vec_4_init(&coeffs);
 
@@ -317,18 +326,18 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
 
     // setting up the challenge coeff to transmit
     // TODO there is a better way
-    if (ibz_get(&vec_chall[0])%2==1) {
-        sig->chall_b = 0;
-        ibz_pow(&tmp,&ibz_const_two,len_chall);
-        ibz_invmod(&sig->chall_coeff,&vec_chall[0],&tmp);
-        ibz_mul(&sig->chall_coeff,&vec_chall[1],&sig->chall_coeff);
-    }
-    else {
-        sig->chall_b = 1;
-        ibz_pow(&tmp,&ibz_const_two,len_chall);
-        ibz_invmod(&sig->chall_coeff,&vec_chall[1],&tmp);
-        ibz_mul(&sig->chall_coeff,&vec_chall[0],&sig->chall_coeff);
-    }
+    // if (ibz_get(&vec_chall[0])%2==1) {
+    //     sig->chall_b = 0;
+    //     ibz_pow(&tmp,&ibz_const_two,len_chall);
+    //     ibz_invmod(&sig->chall_coeff,&vec_chall[0],&tmp);
+    //     ibz_mul(&sig->chall_coeff,&vec_chall[1],&sig->chall_coeff);
+    // }
+    // else {
+    //     sig->chall_b = 1;
+    //     ibz_pow(&tmp,&ibz_const_two,len_chall);
+    //     ibz_invmod(&sig->chall_coeff,&vec_chall[1],&tmp);
+    //     ibz_mul(&sig->chall_coeff,&vec_chall[0],&sig->chall_coeff);
+    // }
     
 
     // now we compute the ideal associated to the challenge 
@@ -441,7 +450,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     }
 
     // now we inverse the matrix of the secret key to get from the canonical basis of pk to phi(B0)
-    ibz_2x2_inv_mod(&sig->mat_pk_can_to_B_pk,&sk->mat_BAcan_to_BA0_two,&TORSION_PLUS_2POWER);
+    ibz_2x2_inv_mod(&sig_mat_pk_can_to_B_pk,&sk->mat_BAcan_to_BA0_two,&TORSION_PLUS_2POWER);
 
     #ifndef NDEBUG 
         ec_basis_t bas_test,bas_ref;
@@ -451,7 +460,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
         copy_point(&bas_test.P,&sk->canonical_basis.P);
         copy_point(&bas_test.Q,&sk->canonical_basis.Q);
         copy_point(&bas_test.PmQ,&sk->canonical_basis.PmQ);
-        matrix_application_even_basis(&bas_test,&sk->curve,&sig->mat_pk_can_to_B_pk,TORSION_PLUS_EVEN_POWER);
+        matrix_application_even_basis(&bas_test,&sk->curve,&sig_mat_pk_can_to_B_pk,TORSION_PLUS_EVEN_POWER);
         fp2_t w0,w1,w0_test;
         ec_point_t A24;
         AC_to_A24(&A24,&CURVE_E0);
@@ -465,8 +474,8 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     #endif 
 
     // and we multiply it with the matrix corresponding to resp_quat precomputed above
-    // ibz_2x2_mul_mod(&sig->mat_pk_can_to_B_pk,&mat,&sig->mat_pk_can_to_B_pk,&TORSION_PLUS_2POWER);
-    ibz_2x2_mul_mod(&sig->mat_pk_can_to_B_pk,&sig->mat_pk_can_to_B_pk,&mat,&TORSION_PLUS_2POWER);
+    // ibz_2x2_mul_mod(&sig_mat_pk_can_to_B_pk,&mat,&sig_mat_pk_can_to_B_pk,&TORSION_PLUS_2POWER);
+    ibz_2x2_mul_mod(&sig_mat_pk_can_to_B_pk,&sig_mat_pk_can_to_B_pk,&mat,&TORSION_PLUS_2POWER);
     
     // canonical basis
     ec_basis_t B_aux_can;
@@ -476,17 +485,17 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     change_of_basis_matrix_two(&mat_Baux0_to_Baux_can,&B_aux_can,&Baux0,&E_aux,TORSION_PLUS_EVEN_POWER); 
 
     // apply the change of basis to the matrix 
-    // ibz_2x2_mul_mod(&sig->mat_pk_can_to_B_pk,&mat_Baux0_to_Baux_can,&sig->mat_pk_can_to_B_pk,&TORSION_PLUS_2POWER);
-    ibz_2x2_mul_mod(&sig->mat_pk_can_to_B_pk,&sig->mat_pk_can_to_B_pk,&mat_Baux0_to_Baux_can,&TORSION_PLUS_2POWER);
+    // ibz_2x2_mul_mod(&sig_mat_pk_can_to_B_pk,&mat_Baux0_to_Baux_can,&sig_mat_pk_can_to_B_pk,&TORSION_PLUS_2POWER);
+    ibz_2x2_mul_mod(&sig_mat_pk_can_to_B_pk,&sig_mat_pk_can_to_B_pk,&mat_Baux0_to_Baux_can,&TORSION_PLUS_2POWER);
 
     // dividing the matrix by the degree of the secret key isogeny
     ibz_copy(&tmp,&sk->secret_ideal.norm);
     assert(ibz_get(&tmp)%2==1);
     ibz_invmod(&tmp,&tmp,&TORSION_PLUS_2POWER);
-    ibz_mul(&sig->mat_pk_can_to_B_pk[0][0],&sig->mat_pk_can_to_B_pk[0][0],&tmp);
-    ibz_mul(&sig->mat_pk_can_to_B_pk[1][0],&sig->mat_pk_can_to_B_pk[1][0],&tmp);
-    ibz_mul(&sig->mat_pk_can_to_B_pk[0][1],&sig->mat_pk_can_to_B_pk[0][1],&tmp);
-    ibz_mul(&sig->mat_pk_can_to_B_pk[1][1],&sig->mat_pk_can_to_B_pk[1][1],&tmp);
+    ibz_mul(&sig_mat_pk_can_to_B_pk[0][0],&sig_mat_pk_can_to_B_pk[0][0],&tmp);
+    ibz_mul(&sig_mat_pk_can_to_B_pk[1][0],&sig_mat_pk_can_to_B_pk[1][0],&tmp);
+    ibz_mul(&sig_mat_pk_can_to_B_pk[0][1],&sig_mat_pk_can_to_B_pk[0][1],&tmp);
+    ibz_mul(&sig_mat_pk_can_to_B_pk[1][1],&sig_mat_pk_can_to_B_pk[1][1],&tmp);
     
 
     // filling the output 
@@ -500,14 +509,168 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     ec_init(&sig->E_aux.A24);
     sig->E_aux.is_A24_computed_and_normalized = 0;
 
+    ibz_pow(&tmp,&ibz_const_two,len_chall+exp_diadic_val_full_resp);
+    ibz_pow(&pow_chall,&ibz_const_two,TORSION_PLUS_EVEN_POWER-(len_chall+exp_diadic_val_full_resp));
 
+    // formatting the challenge info
+    if (ibz_get(&sig_mat_pk_can_to_B_pk[0][0])%2!=0) {
+        // in that case
+        // we will be able to express the kernel as [2^*](P + [x] Q)
+        // where P,Q is the canonical basis of Epk 
+        sig->hint_b = 0;
+        ibz_copy(&sig->x,&sig_mat_pk_can_to_B_pk[0][0]);
+        ibz_invmod(&sig->x,&sig->x,&tmp);
+        ibz_mul(&sig->x,&sig->x,&sig_mat_pk_can_to_B_pk[1][0]);
+        ibz_mod(&sig->x,&sig->x,&tmp);
+    }
+    else if (ibz_get(&sig_mat_pk_can_to_B_pk[1][0])%2!=0) {
+        // in that case
+        // we will be able to express the kernel as [2^*](Q + [x] P)
+        // where P,Q is the canonical basis of Epk 
+        sig->hint_b = 1;
+        ibz_copy(&sig->x,&sig_mat_pk_can_to_B_pk[1][0]);
+        ibz_invmod(&sig->x,&sig->x,&tmp);
+        ibz_mul(&sig->x,&sig->x,&sig_mat_pk_can_to_B_pk[0][0]);
+        ibz_mod(&sig->x,&sig->x,&tmp);
+    } 
+    else if (ibz_get(&sig_mat_pk_can_to_B_pk[0][1])%2!=0) {
+        // in that case
+        // we will be able to express the kernel as [2^*](P + [x] Q)
+        // where P,Q is the canonical basis of Epk 
+        sig->hint_b = 0;
+        ibz_copy(&sig->x,&sig_mat_pk_can_to_B_pk[0][1]);
+        ibz_invmod(&sig->x,&sig->x,&tmp);
+        ibz_mul(&sig->x,&sig->x,&sig_mat_pk_can_to_B_pk[1][1]);
+        ibz_mod(&sig->x,&sig->x,&tmp);
+    }
+    else {
+        assert(ibz_get(&sig_mat_pk_can_to_B_pk[1][1])%2!=0);
+        // in that case
+        // we will be able to express the kernel as [2^*](Q + [x] P)
+        // where P,Q is the canonical basis of Epk 
+        sig->hint_b = 1;
+        ibz_copy(&sig->x,&sig_mat_pk_can_to_B_pk[1][1]);
+        ibz_invmod(&sig->x,&sig->x,&tmp);
+        ibz_mul(&sig->x,&sig->x,&sig_mat_pk_can_to_B_pk[0][1]);
+        ibz_mod(&sig->x,&sig->x,&tmp);
+    } 
+        
+    // now we compute b0,d0 
+    if (!sig->hint_b) {
+        // mat_pk_can_to_B_pk[0][0] = b0 + 2^n b1;
+        // mat_pk_can_to_B_pk[1][0] = c0 + 2^n c1;
+        // mat_pk_can_to_B_pk[0][1] = d0 + 2^n d1;
+        // mat_pk_can_to_B_pk[1][1] = e0 + 2^n e1;
+        // with n = TORSION_PLUS_EVEN_POWER - len_chall - exp_diadic_val_full_resp
+        // and a = len_chall + exp_diadic_val_full_resp
+        // and we set 
+        // sig->b0 = b0
+        // sig->d0 = d0 
+        // sig->b1 = (c1 - xb1) mod 2^a 
+        // sig->d1 = (e1 - xd1) mod 2^a
+        // when a < n we also compute
+        // sig -> c0_adjust = (c0 - (x*b0 mod 2^a))/2^(a)
+        // sig -> e0_adjust = (e0 - (x*d0 mod 2^a))/2^(a)
+        
+        // computation of sig->b0,sig->d0
+        ibz_mod(&sig->b0,&sig_mat_pk_can_to_B_pk[0][0],&pow_chall);
+        ibz_mod(&sig->d0,&sig_mat_pk_can_to_B_pk[0][1],&pow_chall);
+        
+        // computation of b1
+        ibz_sub(&degree_odd_resp,&sig_mat_pk_can_to_B_pk[0][0],&sig->b0);
+        ibz_div(&sig->b1,&remain,&degree_odd_resp,&pow_chall);
+        assert(ibz_cmp(&remain,&ibz_const_zero)==0);
+        // computation of c0
+        ibz_mod(&remain,&sig_mat_pk_can_to_B_pk[1][0],&pow_chall);
+        
+        
+        if (len_chall+exp_diadic_val_full_resp <= TORSION_PLUS_EVEN_POWER-(len_chall+exp_diadic_val_full_resp)) {
+            // computation of sig->c0_adjust
+            ibz_mul(&sig->c0_adjust,&sig->x,&sig->b0);
+            ibz_mod(&sig->c0_adjust,&sig->c0_adjust,&tmp);
+            ibz_sub(&sig->c0_adjust,&remain,&sig->c0_adjust);
+            ibz_div(&sig->c0_adjust,&degree_odd_resp,&sig->c0_adjust,&tmp);
+            assert(ibz_cmp(&degree_odd_resp,&ibz_const_zero)==0);
+        }
+        else {
+            ibz_set(&sig->c0_adjust,0);
+            ibz_set(&sig->e0_adjust,0);
+        }
+
+        // computation of sig->b1 = (c1 - x*b1) mod 2^n
+        ibz_sub(&degree_odd_resp,&sig_mat_pk_can_to_B_pk[1][0],&remain);
+        ibz_div(&degree_odd_resp,&remain,&degree_odd_resp,&pow_chall); // this is c1
+        assert(ibz_cmp(&remain,&ibz_const_zero)==0);
+        ibz_mul(&sig->b1,&sig->b1,&sig->x);
+        ibz_sub(&sig->b1,&degree_odd_resp,&sig->b1);
+        ibz_mod(&sig->b1,&sig->b1,&tmp);  // reducing mod 2^a
+        
+        // computation of d1
+        ibz_sub(&degree_odd_resp,&sig_mat_pk_can_to_B_pk[0][1],&sig->d0);
+        ibz_div(&sig->d1,&remain,&degree_odd_resp,&pow_chall);
+        assert(ibz_cmp(&remain,&ibz_const_zero)==0);
+        // computation of e0
+        ibz_mod(&remain,&sig_mat_pk_can_to_B_pk[1][1],&pow_chall);
+
+        if (len_chall+exp_diadic_val_full_resp <= TORSION_PLUS_EVEN_POWER-(len_chall+exp_diadic_val_full_resp)) {
+            // computation of sig->e0_adjust
+            ibz_mul(&sig->e0_adjust,&sig->x,&sig->d0);
+            ibz_mod(&sig->e0_adjust,&sig->e0_adjust,&tmp);
+            ibz_sub(&sig->e0_adjust,&remain,&sig->e0_adjust);
+            ibz_div(&sig->e0_adjust,&degree_odd_resp,&sig->e0_adjust,&tmp);
+            assert(ibz_cmp(&degree_odd_resp,&ibz_const_zero)==0);
+        }
+        
+        // computation of sig->d1 = (e1 - x*d1)
+        ibz_sub(&degree_odd_resp,&sig_mat_pk_can_to_B_pk[1][1],&remain);
+        ibz_div(&degree_odd_resp,&remain,&degree_odd_resp,&pow_chall); // this is e1
+        assert(ibz_cmp(&remain,&ibz_const_zero)==0);
+        ibz_mul(&sig->d1,&sig->d1,&sig->x);
+        ibz_sub(&sig->d1,&degree_odd_resp,&sig->d1);
+        ibz_mod(&sig->d1,&sig->d1,&tmp);  // reducing mod 2^a
+
+        #ifndef NDEBUG
+            ibz_t I1,I2,I3;
+            ibz_init(&I1);ibz_init(&I2);ibz_init(&I3);
+            ibz_mod(&I1,&sig_mat_pk_can_to_B_pk[1][0],&pow_chall);
+            ibz_mul(&I2,&sig->b0,&sig->x);
+            if (len_chall+exp_diadic_val_full_resp <= TORSION_PLUS_EVEN_POWER-(len_chall+exp_diadic_val_full_resp)) {
+                ibz_mod(&I2,&I2,&tmp);
+                ibz_mul(&I3,&tmp,&sig->c0_adjust);
+                ibz_add(&I2,&I2,&I3);
+                
+            }
+            else {
+                ibz_mod(&I2,&I2,&pow_chall);
+            }
+            assert(ibz_cmp(&I1,&I2)==0);
+            ibz_mod(&I1,&sig_mat_pk_can_to_B_pk[1][1],&pow_chall);
+            ibz_mul(&I2,&sig->d0,&sig->x);
+            if (len_chall+exp_diadic_val_full_resp <= TORSION_PLUS_EVEN_POWER-(len_chall+exp_diadic_val_full_resp)) {
+                ibz_mod(&I2,&I2,&tmp);
+                ibz_mul(&I3,&tmp,&sig->e0_adjust);
+                ibz_add(&I2,&I2,&I3);
+            }
+            else {
+                ibz_mod(&I2,&I2,&pow_chall);
+            }
+            assert(ibz_cmp(&I1,&I2)==0);
+            ibz_finalize(&I1);ibz_finalize(&I2);ibz_finalize(&I3);
+        #endif
+    } 
+    else {
+        // TODECIDE if we need to treat this case
+        assert(0);
+    }
+    
     ibz_finalize(&pow_chall);
     ibz_vec_2_finalize(&vec);
     ibz_vec_2_finalize(&vec_chall);
     ibz_vec_2_finalize(&vec_resp_two);
     ibz_mat_2x2_finalize(&mat_Bchall_can_to_Bchall); 
     ibz_mat_2x2_finalize(&mat_Baux0_to_Baux_can);
-    ibz_mat_2x2_init(&mat);
+    ibz_mat_2x2_finalize(&sig_mat_pk_can_to_B_pk);
+    ibz_mat_2x2_finalize(&mat);
 
     quat_alg_elem_finalize(&resp_quat);
     quat_alg_elem_finalize(&elem_tmp);
@@ -515,7 +678,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     quat_left_ideal_finalize(&lideal_commit); quat_left_ideal_finalize(&lideal_chall_two);
     quat_left_ideal_finalize(&lideal_chall_secret); quat_left_ideal_finalize(&lideal_resp_two);
     quat_left_ideal_finalize(&lideal_tmp);quat_left_ideal_finalize(&lideal_com_resp);
-    quat_left_ideal_init(&lideal_aux_com);
+    quat_left_ideal_finalize(&lideal_aux_com);
     quat_left_ideal_finalize(&lideal_aux);
 
     ibz_vec_4_finalize(&coeffs);
@@ -524,6 +687,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
 
     ibq_finalize(&temp_norm);
     ibz_finalize(&tmp); ibz_finalize(&lattice_content);ibz_finalize(&remain);
+
     return found;
 }
 
@@ -533,34 +697,73 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
 int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned char* m, size_t l) {
 
     int verif;
-
-    ibz_t tmp;
+    ibz_t tmp,tmp2,remain;
     ibz_vec_2_t vec_chall,check_vec_chall;
-    
-
-    ibz_init(&tmp);
+    ibz_mat_2x2_t mat;
+    ec_isog_even_t phi_chall;
+    ec_basis_t bas_EA,B_chall;
+    ec_curve_t Epk;
+    ibz_mat_2x2_init(&mat);
+    ibz_init(&tmp);ibz_init(&remain);ibz_init(&tmp2);
     ibz_vec_2_init(&vec_chall);
     ibz_vec_2_init(&check_vec_chall);
-
+    
 
     // checking that we are given A coefficients and no precomputation
     assert(fp2_is_one(&pk->curve.C) && !pk->curve.is_A24_computed_and_normalized);
     assert(fp2_is_one(&sig->E_aux.C) && !sig->E_aux.is_A24_computed_and_normalized);
-
     clock_t t =tic();
-
-    // computation of the challenge 
-    ec_isog_even_t phi_chall;
-    ec_basis_t bas_EA,B_chall;
-    ec_curve_t Epk;
-    copy_curve(&Epk,&pk->curve);
-    ec_curve_to_basis_2_from_hint(&bas_EA, &Epk,TORSION_PLUS_EVEN_POWER,pk->hint_pk); // canonical 
 
     // TODO use a constant for this
     int len_chall= 122;
 
+    copy_curve(&Epk,&pk->curve);
     phi_chall.curve = Epk;
     phi_chall.length = len_chall + sig->two_resp_length;
+
+
+    // creating a matrix to apply to the basis 
+    
+    // mat [0][0] = sig->b0
+    // mat [0][1] = sig->d0
+    ibz_copy(&mat[0][0],&sig->b0);
+    ibz_copy(&mat[0][1],&sig->d0);
+    if (phi_chall.length <= TORSION_PLUS_EVEN_POWER-phi_chall.length) {
+        // mat [1][0] = (sig->b0 * sig->x mod 2^a) + 2^a * sig->cO_adjust + 2^n * sig->b1 
+        // mat [1][1] = (sig->d0 * sig->x mod 2^a) + 2^a * sig->e0_adjust + 2^n * sig->d1 
+        ibz_pow(&tmp,&ibz_const_two,TORSION_PLUS_EVEN_POWER-len_chall - sig->two_resp_length); // 2^n
+        ibz_mul(&mat[1][0],&tmp,&sig->b1);
+        ibz_mul(&mat[1][1],&tmp,&sig->d1);
+
+        ibz_pow(&tmp,&ibz_const_two,len_chall + sig->two_resp_length); // 2^a
+        ibz_mul(&remain,&sig->b0,&sig->x);
+        ibz_mod(&remain,&remain,&tmp);
+        ibz_mul(&tmp2,&tmp,&sig->c0_adjust);
+        ibz_add(&remain,&remain,&tmp2);
+        ibz_add(&mat[1][0],&mat[1][0],&remain);
+        ibz_mul(&remain,&sig->d0,&sig->x);
+        ibz_mod(&remain,&remain,&tmp);
+        ibz_mul(&tmp2,&tmp,&sig->e0_adjust);
+        ibz_add(&remain,&remain,&tmp2);
+        ibz_add(&mat[1][1],&mat[1][1],&remain);
+    }
+    else {
+        // mat [1][0] = (sig->b0 * sig->x mod 2^n) + 2^n * sig->b1 
+        // mat [1][1] = (sig->d0 * sig->x mod 2^n) + 2^n * sig->d1 
+        ibz_pow(&tmp,&ibz_const_two,TORSION_PLUS_EVEN_POWER-len_chall - sig->two_resp_length); // 2^n
+        ibz_mul(&mat[1][0],&tmp,&sig->b1);
+        ibz_mul(&mat[1][1],&tmp,&sig->d1);
+        ibz_mul(&remain,&sig->b0,&sig->x);
+        ibz_mod(&remain,&remain,&tmp);
+        ibz_add(&mat[1][0],&mat[1][0],&remain);
+        ibz_mul(&remain,&sig->d0,&sig->x);
+        ibz_mod(&remain,&remain,&tmp);
+        ibz_add(&mat[1][1],&mat[1][1],&remain);
+    }
+
+    // computation of the challenge 
+    // canonical basis 
+    ec_curve_to_basis_2_from_hint(&bas_EA, &Epk,TORSION_PLUS_EVEN_POWER,pk->hint_pk); // canonical     
 
     assert(test_point_order_twof(&bas_EA.P,&Epk,TORSION_PLUS_EVEN_POWER));
     assert(test_point_order_twof(&bas_EA.Q,&Epk,TORSION_PLUS_EVEN_POWER));
@@ -569,7 +772,7 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
      t= tic();
 
     // applying the change matrix on the basis of E_pk
-    matrix_application_even_basis(&bas_EA,&Epk,&sig->mat_pk_can_to_B_pk,TORSION_PLUS_EVEN_POWER);
+    matrix_application_even_basis(&bas_EA,&Epk,&mat,TORSION_PLUS_EVEN_POWER);
 
     // TOC_clock(t,"matrix application");
 
@@ -585,7 +788,7 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     ec_point_t points[3];
 
     // choosing the right point for the small two_isogenies 
-    if (ibz_get(&sig->mat_pk_can_to_B_pk[0][0])%2==0 && ibz_get(&sig->mat_pk_can_to_B_pk[1][0])%2==0) {
+    if (ibz_get(&mat[0][0])%2==0 && ibz_get(&mat[1][0])%2==0) {
         copy_point(&phi_chall.kernel,&bas_EA.Q);
     }
     else {
@@ -620,22 +823,12 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     // recovering the canonical basis 
     ec_curve_to_basis_2_from_hint(&B_aux_can,&sig->E_aux,TORSION_PLUS_EVEN_POWER,sig->hint_aux);
 
-
     // setting to the right order 
     ec_dbl_iter(&B_aux_can.P,TORSION_PLUS_EVEN_POWER - pow_dim2_deg_resp,&sig->E_aux,&B_aux_can.P);
     ec_dbl_iter(&B_aux_can.Q,TORSION_PLUS_EVEN_POWER - pow_dim2_deg_resp,&sig->E_aux,&B_aux_can.Q);
     ec_dbl_iter(&B_aux_can.PmQ,TORSION_PLUS_EVEN_POWER - pow_dim2_deg_resp,&sig->E_aux,&B_aux_can.PmQ);
 
     
-
-
-    // due to a weird error that I couldn't understand 
-    assert(test_point_order_twof(&B_chall.P,&Echall,pow_dim2_deg_resp));    
-    assert(test_point_order_twof(&B_chall.Q,&Echall,pow_dim2_deg_resp));
-    assert(test_point_order_twof(&B_chall.PmQ,&Echall,pow_dim2_deg_resp));
-    assert(test_point_order_twof(&B_aux_can.P,&sig->E_aux,pow_dim2_deg_resp));    
-    assert(test_point_order_twof(&B_aux_can.Q,&sig->E_aux,pow_dim2_deg_resp));
-    assert(test_point_order_twof(&B_aux_can.PmQ,&sig->E_aux,pow_dim2_deg_resp));
     #ifndef NDEBUG 
         ec_basis_t bas_test,bas_ref;
         copy_point(&bas_ref.P,&B_chall.P);
@@ -657,8 +850,6 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
         assert(fp2_is_one(&w0_test));
 
     #endif 
-
-
 
     // now compute the dim2 isogeny from E_chall_2 x E_aux -> E_com x E_aux'
     // of kernel B_chall_can x B_aux_can
@@ -693,25 +884,24 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
 
     // comparing
     // recovering the exact vec_chall 
-    if (sig->chall_b) {
-        ibz_copy(&vec_chall[0],&sig->chall_coeff);
+    if (sig->hint_b) {
+        ibz_copy(&vec_chall[0],&sig->x);
         ibz_set(&vec_chall[1],1);
     }
     else {
-        ibz_copy(&vec_chall[1],&sig->chall_coeff);
+        ibz_copy(&vec_chall[1],&sig->x);
         ibz_set(&vec_chall[0],1);
     }
     ibz_pow(&tmp,&ibz_const_two,len_chall);
 
     // performing the final check 
-    if (sig->chall_b) {
+    if (sig->hint_b) {
         ibz_mul(&vec_chall[0],&vec_chall[0],&check_vec_chall[1]);
         ibz_mod(&vec_chall[0],&vec_chall[0],&tmp);
         ibz_mod(&check_vec_chall[0],&check_vec_chall[0],&tmp);
         verif = (ibz_cmp(&vec_chall[0],&check_vec_chall[0])==0);
     }
     else {
-        
         ibz_mul(&vec_chall[1],&vec_chall[1],&check_vec_chall[0]);
         ibz_mod(&vec_chall[1],&vec_chall[1],&tmp);
         ibz_mod(&check_vec_chall[1],&check_vec_chall[1],&tmp);
@@ -725,7 +915,7 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
         hash_to_challenge(&check_vec_chall,&E_com,m,pk,l);
 
         // performing the final check 
-        if (sig->chall_b) {
+        if (sig->hint_b) {
             ibz_mul(&vec_chall[0],&vec_chall[0],&check_vec_chall[1]);
             ibz_mod(&vec_chall[0],&vec_chall[0],&tmp);
             ibz_mod(&check_vec_chall[0],&check_vec_chall[0],&tmp);
@@ -742,10 +932,13 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
 
 
     return verif;
-
+    ibz_finalize(&remain);
     ibz_finalize(&tmp);
+    ibz_finalize(&tmp2);
     ibz_vec_2_finalize(&vec_chall);
     ibz_vec_2_finalize(&check_vec_chall);
+    ibz_mat_2x2_finalize(&mat);
+
 
 }
 

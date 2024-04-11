@@ -144,20 +144,6 @@ int test_sqisign(int repeat, int bench)
         printf(" \x1b[35mfull\x1b[0m signature was: %s\n\n", check ? "\x1b[32mvalid\x1b[0m" : "\x1b[31minvalid\x1b[0m");
     }
 
-
-    // TOC(t, "protocols_sign");
-    // float ms = (1000. * (float) (clock() - t) / CLOCKS_PER_SEC);
-    // printf("average signing time [%.2f ms]\n", (float) (ms/repeat));
-
-    // clock_t t_verif = tic();
-    // for (int i = 0; i < repeat; ++i)
-    // {   
-        
-    // }
-    // TOC(t_verif,"protocols_verif");  
-    // ms = (1000. * (float) (clock() - t_verif) / CLOCKS_PER_SEC);
-    // printf("average verif time [%.2f ms]\n", (float) (ms/repeat));
-
     float ms;
 
     printf("\n\nBenchmarking signatures\n");

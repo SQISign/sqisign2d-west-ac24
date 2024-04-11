@@ -44,11 +44,16 @@ typedef struct signature {
     ec_curve_t E_aux; /// the montgomery A coefficient for the auxilliary curve
 
     int two_resp_length;
-    ibz_mat_2x2_t mat_pk_can_to_B_pk; /// the matrix of the desired basis 
-    ibz_t chall_coeff;
-    int chall_b;
     int *hint_aux;
-    int *hint_chall;
+    ibz_t x;
+    int hint_b;
+    ibz_t b0;
+    ibz_t d0;
+    ibz_t b1;    
+    ibz_t d1;
+    ibz_t c0_adjust;
+    ibz_t e0_adjust;
+
 } signature_t;
 
 /** @brief Type for the public keys

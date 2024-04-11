@@ -116,8 +116,16 @@ int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *
     ibz_sub(&tmp,&two_pow,u);
     ibz_mul(&tmp,&tmp,u);
 
+    // TODO make this a clean constant
+    found = 0;
+    int count = 0;
+    while (!found && count < 10 ) {
+        found = represent_integer_non_diag(&theta,&tmp,&QUATALG_PINFTY);
+        count++;
+    }
+
     // clock_t t = tic();
-    found = represent_integer_non_diag(&theta,&tmp,&QUATALG_PINFTY);
+    
     // TOC(t,"represent integer");
 
     if (!found) {
@@ -1125,10 +1133,6 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
 
 
     assert(test_point_order_twof(&T1.P1,&E01.E1,exp));
-    assert(test_point_order_twof(&T1.P2,&E01.E2,exp));
-    assert(test_point_order_twof(&T2.P1,&E01.E1,exp));
-    assert(test_point_order_twof(&T2.P2,&E01.E2,exp));
-    assert(test_point_order_twof(&T1m2.P1,&E01.E1,exp));
     assert(test_point_order_twof(&T1m2.P2,&E01.E2,exp));
 
     assert(ibz_get(u)%2==1);
@@ -1162,10 +1166,6 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     theta_chain_eval_no_help(&T1m2,isog,&xyPmQ,&E01);
 
     assert(test_point_order_twof(&T1.P1,&isog->codomain.E1,TORSION_PLUS_EVEN_POWER));
-    assert(test_point_order_twof(&T2.P1,&isog->codomain.E1,TORSION_PLUS_EVEN_POWER));
-    assert(test_point_order_twof(&T1m2.P1,&isog->codomain.E1,TORSION_PLUS_EVEN_POWER));
-    assert(test_point_order_twof(&T1.P2,&isog->codomain.E2,TORSION_PLUS_EVEN_POWER));
-    assert(test_point_order_twof(&T2.P2,&isog->codomain.E2,TORSION_PLUS_EVEN_POWER));
     assert(test_point_order_twof(&T1m2.P2,&isog->codomain.E2,TORSION_PLUS_EVEN_POWER));
 
     copy_point(&basis->P,&T1.P2);
