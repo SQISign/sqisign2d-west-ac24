@@ -1,80 +1,53 @@
 // Include statements
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include "gf5248.h"
 
-// Fp definitions
-#define NWORDS_FIELD 4
+// Type for elements of GF(p)
+#define fp_t gf5248
 
-typedef struct fp_t {
-  uint64_t w[NWORDS_FIELD];
-} fp_t;
+// Constants (Assumed to be in Montgomery form)
+#define ZERO gf5248_ZERO
+#define ONE gf5248_ONE
 
-// Constants for Montgomery multiplication
-// Modulus: p = 5*2^248 - 1
-static const fp_t MODULUS = {
-    0xFFFFFFFFFFFFFFFF,
-    0xFFFFFFFFFFFFFFFF,
-    0xFFFFFFFFFFFFFFFF,
-    0x04FFFFFFFFFFFFFF,
-};
+// Operations in fp
+#define fp_neg gf5248_neg
+#define fp_add gf5248_add
+#define fp_sub gf5248_sub
+#define fp_mul gf5248_mul
+#define fp_sqr gf5248_square
 
-// 2*p
-static const fp_t MODULUS_X2 = {0xFFFFFFFFFFFFFFFE, 0xFFFFFFFFFFFFFFFF,
-                                   0xFFFFFFFFFFFFFFFF, 0x09FFFFFFFFFFFFFF};
+// Comparisons for fp elements
+#define fp_is_zero gf5248_iszero
+#define fp_equals gf5248_equals
 
-// Constants 0, 1, -1 in Montgomery representation.
-static const fp_t ZERO = {0, 0, 0, 0};
-static const fp_t ONE = {
-    0x0000000000000033,
-    0x0000000000000000,
-    0x0000000000000000,
-    0x0100000000000000,
-};
+// Set a uint32 to an Fp value
+#define fp_set_small gf5248_set_small
 
-static const fp_t MINUS_ONE = {
-    0xFFFFFFFFFFFFFFCC,
-    0xFFFFFFFFFFFFFFFF,
-    0xFFFFFFFFFFFFFFFF,
-    0x03FFFFFFFFFFFFFF,
-};
+// For zero and one, we use predefined constants
+void fp_set_zero(fp_t * a);
+void fp_set_one(fp_t * a);
 
-// 1/2^244 in the field, in Montgomery representation.
-static const fp_t INVT244 = {
-    0x0000000000001000,
-    0x0000000000000000,
-    0x0000000000000000,
-    0x0000000000000000,
-};
+// Copy a value
+void fp_copy(fp_t * out, const fp_t * a);
 
-// Montgomery representation of 2^256 (i.e. 2^512 mod q).
-static const fp_t R2 = {
-    0x3333333333333D70,
-    0x3333333333333333,
-    0x3333333333333333,
-    0x0333333333333333,
-};
+// Encoding and decoding of bytes
+#define fp_encode gf5248_encode
+#define fp_decode gf5248_decode
+#define fp_decode_reduce gf5248_decode_reduce
 
-// Most basic prime field operations
-void fp_neg(fp_t *out, const fp_t *a);
-void fp_add(fp_t *out, const fp_t *a, const fp_t *b);
-void fp_sub(fp_t *out, const fp_t *a, const fp_t *b);
-void fp_mul(fp_t *out, const fp_t *a, const fp_t *b);
-void fp_sqr(fp_t *out, const fp_t *a);
-void fp_n_sqr(fp_t * out, const fp_t * x, int n);
+// Functions defined in low level code but with different API
+void fp_inv(fp_t * a);
+void fp_sqrt(fp_t * a);
+bool fp_is_square(const fp_t * a);
 
-void fp_to_mont(fp_t *out, const fp_t *a);
-void fp_from_mont(fp_t *out, const fp_t *a);
-
-void fp_copy(fp_t *out, const fp_t *a);
-
-void fp_set_zero(fp_t *out);
-void fp_set_one(fp_t *out);
-
-uint32_t fp_is_zero(fp_t *x);
-uint32_t fp_equal(fp_t *x, fp_t *y);
-
-static void fp_exp3div4(fp_t* out, const fp_t* a);
-void fp_sqrt(fp_t *a);
-void fp_inv(fp_t *a);
-bool fp_is_square(const fp_t* a);
-
+// TODO: I believe these functions should not be available
+// I believe the API should exist without the user thinking
+// about or knowing of the Montgomery form. If we need to set
+// small integers then we have `gf5248_set_small` which takes
+// and integer and internally does the conversion for us.
+//
+// KILL these functions
+// fp_to_mont()
+// fp_from_mont()
+// fp_set_one_mont()

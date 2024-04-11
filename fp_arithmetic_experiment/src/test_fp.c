@@ -2,6 +2,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "fp.h"
 #include "test_utils.h"
 
 // Benchmark and test parameters  
@@ -26,9 +27,9 @@ bool fp_test(void)
         fp_add(&b, &a, (fp_t *)&ONE);
         fp_set_zero(&c);
 
-        if (fp_equal(&a, &a) == 0) { passed=0; break; }
-        if (fp_equal(&a, &b) != 0) { passed=0; break; }
-        if (fp_equal(&c, (fp_t *)&ZERO) == 0) { passed=0; break; }
+        if (fp_equals(&a, &a) == 0) { passed=0; break; }
+        if (fp_equals(&a, &b) != 0) { passed=0; break; }
+        if (fp_equals(&c, (fp_t *)&ZERO) == 0) { passed=0; break; }
 
         if (fp_is_zero((fp_t *)&ZERO) == 0) { passed=0; break; }
         if (fp_is_zero((fp_t *)&ONE) != 0)  { passed=0; break; }
@@ -45,20 +46,20 @@ bool fp_test(void)
 
         fp_add(&d, &a, &b); fp_add(&e, &d, &c);                 // e = (a+b)+c
         fp_add(&d, &b, &c); fp_add(&f, &d, &a);                 // f = a+(b+c)
-        if (fp_equal(&e, &f) == 0) { passed=0; break; }
+        if (fp_equals(&e, &f) == 0) { passed=0; break; }
 
         fp_add(&d, &a, &b);                                  // d = a+b 
         fp_add(&e, &b, &a);                                  // e = b+a
-        if (fp_equal(&d, &e) == 0 ) { passed=0; break; }
+        if (fp_equals(&d, &e) == 0 ) { passed=0; break; }
 
         fp_set_zero(&b);
         fp_add(&d, &a, &b);                                  // d = a+0 
-        if (fp_equal(&a, &d) == 0 ) { passed=0; break; }
+        if (fp_equals(&a, &d) == 0 ) { passed=0; break; }
 
         fp_set_zero(&b);   
         fp_neg(&d, &a);                      
         fp_add(&e, &a, &d);                                  // e = a+(-a)
-        if (fp_equal(&e, &b) == 0 ) { passed=0; break; }
+        if (fp_equals(&e, &b) == 0 ) { passed=0; break; }
     }
     if (passed==1) printf("  GF(p) addition tests ............................................ PASSED");
     else { printf("  GF(p) addition tests... FAILED"); printf("\n"); return false; }
@@ -72,44 +73,23 @@ bool fp_test(void)
 
         fp_sub(&d, &a, &b); fp_sub(&e, &d, &c);                 // e = (a-b)-c
         fp_add(&d, &b, &c); fp_sub(&f, &a, &d);                 // f = a-(b+c)
-        if (fp_equal(&e, &f) == 0) { passed=0; break; }
+        if (fp_equals(&e, &f) == 0) { passed=0; break; }
 
         fp_sub(&d, &a, &b);                                  // d = a-b 
         fp_sub(&e, &b, &a);
         fp_neg(&e, &e);                                      // e = -(b-a)
-        if (fp_equal(&d, &e) == 0) { passed=0; break; }
+        if (fp_equals(&d, &e) == 0) { passed=0; break; }
 
         fp_set_zero(&b);
         fp_sub(&d, &a, &b);                                  // d = a-0 
-        if (fp_equal(&a, &d) == 0) { passed=0; break; }
+        if (fp_equals(&a, &d) == 0) { passed=0; break; }
                 
         fp_sub(&e, &a, &a);                                  // e = a+(-a)
         if (fp_is_zero(&e) == 0) { passed=0; break; }
     }
     if (passed==1) printf("  GF(p) subtraction tests ......................................... PASSED");
     else { printf("  GF(p) subtraction tests... FAILED"); printf("\n"); return false; }
-    printf("\n");
-
-    // Montgomery conversion
-    // TODO: this fails currently
-    // I must have a stupid bug
-    passed = 1;
-    for (n=0; n<TEST_LOOPS; n++)
-    {    
-        fp_random_test(&a); fp_random_test(&b); fp_random_test(&c);
-
-        // fp_from_mont(&b, &a);
-        // fp_to_mont(&c, &b);
-        // if (fp_equal(&a, &c) == 0) { passed=0; break; }
-
-        fp_to_mont(&b, &a);
-        fp_from_mont(&c, &b);
-        if (fp_equal(&a, &c) == 0) { passed=0; break; }
-    }
-    if (passed==1) printf("  GF(p) montgomery conversion tests ............................... PASSED");
-    else { printf("  GF(p) montgomery conversion tests... FAILED"); printf("\n"); return false; }
-    printf("\n");
-    
+    printf("\n");  
 
     // Field multiplication
     passed = 1;
@@ -118,23 +98,23 @@ bool fp_test(void)
         fp_random_test(&a); fp_random_test(&b); fp_random_test(&c);
         fp_mul(&d, &a, &b); fp_mul(&e, &d, &c);                          // e = (a*b)*c
         fp_mul(&d, &b, &c); fp_mul(&f, &d, &a);                          // f = a*(b*c)
-        if (fp_equal(&e, &f) == 0) { passed=0; break; }
+        if (fp_equals(&e, &f) == 0) { passed=0; break; }
 
         fp_add(&d, &b, &c); fp_mul(&e, &a, &d);                          // e = a*(b+c)
         fp_mul(&d, &a, &b); fp_mul(&f, &a, &c); fp_add(&f, &d, &f);      // f = a*b+a*c
-        if (fp_equal(&e, &f) == 0) { passed=0; break; }
+        if (fp_equals(&e, &f) == 0) { passed=0; break; }
      
         fp_mul(&d, &a, &b);                                              // d = a*b 
         fp_mul(&e, &b, &a);                                              // e = b*a 
-        if (fp_equal(&d, &e) == 0) { passed=0; break; }
+        if (fp_equals(&d, &e) == 0) { passed=0; break; }
 
         fp_set_one(&b);
         fp_mul(&d, &a, &b);                                              // d = a*1               
-        if (fp_equal(&a, &d) == 0) { passed=0; break; }
+        if (fp_equals(&a, &d) == 0) { passed=0; break; }
        
         fp_set_zero(&b);
         fp_mul(&d, &a, &b);                                              // d = a*0           
-        if (fp_equal(&b, &d) == 0) { passed=0; break; } 
+        if (fp_equals(&b, &d) == 0) { passed=0; break; } 
     }
     if (passed==1) printf("  GF(p) multiplication tests ...................................... PASSED");
     else { printf("  GF(p) multiplication tests... FAILED"); printf("\n"); return false; }
@@ -148,7 +128,7 @@ bool fp_test(void)
 
         fp_sqr(&b, &a);                                    // b = a^2
         fp_mul(&c, &a, &a);                               // c = a*a 
-        if (fp_equal(&b, &c) == 0) { passed=0; break; } 
+        if (fp_equals(&b, &c) == 0) { passed=0; break; } 
 
         fp_set_zero(&a); 
         fp_sqr(&d, &a);                                  // d = 0^2 
@@ -167,12 +147,11 @@ bool fp_test(void)
         fp_copy(&b, &a);
         fp_inv(&b);
         fp_mul(&c, &a, &b);                               // c = a*a^-1 
-        if (fp_equal(&c, (fp_t*)&ONE) == 0) { passed=0; break; } 
-
+        if (fp_equals(&c, (fp_t*)&ONE) == 0) { passed=0; break; } 
 
         fp_set_zero(&a);
         fp_inv(&a);                                        // c = 0^-1
-        if (fp_equal(&a, (fp_t*)&ZERO) == 0) { passed=0; break; } 
+        if (fp_equals(&a, (fp_t*)&ZERO) == 0) { passed=0; break; } 
     }
     if (passed == 1) printf("  GF(p) inversion tests............................................ PASSED");
     else { printf("  GF(p) inversion tests... FAILED"); printf("\n"); return false; }
@@ -189,7 +168,7 @@ bool fp_test(void)
 
         fp_sqrt(&c);                      // c, d = ±sqrt(c) 
         fp_neg(&d, &c);
-        if ((fp_equal(&a, &c) == 0) && (fp_equal(&a, &d) == 0)) { passed = 0; break; }
+        if ((fp_equals(&a, &c) == 0) && (fp_equals(&a, &d) == 0)) { passed = 0; break; }
     }
     if (passed == 1) printf("  Square root, square tests........................................ PASSED");
     else { printf("  Square root, square tests... FAILED"); printf("\n"); return false; }
@@ -204,6 +183,7 @@ bool fp_run(void)
     int n, i;
     uint64_t cycles1, cycles2;
     fp_t a, b;
+    uint8_t tmp[32];
         
     fp_random_test(&a);
     fp_random_test(&b);
@@ -228,8 +208,9 @@ bool fp_run(void)
         cycles2 = core_cycles();
         cycle_runs[i] = cycles2-cycles1;
     }
+    fp_encode(tmp, &b);
     qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
-    printf("  GF(p) addition runs in .......................................... %llu cycles, (%llu ignore me)\n", cycle_runs[4] / (6 * BENCH_LOOPS), b.w[0]);
+    printf("  GF(p) addition runs in .......................................... %llu cycles, (%u ignore me)\n", cycle_runs[4] / (6 * BENCH_LOOPS), tmp[0]);
 
 
     // GF(p) subtraction
@@ -247,8 +228,9 @@ bool fp_run(void)
         cycles2 = core_cycles();
         cycle_runs[i] = cycles2-cycles1;
     }
+    fp_encode(tmp, &b);
     qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
-    printf("  GF(p) subtraction runs in ....................................... %llu cycles, (%llu ignore me)\n", cycle_runs[4] /  (6 * BENCH_LOOPS), a.w[0]);
+    printf("  GF(p) subtraction runs in ....................................... %llu cycles, (%u ignore me)\n", cycle_runs[4] /  (6 * BENCH_LOOPS), tmp[0]);
 
     // GF(p) multiplication
     for (i=0; i<20; i++){
@@ -265,8 +247,9 @@ bool fp_run(void)
         cycles2 = core_cycles();
         cycle_runs[i] = cycles2-cycles1;
     }
+    fp_encode(tmp, &b);
     qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
-    printf("  GF(p) multiplication runs in .................................... %llu cycles, (%llu ignore me)\n", cycle_runs[4] /  (6 * BENCH_LOOPS), a.w[0]);
+    printf("  GF(p) multiplication runs in .................................... %llu cycles, (%u ignore me)\n", cycle_runs[4] /  (6 * BENCH_LOOPS), tmp[0]);
 
     // GF(p) squaring
     for (i=0; i<20; i++){
@@ -278,8 +261,9 @@ bool fp_run(void)
         cycles2 = core_cycles();
         cycle_runs[i] = cycles2-cycles1;
     }
+    fp_encode(tmp, &a);
     qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
-    printf("  GF(p) squaring runs in .......................................... %llu cycles, (%llu ignore me)\n", cycle_runs[4] /  (BENCH_LOOPS), a.w[0]);
+    printf("  GF(p) squaring runs in .......................................... %llu cycles, (%u ignore me)\n", cycle_runs[4] /  (BENCH_LOOPS), tmp[0]);
 
     // GF(p) inversion
     for (i=0; i<20; i++){
@@ -292,8 +276,9 @@ bool fp_run(void)
         cycles2 = core_cycles();
         cycle_runs[i] = cycles2-cycles1;
     }
+    fp_encode(tmp, &a);
     qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
-    printf("  GF(p) inversion runs in ......................................... %llu cycles, (%llu ignore me)\n", cycle_runs[4] /  BENCH_LOOPS, a.w[0]);
+    printf("  GF(p) inversion runs in ......................................... %llu cycles, (%u ignore me)\n", cycle_runs[4] /  BENCH_LOOPS, tmp[0]);
 
 
     // GF(p) sqrt
@@ -307,8 +292,9 @@ bool fp_run(void)
         cycles2 = core_cycles();
         cycle_runs[i] = cycles2-cycles1;
     }
+    fp_encode(tmp, &a);
     qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
-    printf("  GF(p) sqrt runs in .............................................. %llu cycles, (%llu ignore me)\n", cycle_runs[4] / BENCH_LOOPS, a.w[0]);
+    printf("  GF(p) sqrt runs in .............................................. %llu cycles, (%u ignore me)\n", cycle_runs[4] / BENCH_LOOPS, tmp[0]);
 
     // GF(p) is_square    
     for (i=0; i<20; i++){
@@ -321,8 +307,9 @@ bool fp_run(void)
         cycles2 = core_cycles();
         cycle_runs[i] = cycles2-cycles1;
     }
+    fp_encode(tmp, &a);
     qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
-    printf("  Square checking runs in ......................................... %llu cycles, (%llu ignore me)\n", cycle_runs[4] / BENCH_LOOPS, a.w[0]);
+    printf("  Square checking runs in ......................................... %llu cycles, (%u ignore me)\n", cycle_runs[4] / BENCH_LOOPS, tmp[0]);
 
     return OK;
 }

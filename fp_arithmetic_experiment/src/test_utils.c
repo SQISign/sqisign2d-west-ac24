@@ -1,22 +1,27 @@
+/*
+ * A custom SHA-3 / SHAKE implementation is used for pseudorandom (but
+ * reproducible) generation of test values.
+ */
+#include "sha3.h"
 #include "test_utils.h"
 
+// Make n random-ish field elements (for tests only!).
 void
-fp_random_test(fp_t* a)
-{ // Generating a pseudo-random field element in [0, p-1] 
-  // SECURITY NOTE: distribution is not fully uniform. TO BE USED FOR TESTING ONLY.
-    unsigned int i;
-    uint64_t a0, a1;
-  
-    for (i = 0; i < 4; i++) {
-        a0 = rand();
-        a1 = rand();
-        a->w[i] = a0 * a1;             // Obtain 256-bit number
-    }
-   
-    // Clear the top few bits
-    int top_bits = 5;
-    a->w[3] &= (((uint64_t)(-1) << top_bits) >> top_bits);
+fp_random_test(fp_t *a)
+{
+	shake_context sc;
+	uint8_t tmp[32];
+	uint64_t z;
 
+	z = core_cycles();
+	shake_init(&sc, 256);
+	for (int i = 0; i < 8; i ++) {
+		tmp[i] = (uint8_t)(z >> (8 * i));
+	}
+	shake_inject(&sc, tmp, 8);
+	shake_flip(&sc);
+	shake_extract(&sc, tmp, 32);
+	fp_decode_reduce(a, tmp, 32);
 }
 
 int
