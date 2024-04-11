@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-
-#include "fp.h"
-#include "test_utils.h"
+#include "../fp.h"
+#include "../test_utils.h"
 
 // Benchmark and test parameters  
 static int BENCH_LOOPS = 1000;         // Number of iterations per bench
@@ -27,9 +26,9 @@ bool fp_test(void)
         fp_add(&b, &a, (fp_t *)&ONE);
         fp_set_zero(&c);
 
-        if (fp_equals(&a, &a) == 0) { passed=0; break; }
-        if (fp_equals(&a, &b) != 0) { passed=0; break; }
-        if (fp_equals(&c, (fp_t *)&ZERO) == 0) { passed=0; break; }
+        if (fp_is_equal(&a, &a) == 0) { passed=0; break; }
+        if (fp_is_equal(&a, &b) != 0) { passed=0; break; }
+        if (fp_is_equal(&c, (fp_t *)&ZERO) == 0) { passed=0; break; }
 
         if (fp_is_zero((fp_t *)&ZERO) == 0) { passed=0; break; }
         if (fp_is_zero((fp_t *)&ONE) != 0)  { passed=0; break; }
@@ -46,20 +45,20 @@ bool fp_test(void)
 
         fp_add(&d, &a, &b); fp_add(&e, &d, &c);                 // e = (a+b)+c
         fp_add(&d, &b, &c); fp_add(&f, &d, &a);                 // f = a+(b+c)
-        if (fp_equals(&e, &f) == 0) { passed=0; break; }
+        if (fp_is_equal(&e, &f) == 0) { passed=0; break; }
 
         fp_add(&d, &a, &b);                                  // d = a+b 
         fp_add(&e, &b, &a);                                  // e = b+a
-        if (fp_equals(&d, &e) == 0 ) { passed=0; break; }
+        if (fp_is_equal(&d, &e) == 0 ) { passed=0; break; }
 
         fp_set_zero(&b);
         fp_add(&d, &a, &b);                                  // d = a+0 
-        if (fp_equals(&a, &d) == 0 ) { passed=0; break; }
+        if (fp_is_equal(&a, &d) == 0 ) { passed=0; break; }
 
         fp_set_zero(&b);   
         fp_neg(&d, &a);                      
         fp_add(&e, &a, &d);                                  // e = a+(-a)
-        if (fp_equals(&e, &b) == 0 ) { passed=0; break; }
+        if (fp_is_equal(&e, &b) == 0 ) { passed=0; break; }
     }
     if (passed==1) printf("  GF(p) addition tests ............................................ PASSED");
     else { printf("  GF(p) addition tests... FAILED"); printf("\n"); return false; }
@@ -73,16 +72,16 @@ bool fp_test(void)
 
         fp_sub(&d, &a, &b); fp_sub(&e, &d, &c);                 // e = (a-b)-c
         fp_add(&d, &b, &c); fp_sub(&f, &a, &d);                 // f = a-(b+c)
-        if (fp_equals(&e, &f) == 0) { passed=0; break; }
+        if (fp_is_equal(&e, &f) == 0) { passed=0; break; }
 
         fp_sub(&d, &a, &b);                                  // d = a-b 
         fp_sub(&e, &b, &a);
         fp_neg(&e, &e);                                      // e = -(b-a)
-        if (fp_equals(&d, &e) == 0) { passed=0; break; }
+        if (fp_is_equal(&d, &e) == 0) { passed=0; break; }
 
         fp_set_zero(&b);
         fp_sub(&d, &a, &b);                                  // d = a-0 
-        if (fp_equals(&a, &d) == 0) { passed=0; break; }
+        if (fp_is_equal(&a, &d) == 0) { passed=0; break; }
                 
         fp_sub(&e, &a, &a);                                  // e = a+(-a)
         if (fp_is_zero(&e) == 0) { passed=0; break; }
@@ -98,23 +97,23 @@ bool fp_test(void)
         fp_random_test(&a); fp_random_test(&b); fp_random_test(&c);
         fp_mul(&d, &a, &b); fp_mul(&e, &d, &c);                          // e = (a*b)*c
         fp_mul(&d, &b, &c); fp_mul(&f, &d, &a);                          // f = a*(b*c)
-        if (fp_equals(&e, &f) == 0) { passed=0; break; }
+        if (fp_is_equal(&e, &f) == 0) { passed=0; break; }
 
         fp_add(&d, &b, &c); fp_mul(&e, &a, &d);                          // e = a*(b+c)
         fp_mul(&d, &a, &b); fp_mul(&f, &a, &c); fp_add(&f, &d, &f);      // f = a*b+a*c
-        if (fp_equals(&e, &f) == 0) { passed=0; break; }
+        if (fp_is_equal(&e, &f) == 0) { passed=0; break; }
      
         fp_mul(&d, &a, &b);                                              // d = a*b 
         fp_mul(&e, &b, &a);                                              // e = b*a 
-        if (fp_equals(&d, &e) == 0) { passed=0; break; }
+        if (fp_is_equal(&d, &e) == 0) { passed=0; break; }
 
         fp_set_one(&b);
         fp_mul(&d, &a, &b);                                              // d = a*1               
-        if (fp_equals(&a, &d) == 0) { passed=0; break; }
+        if (fp_is_equal(&a, &d) == 0) { passed=0; break; }
        
         fp_set_zero(&b);
         fp_mul(&d, &a, &b);                                              // d = a*0           
-        if (fp_equals(&b, &d) == 0) { passed=0; break; } 
+        if (fp_is_equal(&b, &d) == 0) { passed=0; break; } 
     }
     if (passed==1) printf("  GF(p) multiplication tests ...................................... PASSED");
     else { printf("  GF(p) multiplication tests... FAILED"); printf("\n"); return false; }
@@ -128,7 +127,7 @@ bool fp_test(void)
 
         fp_sqr(&b, &a);                                    // b = a^2
         fp_mul(&c, &a, &a);                               // c = a*a 
-        if (fp_equals(&b, &c) == 0) { passed=0; break; } 
+        if (fp_is_equal(&b, &c) == 0) { passed=0; break; } 
 
         fp_set_zero(&a); 
         fp_sqr(&d, &a);                                  // d = 0^2 
@@ -147,11 +146,11 @@ bool fp_test(void)
         fp_copy(&b, &a);
         fp_inv(&b);
         fp_mul(&c, &a, &b);                               // c = a*a^-1 
-        if (fp_equals(&c, (fp_t*)&ONE) == 0) { passed=0; break; } 
+        if (fp_is_equal(&c, (fp_t*)&ONE) == 0) { passed=0; break; } 
 
         fp_set_zero(&a);
         fp_inv(&a);                                        // c = 0^-1
-        if (fp_equals(&a, (fp_t*)&ZERO) == 0) { passed=0; break; } 
+        if (fp_is_equal(&a, (fp_t*)&ZERO) == 0) { passed=0; break; } 
     }
     if (passed == 1) printf("  GF(p) inversion tests............................................ PASSED");
     else { printf("  GF(p) inversion tests... FAILED"); printf("\n"); return false; }
@@ -168,7 +167,7 @@ bool fp_test(void)
 
         fp_sqrt(&c);                      // c, d = ±sqrt(c) 
         fp_neg(&d, &c);
-        if ((fp_equals(&a, &c) == 0) && (fp_equals(&a, &d) == 0)) { passed = 0; break; }
+        if ((fp_is_equal(&a, &c) == 0) && (fp_is_equal(&a, &d) == 0)) { passed = 0; break; }
     }
     if (passed == 1) printf("  Square root, square tests........................................ PASSED");
     else { printf("  Square root, square tests... FAILED"); printf("\n"); return false; }

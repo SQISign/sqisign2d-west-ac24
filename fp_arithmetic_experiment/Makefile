@@ -2,7 +2,6 @@
 
 CC ?= clang
 SRC = $(wildcard src/*.c)
-OUTPUT = fp_testing
 
 # Detect the arch
 uname_p := $(shell uname -p) # store the output of the command in a variable
@@ -16,10 +15,13 @@ endif
 
 # ------------------------------------------------------------------------
 
-all:
-	$(CC) $(SRC) -o $(OUTPUT) $(FLAGS)
+all: test_fp test_fp2
 
-clean:
-	rm -r $(OUTPUT)
+test_fp: src/bin/test_fp.c
+	$(CC) $(SRC) src/bin/test_fp.c -o test_fp $(FLAGS)
+
+test_fp2: src/bin/test_fp2.c
+	$(CC) $(SRC) src/bin/test_fp2.c -o test_fp2 $(FLAGS)
+
 
 # ========================================================================

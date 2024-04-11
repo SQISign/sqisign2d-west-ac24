@@ -24,6 +24,13 @@ fp_random_test(fp_t *a)
 	fp_decode_reduce(a, tmp, 32);
 }
 
+void
+fp2_random_test(fp2_t *a)
+{
+	fp_random_test(&(a->re));
+	fp_random_test(&(a->im));
+}
+
 int
 cmp_u64(const void *v1, const void *v2)
 {

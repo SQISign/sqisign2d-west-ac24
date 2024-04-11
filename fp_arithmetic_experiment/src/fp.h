@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include "gf5248.h"
 
+#define NWORDS_FIELD 4
+
 // Type for elements of GF(p)
 #define fp_t gf5248
 
@@ -16,10 +18,11 @@
 #define fp_sub gf5248_sub
 #define fp_mul gf5248_mul
 #define fp_sqr gf5248_square
+#define fp_half gf5248_half
 
 // Comparisons for fp elements
 #define fp_is_zero gf5248_iszero
-#define fp_equals gf5248_equals
+#define fp_is_equal gf5248_equals
 
 // Set a uint32 to an Fp value
 #define fp_set_small gf5248_set_small
