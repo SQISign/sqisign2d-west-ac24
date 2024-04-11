@@ -82,7 +82,7 @@ void quicksort(ibz_t arr[],ibz_vec_4_t varr[], int low, int high) {
  * F is an isogeny encoding an isogeny phi : E0 -> Eu of degree u 
  * note that the codomain of F can be either Eu x Eu' or Eu' x Eu for some curve Eu'  
 */
-int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *u, int extra_info, int small) {
+int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *u, int small) {
 
     // var declaration
     int found;
@@ -90,15 +90,14 @@ int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *
     quat_alg_elem_t theta;
     ec_curve_t E0 = CURVE_E0; 
     int length;
-    // TODO remove extra_info parameter
-    assert(extra_info);
+    int extra_info = 1;
 
     if (!small) {
         length = TORSION_PLUS_EVEN_POWER-2;
     }
     else {
         // TODO This is a constant that should be set-up at a cleaner place 
-        length = 150;
+        length = SQIsign2D_small_fixed_deg_exp;
     }
 
     // var init 
@@ -416,9 +415,6 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
                         ibz_div(&n,&remain,&n,&adjusted_norm);
                         // TODECIDE : do we use only odd norms ?
                         if (ibz_mod_ui(&n,2)==1) {
-                        // if (1) {
-                            
-                            
                             ibz_set(&small_vecs[index][0],i1);
                             ibz_set(&small_vecs[index][1],i2);
                             ibz_set(&small_vecs[index][2],i3);
@@ -450,9 +446,8 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
 
     // TODO try to go through d1,d2 by increasing size of the products d1*d2
 
-    // param to see how much bigger we go over the line 
-    // TODO this must a scheme constant
-    // EDIT : useless after all
+    // this was a failed attempt to speed-up this algorithm.
+    // since we set it to one, we could simply remove it
     int overstretch = 1;
 
     // precomputing a list of small_norms[i]/target
@@ -658,10 +653,7 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     ibz_init(&test2);
 
     ibz_init(&target);ibz_init(&tmp);ibz_init(&two_pow);
-    // TODECIDE allow for a smaller exponent ?
-    // TODO if we remain with the smaller exponent then this value has already been computed
     int exp = TORSION_PLUS_EVEN_POWER;
-    ibz_pow(&target,&ibz_const_two,exp);
     quat_alg_elem_init(&theta);
     quat_alg_elem_init(&quat_tmp);
     quat_alg_elem_init(&quat_gcd_remove);
@@ -674,7 +666,7 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     // first, we find u,v,d1,d2,beta1,beta2
     // such that u*d1 + v*d2 = 2^TORSION_PLUS_EVEN_POWER and there are ideals of norm d1,d2 equivalent to ideal
     // beta1 and beta2 are elements of norm nd1, nd2 where n=n(lideal)
-    int found = find_uv(u,v,coeffs,beta1,beta2,d1,d2,&target,number_sum_square,lideal,Bpoo);
+    int found = find_uv(u,v,coeffs,beta1,beta2,d1,d2,&TORSION_PLUS_2POWER,number_sum_square,lideal,Bpoo);
     // TOC(t,"\n \ntotal time to find u,v");
 
     if (!found) {
@@ -780,7 +772,7 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
 
         // we perform the computation of phiu with a fixed degree isogeny 
         // t = tic();
-        fixed_degree_isogeny(&Fu,&idealu,u,1,1);
+        fixed_degree_isogeny(&Fu,&idealu,u,1);
         // TOC(t,"1st fixed deg");
         // pushing the torsion points through Fu
         // first we lift the basis 
@@ -852,7 +844,7 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
 
         // computation of phiv
         // t = tic();
-        int bv = fixed_degree_isogeny(&Fv,&idealv,v,1,1);
+        int bv = fixed_degree_isogeny(&Fv,&idealv,v,1);
         assert(bv);
         // TOC(t,"2nd fixed deg");
 
@@ -938,7 +930,7 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         E00.E2 = E0;
 
         // we perform the computation of phiu with a fixed degree isogeny 
-        fixed_degree_isogeny(&Fu,&idealu,u,1,1);
+        fixed_degree_isogeny(&Fu,&idealu,u,1);
 
         // pushing the torsion points through Fu
         // first we lift the basis 

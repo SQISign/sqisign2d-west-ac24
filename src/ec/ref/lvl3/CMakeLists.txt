@@ -8,6 +8,7 @@ set(SOURCE_FILES_EC_${SVARIANT_UPPER}_REF
     ${ECX_DIR}/xeval.c 
     ${ECX_DIR}/isog_chains.c 
     ${ECX_DIR}/basis.c
+    ${ECX_DIR}/biextension.c
 )
 
 add_library(${LIB_EC_${SVARIANT_UPPER}} ${SOURCE_FILES_EC_${SVARIANT_UPPER}_REF})

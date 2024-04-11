@@ -1359,8 +1359,6 @@ void theta_chain_comput_naive(theta_chain_t *out,int n, theta_couple_curve_t *E1
     ibz_init(&a);
     ibz_init(&b);
 
-    // TODO use a better strategy
-
     // init of the isogeny chain
     out->domain=*E12;
     out->length=n;
@@ -1524,8 +1522,6 @@ void theta_chain_comput_balanced(theta_chain_t *out,int n, theta_couple_curve_t 
     ibz_t a,b;
     ibz_init(&a);
     ibz_init(&b);
-
-    // TODO use a better strategy
 
     // init of the isogeny chain
     out->domain=*E12;

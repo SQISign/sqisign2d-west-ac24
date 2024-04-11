@@ -64,42 +64,11 @@ void commit(ec_curve_t *E_com, quat_left_ideal_t *lideal_com) {
     generate_random_prime(&n,1,140);
 
     theta_chain_t F;
-    found = fixed_degree_isogeny(&F,lideal_com,&n,1,1);
+    found = fixed_degree_isogeny(&F,lideal_com,&n,1);
 
-    // evaluating the isogeny on the basis 
-    // preparing everything
-    // theta_couple_jac_point_t Teval1,Teval2,Teval3;
-    // jac_point_t temp;
-    // theta_couple_point_t Tev1,Tev2,Tev3;
-    // theta_couple_curve_t E00;
-    // ec_curve_t E0;
-    // E0 = CURVE_E0;
-    // E00.E1 = CURVE_E0;
-    // E00.E2 = CURVE_E0;
-    // ec_basis_t bas=BASIS_EVEN;
-    // lift_basis(&Teval1.P1,&Teval2.P1,&bas,&E0);
-    // jac_neg(&temp,&Teval2.P1);
-    // ADD(&Teval3.P1,&Teval1.P1,&temp,&E0);
-    // fp2_set(&Teval1.P2.x,0);
-    // fp2_set(&Teval1.P2.y,1);
-    // fp2_set(&Teval1.P2.z,0);
-    // fp2_set(&Teval2.P2.x,0);
-    // fp2_set(&Teval2.P2.y,1);
-    // fp2_set(&Teval2.P2.z,0);
-    // fp2_set(&Teval3.P2.x,0);
-    // fp2_set(&Teval3.P2.y,1);
-    // fp2_set(&Teval3.P2.z,0);
-    // theta_chain_eval_no_help(&Tev1,&F,&Teval1,&E00);
-    // theta_chain_eval_no_help(&Tev2,&F,&Teval2,&E00);
-    // theta_chain_eval_no_help(&Tev3,&F,&Teval3,&E00);
 
     // it's always the second curve
     copy_curve(E_com,&F.codomain.E2);
-    // copy_point(&basis_even_com->P,&Tev1.P2);
-    // copy_point(&basis_even_com->Q,&Tev2.P2);
-    // copy_point(&basis_even_com->PmQ,&Tev3.P2);
-
-
 
     assert(found);
 
@@ -138,8 +107,7 @@ int sample_response(quat_alg_elem_t *x, const quat_lattice_t *lattice, ibz_t con
     ibz_init(&norm);
     ibz_init(&norm_bound);
 
-    // TODO make this a proper constant
-    ibz_pow(&norm_bound,&ibz_const_two,126);
+    ibz_pow(&norm_bound,&ibz_const_two,SQIsign2D_response_heuristic_bound);
 
     // printf("[");
     // for (int col = 0; col < 4; ++col) {
@@ -225,7 +193,6 @@ int sample_response(quat_alg_elem_t *x, const quat_lattice_t *lattice, ibz_t con
     return found;
 }
 
-// TODO(code): this is also used in verification, move to a common location when verification is implemented
 // compute the challenge as the hash of the message and the commitment curve and public key
 void hash_to_challenge(ibz_vec_2_t *scalars, const ec_curve_t *com_curve, const unsigned char *message, const public_key_t *pk, size_t length)
 {
@@ -244,9 +211,9 @@ void hash_to_challenge(ibz_vec_2_t *scalars, const ec_curve_t *com_curve, const 
         digit_t digits[NWORDS_FIELD];
 
         //FIXME should use SHAKE128 for smaller parameter sets?
-        // TODO decide how many iterations and make this a clean constant 
+        // TODO we want to use a bit differently (first we hash first half and then derive the second half)
         SHAKE256((void *) digits, sizeof(digits), buf, sizeof(fp2_t) + sizeof(fp2_t) + length);
-        for (int i=0;i<31;i++) {
+        for (int i=0;i<SQIsign2D_heuristic_challenge_hash_iteration;i++) {
             SHAKE256((void *) digits, sizeof(digits), (void *) digits, sizeof(digits));
         }
         
@@ -316,28 +283,13 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     commit(&E_com, &lideal_commit);
 
     // TODO make a clean constant for this
-    int len_chall= 122;
+    int len_chall= SQIsign2D_heuristic_challenge_length;
     ibz_pow(&pow_chall,&ibz_const_two,len_chall);
 
     // computing the challenge
     // vec_chall is a pair of coefficients encoding the kernel of the challenge isogeny
     // as vec_chall[0]*B[0] + vec_chall[1]*B[1] where B is the canonical basis of the 2^len_chall torsion of EA
     hash_to_challenge(&vec_chall, &E_com, m, pk, l);
-
-    // setting up the challenge coeff to transmit
-    // TODO there is a better way
-    // if (ibz_get(&vec_chall[0])%2==1) {
-    //     sig->chall_b = 0;
-    //     ibz_pow(&tmp,&ibz_const_two,len_chall);
-    //     ibz_invmod(&sig->chall_coeff,&vec_chall[0],&tmp);
-    //     ibz_mul(&sig->chall_coeff,&vec_chall[1],&sig->chall_coeff);
-    // }
-    // else {
-    //     sig->chall_b = 1;
-    //     ibz_pow(&tmp,&ibz_const_two,len_chall);
-    //     ibz_invmod(&sig->chall_coeff,&vec_chall[1],&tmp);
-    //     ibz_mul(&sig->chall_coeff,&vec_chall[0],&sig->chall_coeff);
-    // }
     
 
     // now we compute the ideal associated to the challenge 
@@ -400,7 +352,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     // now we compute the ideal_aux
     // computing the norm
     // TODO make a clean constant for this
-    pow_dim2_deg_resp = 126 - exp_diadic_val_full_resp;
+    pow_dim2_deg_resp = SQIsign2D_response_heuristic_bound - exp_diadic_val_full_resp;
     ibz_pow(&remain,&ibz_const_two,pow_dim2_deg_resp);
     ibz_sub(&tmp,&remain,&degree_odd_resp);
     assert(ibz_cmp(&tmp,&ibz_const_zero)>0);
@@ -715,7 +667,7 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     clock_t t =tic();
 
     // TODO use a constant for this
-    int len_chall= 122;
+    int len_chall= SQIsign2D_heuristic_challenge_length;
 
     copy_curve(&Epk,&pk->curve);
     phi_chall.curve = Epk;
@@ -779,7 +731,7 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     t =tic();
 
     // TODO make a clean constant for this
-    int pow_dim2_deg_resp = 126 - sig->two_resp_length;
+    int pow_dim2_deg_resp = SQIsign2D_heuristic_challenge_hash_iteration - sig->two_resp_length;
 
     // computing the isogeny
     // computing the small two chain

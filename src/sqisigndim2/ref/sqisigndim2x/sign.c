@@ -304,7 +304,6 @@ void sample_response(quat_alg_elem_t *x, const quat_lattice_t *lattice, ibz_t co
 
 
 
-// TODO(code): this is also used in verification, move to a common location when verification is implemented
 // compute the challenge as the hash of the message and the commitment curve and public key
 void hash_to_challenge(ibz_vec_2_t *scalars, const ec_curve_t *com_curve, const unsigned char *message, const public_key_t *pk, size_t length)
 {
@@ -421,8 +420,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     // the degree of the backtring is the scalar tmp computed above such that quat_resp is in tmp * O0
     // we assume that the length of the backtracking is smaller than 60;
     backtracking = two_adic_valuation(ibz_get(&tmp));
-    // TODO define this as a proper constant (and possibly increase the constant ?)
-    assert(backtracking<15);
+    assert(backtracking<SQIsign2D_backtracking_bound);
     ibz_pow(&tmp,&ibz_const_two,backtracking);
     ibz_div(&lattice_content,&remain,&lattice_content,&tmp);
 
@@ -454,8 +452,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
 
     // now we compute the ideal_aux
     // computing the norm
-    // TODO make a clean constant for this
-    pow_dim2_deg_resp = 130;
+    pow_dim2_deg_resp = SQIsign2D_response_length;
     ibz_pow(&remain,&ibz_const_two,pow_dim2_deg_resp);
     ibz_sub(&tmp,&remain,&degree_odd_resp);
 
@@ -816,8 +813,7 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     // printf("challenge computation length : %d ",phi_chall.length);
     // TOC_clock(t,"");
 
-    // TODO make a clean constant for this
-    int pow_dim2_deg_resp = 130;
+    int pow_dim2_deg_resp = SQIsign2D_response_length;
 
     ec_basis_t B_chall_can,B_aux_can;
     ec_curve_t E_aux;

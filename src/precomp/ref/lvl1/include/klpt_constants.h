@@ -23,5 +23,11 @@
 #define SQISIGN_signing_total_length 1240
 #define SQISIGN_signing_length 5
 #define SQISIGN_keygen_length 3
+#define SQIsign2D_small_fixed_deg_exp 150
+#define SQIsign2D_response_heuristic_bound 126
+#define SQIsign2D_heuristic_challenge_length 122
+#define SQIsign2D_heuristic_challenge_hash_iteration 16
+#define SQIsign2D_backtracking_bound 16
+#define SQIsign2D_response_length 128
 extern const short SMALL_PRIMES_1MOD4[11];
 extern const ibz_t PROD_SMALL_PRIMES_3MOD4;

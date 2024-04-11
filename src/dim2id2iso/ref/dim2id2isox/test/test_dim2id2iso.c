@@ -16,7 +16,7 @@ int dim2id2iso_test_fixed_degree_isogeny() {
     ibz_mul(&u,&u,&ibz_const_three);
 
     theta_chain_t F;
-    fixed_degree_isogeny(&F,&lideal,&u,1,0);
+    fixed_degree_isogeny(&F,&lideal,&u,0);
 
     // now we check that we get a correct codomain in the end
     // by evaluating some point and checking the pairing

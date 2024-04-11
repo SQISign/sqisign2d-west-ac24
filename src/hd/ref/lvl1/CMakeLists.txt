@@ -1,10 +1,10 @@
-set(SOURCE_FILES_HD_${SVARIANT_UPPER}_REF
+set(SOURCE_FILES_HD_GENERIC_REF
     ${HDX_DIR}/hd.c
     ${HDX_DIR}/theta_structure.c 
     ${HDX_DIR}/theta_isogenies.c 
 )
 
-add_library(${LIB_HD_${SVARIANT_UPPER}} ${SOURCE_FILES_HD_${SVARIANT_UPPER}_REF})
+add_library(${LIB_HD_${SVARIANT_UPPER}} ${SOURCE_FILES_HD_GENERIC_REF})
 target_include_directories(${LIB_HD_${SVARIANT_UPPER}} PRIVATE ${INC_INTBIG} ${INC_PRECOMP_${SVARIANT_UPPER}} ${INC_PUBLIC} ${INC_GF_${SVARIANT_UPPER}} ${INC_COMMON} ${INC_EC} ${INC_ID2ISO} ${INC_HD})
 target_compile_options(${LIB_HD_${SVARIANT_UPPER}} PRIVATE ${C_OPT_FLAGS})
 

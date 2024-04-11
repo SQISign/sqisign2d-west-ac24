@@ -15,6 +15,7 @@
 #include <hd.h>
 #include <id2iso.h>
 #include <biextension.h>
+#include <klpt_constants.h>
 
 
 
@@ -35,7 +36,7 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
  * F is an isogeny encoding an isogeny phi : E0 -> Eu of degree u 
  * note that the codomain of F can be either Eu x Eu' or Eu' x Eu for some curve Eu'  
 */
-int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *u, int extra_info, int small);
+int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *u, int small);
 
 
 

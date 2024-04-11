@@ -35,9 +35,10 @@ add_subdirectory(precomp)
 add_subdirectory(klpt)
 add_subdirectory(gf)
 add_subdirectory(ec)
-add_subdirectory(hd)
+
 
 add_subdirectory(id2iso)
+add_subdirectory(hd)
 add_subdirectory(sqisignhd)
 add_subdirectory(dim2id2iso)
 add_subdirectory(sqisigndim2)
@@ -64,7 +65,7 @@ FOREACH(SVARIANT ${SVARIANT_S})
         sqisign_common_sys
     )
 
-    target_include_directories(sqisign_${SVARIANT_LOWER} PUBLIC ${INC_PROTOCOLS} ${INC_INTBIG} ${INC_QUATERNION} ${INC_PRECOMP_${SVARIANT_UPPER}} ${INC_EC} ${INC_GF_${SVARIANT_UPPER}} ${INC_COMMON} ${INC_KLPT} ${INC_ID2ISO} ../include PRIVATE common/generic internal)
+    target_include_directories(sqisign_${SVARIANT_LOWER} PUBLIC ${INC_PROTOCOLS} ${INC_INTBIG} ${INC_QUATERNION} ${INC_PRECOMP_${SVARIANT_UPPER}} ${INC_EC} ${INC_GF_${SVARIANT_UPPER}} ${INC_COMMON} ${INC_KLPT} ${INC_HD} ${INC_ID2ISO} ../include PRIVATE common/generic internal)
     target_compile_definitions(sqisign_${SVARIANT_LOWER} PUBLIC SQISIGN_VARIANT=${SVARIANT})
 
     # Library for SQIsign variant (test)
@@ -84,7 +85,7 @@ FOREACH(SVARIANT ${SVARIANT_S})
         sqisign_common_test
     )
 
-    target_include_directories(sqisign_${SVARIANT_LOWER}_test PUBLIC ${INC_PROTOCOLS} ${INC_INTBIG} ${INC_QUATERNION} ${INC_PRECOMP_${SVARIANT_UPPER}} ${INC_EC} ${INC_GF_${SVARIANT_UPPER}} ${INC_COMMON} ${INC_KLPT} ${INC_ID2ISO} ../include PRIVATE common/generic internal)
+    target_include_directories(sqisign_${SVARIANT_LOWER}_test PUBLIC ${INC_PROTOCOLS} ${INC_INTBIG} ${INC_QUATERNION} ${INC_PRECOMP_${SVARIANT_UPPER}} ${INC_EC} ${INC_GF_${SVARIANT_UPPER}} ${INC_COMMON} ${INC_KLPT} ${INC_HD} ${INC_ID2ISO} ../include PRIVATE common/generic internal)
     target_compile_definitions(sqisign_${SVARIANT_LOWER}_test PUBLIC SQISIGN_VARIANT=${SVARIANT})
 
 ENDFOREACH()
