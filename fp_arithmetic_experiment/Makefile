@@ -10,6 +10,8 @@ uname_p := $(shell uname -p) # store the output of the command in a variable
 FLAGS = -Wall -Wextra -pedantic -std=gnu99 -O3 -march=native -mtune=native
 ifeq ($(strip $(uname_p)),i386)
 	FLAGS += -DTARGET_x86
+else ifeq ($(strip $(uname_p)),x86_64)
+	FLAGS += -DTARGET_x86
 endif
 
 # ------------------------------------------------------------------------
