@@ -7,10 +7,6 @@ The API is slightly different (I work with pointers more often than the original
 
 This code (aside from inversion and legendre) follows the Rust code. The timing seems a little better.
 
-## Performance Gain
-
-At the moment, it looks as though we get a roughly 3x speed up compared to the assembly when using my machine. I think there are some dumb choices I have made so over the next week I will try and improve this further.
-
 ## Building
 
 To build the binary, I hope running `make` is enough. It works for my Mac, but maybe something different happens for ARM macs or linux machines... Forgive me, but cross platform building is not something I understand so this really is a "it works on my machine".
@@ -20,9 +16,7 @@ To build the binary, I hope running `make` is enough. It works for my Mac, but m
 I followed the SQIsign testing, so you run:
 
 ```
-Jack: fp_arithmetic_experiment % ./fp_testing test 100000
-
---------------------------------------------------------------------------------------------------------
+Jack: fp_arithmetic_experiment % ./test_fp test 100000
 
 Testing field arithmetic over GF(p): 
 
@@ -36,24 +30,47 @@ Testing field arithmetic over GF(p):
   Square root, square tests........................................ PASSED
   ```
 
+```
+Jack: fp_arithmetic_experiment % ./test_fp2 test 100000
+
+Testing arithmetic over GF(p^2): 
+
+  GF(p^2) addition tests ............................................ PASSED
+  GF(p^2) subtraction tests ......................................... PASSED
+  GF(p^2) multiplication tests ...................................... PASSED
+  GF(p^2) squaring tests............................................. PASSED
+  GF(p^2) inversion tests............................................ PASSED
+  Square root, square tests.......................................... PASSED
+```
+
 ## Benchmarks
 
 The following benchmarks are found using a 2.6 GHz 6-Core Intel Core i7 with turbo boost disabled
 
 ```
-Jack: fp_arithmetic_experiment % ./fp_testing bench 10000
+Benchmarking GF(p) field arithmetic: 
 
---------------------------------------------------------------------------------------------------------
+  GF(p) addition runs in .......................................... 13 cycles, (125 ignore me)
+  GF(p) subtraction runs in ....................................... 13 cycles, (196 ignore me)
+  GF(p) multiplication runs in .................................... 46 cycles, (2 ignore me)
+  GF(p) squaring runs in .......................................... 33 cycles, (135 ignore me)
+  GF(p) inversion runs in ......................................... 7911 cycles, (7 ignore me)
+  GF(p) sqrt runs in .............................................. 9056 cycles, (58 ignore me)
+  Square checking runs in ......................................... 6616 cycles, (175 ignore me)
+```
 
-Benchmarking GF(p) field arithmetic:
+```
+Jack: fp_arithmetic_experiment % ./test_fp2 bench 10000
 
-  GF(p) addition runs in .......................................... 6 cycles, (5901499188998290977 ignore me)
-  GF(p) subtraction runs in ....................................... 6 cycles, (12179369125404802345 ignore me)
-  GF(p) multiplication runs in .................................... 20 cycles, (3586068188944577399 ignore me)
-  GF(p) squaring runs in .......................................... 15 cycles, (3876598179343484886 ignore me)
-  GF(p) inversion runs in ......................................... 4200 cycles, (17670238964497910354 ignore me)
-  GF(p) sqrt runs in .............................................. 4056 cycles, (5452856236907160256 ignore me)
-  Square checking runs in ......................................... 4190 cycles, (8869800425310996852 ignore me)
+Benchmarking GF(p^2) field arithmetic: 
+
+  GF(p^2) addition runs in .......................................... 22 cycles, (46 ignore me)
+  GF(p^2) subtraction runs in ....................................... 22 cycles, (184 ignore me)
+  GF(p^2) multiplication runs in .................................... 199 cycles, (254 ignore me)
+  GF(p^2) squaring runs in .......................................... 128 cycles, (21 ignore me)
+  GF(p^2) inversion runs in ......................................... 7983 cycles, (158 ignore me)
+  GF(p^2) sqrt runs in .............................................. 33162 cycles, (117 ignore me)
+  Square checking runs in ........................................... 6701 cycles, (240 ignore me)
 ```
 
 As a comparison, the following timings from the current repo
