@@ -1,7 +1,8 @@
-#include "bench.h"
-#include "test_utils.h"
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
+
+#include "test_utils.h"
 
 // Benchmark and test parameters  
 static int BENCH_LOOPS = 1000;         // Number of iterations per bench
@@ -13,8 +14,6 @@ bool fp_test(void)
     bool OK = true;
     int n, passed;
     fp_t a, b, c, d, e, f;
-    // fp_t ma, mb;
-
 
     printf("\n--------------------------------------------------------------------------------------------------------\n\n"); 
     printf("Testing field arithmetic over GF(p): \n\n"); 
@@ -116,7 +115,7 @@ bool fp_test(void)
     passed = 1;
     for (n=0; n<TEST_LOOPS; n++)
     {    
-        fp_random_test_mont(&a); fp_random_test_mont(&b); fp_random_test_mont(&c);
+        fp_random_test(&a); fp_random_test(&b); fp_random_test(&c);
         fp_mul(&d, &a, &b); fp_mul(&e, &d, &c);                          // e = (a*b)*c
         fp_mul(&d, &b, &c); fp_mul(&f, &d, &a);                          // f = a*(b*c)
         if (fp_equal(&e, &f) == 0) { passed=0; break; }
@@ -145,7 +144,7 @@ bool fp_test(void)
     passed = 1;
     for (n=0; n<TEST_LOOPS; n++)
     {
-        fp_random_test_mont(&a);
+        fp_random_test(&a);
 
         fp_sqr(&b, &a);                                    // b = a^2
         fp_mul(&c, &a, &a);                               // c = a*a 
@@ -199,25 +198,24 @@ bool fp_test(void)
     return OK;
 }
 
-
 bool fp_run(void)
 {
     bool OK = true;
     int n, i;
-    unsigned long long cycles, cycles1, cycles2;
+    uint64_t cycles1, cycles2;
     fp_t a, b;
         
+    fp_random_test(&a);
+    fp_random_test(&b);
+
     printf("\n--------------------------------------------------------------------------------------------------------\n\n"); 
     printf("Benchmarking GF(p) field arithmetic: \n\n"); 
 
     // GF(p) addition
-    fp_random_test(&a);
-    fp_random_test(&b);
-    long cycle_runs[10];
+    uint64_t cycle_runs[20];
 
-    for (i=0; i<10; i++){
-        cycles = 0;
-        cycles1 = cpucycles(); 
+    for (i=0; i<20; i++){
+        cycles1 = core_cycles(); 
         for (n=0; n<BENCH_LOOPS; n++)
         {
             fp_add(&a, &a, &b);
@@ -227,19 +225,16 @@ bool fp_run(void)
             fp_add(&a, &a, &b);
             fp_add(&b, &b, &a);
         }
-        cycles2 = cpucycles();
+        cycles2 = core_cycles();
         cycle_runs[i] = cycles2-cycles1;
     }
-    qsort(cycle_runs, 10, sizeof(long), compare);
-    printf("  GF(p) addition runs in .......................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] / (6 * BENCH_LOOPS), a.w[0]);
+    qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
+    printf("  GF(p) addition runs in .......................................... %llu cycles, (%llu ignore me)\n", cycle_runs[4] / (6 * BENCH_LOOPS), b.w[0]);
+
 
     // GF(p) subtraction
-    fp_random_test(&a);
-    fp_random_test(&b);
-
-    for (i=0; i<10; i++){
-        cycles = 0;
-        cycles1 = cpucycles(); 
+    for (i=0; i<20; i++){
+        cycles1 = core_cycles(); 
         for (n=0; n<BENCH_LOOPS; n++)
         {
             fp_sub(&a, &a, &b);
@@ -249,19 +244,15 @@ bool fp_run(void)
             fp_sub(&a, &a, &b);
             fp_sub(&b, &b, &a);
         }
-        cycles2 = cpucycles();
+        cycles2 = core_cycles();
         cycle_runs[i] = cycles2-cycles1;
     }
-    qsort(cycle_runs, 10, sizeof(long), compare);
-    printf("  GF(p) subtraction runs in ....................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] /  (6 * BENCH_LOOPS), a.w[0]);
+    qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
+    printf("  GF(p) subtraction runs in ....................................... %llu cycles, (%llu ignore me)\n", cycle_runs[4] /  (6 * BENCH_LOOPS), a.w[0]);
 
     // GF(p) multiplication
-    fp_random_test(&a);
-    fp_random_test(&b);
-
-    for (i=0; i<10; i++){
-        cycles = 0;
-        cycles1 = cpucycles(); 
+    for (i=0; i<20; i++){
+        cycles1 = core_cycles(); 
         for (n=0; n<BENCH_LOOPS; n++)
         {
             fp_mul(&a, &a, &b);
@@ -271,90 +262,75 @@ bool fp_run(void)
             fp_mul(&a, &a, &b);
             fp_mul(&b, &b, &a);
         }
-        cycles2 = cpucycles();
+        cycles2 = core_cycles();
         cycle_runs[i] = cycles2-cycles1;
     }
-    qsort(cycle_runs, 10, sizeof(long), compare);
-    printf("  GF(p) multiplication runs in .................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] /  (6 * BENCH_LOOPS), a.w[0]);
+    qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
+    printf("  GF(p) multiplication runs in .................................... %llu cycles, (%llu ignore me)\n", cycle_runs[4] /  (6 * BENCH_LOOPS), a.w[0]);
 
     // GF(p) squaring
-    fp_random_test(&a);
-
-    for (i=0; i<10; i++){
-        cycles = 0;
-        cycles1 = cpucycles(); 
+    for (i=0; i<20; i++){
+        cycles1 = core_cycles(); 
         for (n=0; n<BENCH_LOOPS; n++)
         {
             fp_sqr(&a, &a);
         }
-        cycles2 = cpucycles();
+        cycles2 = core_cycles();
         cycle_runs[i] = cycles2-cycles1;
     }
-    qsort(cycle_runs, 10, sizeof(long), compare);
-    printf("  GF(p) squaring runs in .......................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] /  (BENCH_LOOPS), a.w[0]);
+    qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
+    printf("  GF(p) squaring runs in .......................................... %llu cycles, (%llu ignore me)\n", cycle_runs[4] /  (BENCH_LOOPS), a.w[0]);
 
-  // GF(p) inversion
-    fp_random_test(&a);
-    fp_random_test(&b);
-
-    for (i=0; i<10; i++){
-        cycles = 0;
-        cycles1 = cpucycles(); 
+    // GF(p) inversion
+    for (i=0; i<20; i++){
+        cycles1 = core_cycles(); 
         for (n=0; n<BENCH_LOOPS; n++)
         {
             fp_inv(&a);
             fp_add(&a, &b, &a);
         }
-        cycles2 = cpucycles();
+        cycles2 = core_cycles();
         cycle_runs[i] = cycles2-cycles1;
     }
-    qsort(cycle_runs, 10, sizeof(long), compare);
-    printf("  GF(p) inversion runs in ......................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] /  BENCH_LOOPS, a.w[0]);
+    qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
+    printf("  GF(p) inversion runs in ......................................... %llu cycles, (%llu ignore me)\n", cycle_runs[4] /  BENCH_LOOPS, a.w[0]);
 
 
     // GF(p) sqrt
-    fp_random_test(&a);
-    fp_random_test(&b);
-
-    for (i=0; i<10; i++){
-        cycles = 0;
-        cycles1 = cpucycles(); 
+    for (i=0; i<20; i++){
+        cycles1 = core_cycles(); 
         for (n=0; n<BENCH_LOOPS; n++)
         {
             fp_sqrt(&a);
             fp_add(&a, &b, &a);
         }
-        cycles2 = cpucycles();
+        cycles2 = core_cycles();
         cycle_runs[i] = cycles2-cycles1;
     }
-    qsort(cycle_runs, 10, sizeof(long), compare);
-    printf("  GF(p) sqrt runs in .............................................. %ld cycles, (%llu ignore me)\n", cycle_runs[4] / BENCH_LOOPS, a.w[0]);
+    qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
+    printf("  GF(p) sqrt runs in .............................................. %llu cycles, (%llu ignore me)\n", cycle_runs[4] / BENCH_LOOPS, a.w[0]);
 
-    // GF(p) is_square
-    fp_random_test(&a);
-    fp_random_test(&b);
-    
-    for (i=0; i<10; i++){
-        cycles = 0;
-        cycles1 = cpucycles(); 
+    // GF(p) is_square    
+    for (i=0; i<20; i++){
+        cycles1 = core_cycles(); 
         for (n=0; n<BENCH_LOOPS; n++)
         {
             fp_is_square(&a);
             fp_add(&a, &b, &a);
         }
-        cycles2 = cpucycles();
+        cycles2 = core_cycles();
         cycle_runs[i] = cycles2-cycles1;
     }
-    qsort(cycle_runs, 10, sizeof(long), compare);
-    printf("  Square checking runs in ......................................... %ld cycles, (%llu ignore me)\n", cycle_runs[4] / BENCH_LOOPS, a.w[0]);
-
-    return OK;
+    qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
+    printf("  Square checking runs in ......................................... %llu cycles, (%llu ignore me)\n", cycle_runs[4] / BENCH_LOOPS, a.w[0]);
 
     return OK;
 }
 
 int main(int argc, char* argv[])
 {
+    srand(time(NULL));
+
     if (argc < 3) {
         printf("Please enter an argument: 'test' or 'bench' and <reps>\n");
         exit(1);
