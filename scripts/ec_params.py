@@ -16,12 +16,12 @@ import functools
 # runing src/ec/ref/lvl1/test/mont.test or left as "None" to use a
 # generic estimate.
 # ++++++++++ 
-#p2 =  None   # cost of xdbl
-#q4 = None    # cost of xeval4
+p2 =  0   # cost of xdbl
+q4 = 0    # cost of xeval4
 
 ##SqiSign lvl 1 costs
-p2 = 1766
-q4 = 2452
+# p2 = 1766
+# q4 = 2452
 
 ##SqiSign lvl 3 costs
 #p2 = 4071
@@ -191,9 +191,9 @@ if __name__ == '__main__':
     p,POWER_OF_2,POWER_OF_3,Pfactors,Mfactors = config()
     PMfactors = Pfactors + Mfactors
 
-    if not p2 and q4:
-        p2 = 1.0
-        q4 = 1.3
+    if p2==0 and q4==0:
+        p2 = 10
+        q4 = 13
 
     sizeI = [ceil(sqrt((l-1)/4)) for l in PMfactors]
     sizeJ = [floor((l-1)/4/ceil(sqrt((l-1)/4))) for l in PMfactors]
