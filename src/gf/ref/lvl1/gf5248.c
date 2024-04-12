@@ -670,6 +670,19 @@ dec64le(const void *src)
 		| ((uint64_t)buf[7] << 56);
 }
 
+void 
+gf5248_w64(gf5248 *out, const uint64_t data[4])
+{
+    // Set the words from input data
+	out->v0 = data[0];
+    out->v1 = data[1];
+    out->v2 = data[2];
+    out->v3 = data[3];
+    
+	// Final conversion to Montgomery representation.
+	gf5248_mul(out, out, &R2);
+}
+
 // see gf5248.h
 void
 gf5248_encode(void *dst, const gf5248 *a)

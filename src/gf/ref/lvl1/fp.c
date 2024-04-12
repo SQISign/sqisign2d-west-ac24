@@ -39,13 +39,6 @@ void fp_set_one(fp_t * a){
     fp_copy(a, &ONE);
 }
 
-void fp_w64(fp_t *out, const uint64_t data[4]){
-    out->v0 = data[0];
-    out->v1 = data[1];
-    out->v2 = data[2];
-    out->v3 = data[3];
-}
-
 /**********************                                    ***********************/
 /********************** The below should probably be moved ***********************/
 /**********************                                    ***********************/
