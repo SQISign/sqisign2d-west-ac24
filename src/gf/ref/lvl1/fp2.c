@@ -38,7 +38,7 @@ bool fp2_is_equal(const fp2_t* a, const fp2_t* b)
 bool fp2_is_one(const fp2_t* a)
 { // Is a GF(p^2) element one?
   // Returns 1 (true) if a=0, 0 (false) otherwise
-    return fp_is_equal(&(a->re), &ONE) & fp_is_zero(&(a->im));
+    return fp_is_equal(&(a->re), &ONE) & fp_is_equal(&(a->im), &ZERO);
 }
 
 void fp2_copy(fp2_t* x, const fp2_t* y)

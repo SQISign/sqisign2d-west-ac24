@@ -47,7 +47,7 @@ void xisog_2(ec_point_t* B, ec_point_t const P)
 void xisog_2_singular(ec_point_t* B24, ec_point_t A24){
 	fp2_t t0, four;
 	// fp_mont_setone(four.re);
-	// fp2_set_one(&four);
+	// fp_set(four.im, 0);
 	// fp2_add(&four, &four, &four);
 	// fp2_add(&four, &four, &four);
 	fp2_set_small(&four, 4);
