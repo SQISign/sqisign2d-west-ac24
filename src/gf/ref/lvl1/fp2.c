@@ -279,6 +279,7 @@ void fp2_pow(fp2_t *out,const fp2_t * x,const uint64_t *exp,const int size) {
     uint64_t exp_tmp[size];
     uint64_t bit;
 
+    memcpy((digit_t*)exp_tmp, (digit_t*)exp, size*RADIX/8);
     fp2_copy(&acc, x);
     fp2_set_one(out);
 

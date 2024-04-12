@@ -53,10 +53,8 @@ int hd_chain_test() {
         // fp2_test 
         fp2_t xx,yy,z;
     
-        fp_set(xx.im,0);
-        fp_set(yy.im,0);
-        fp_mont_setone(xx.re);
-        fp_mont_setone(yy.re);
+        fp2_set_one(&xx);
+        fp2_set_one(&yy);
         fp2_sub(&xx,&xx,&yy);
         assert(fp2_is_zero(&xx));
         fp2_neg(&xx,&yy);
@@ -67,10 +65,10 @@ int hd_chain_test() {
 
 
         fp2_t test_i,min;
-        fp_mont_setone(test_i.im);
-        fp_set(test_i.re,0);
-        fp_set(min.im,0);
-        fp_mont_setone(min.re);
+        fp_set_one(&test_i.im);
+        fp_set_zero(&test_i.re);
+        fp_set_zero(&min.im);
+        fp_set_one(&min.re);
         fp2_mul(&test_i,&test_i,&test_i);
         fp2_add(&test_i,&test_i,&min);
         assert(fp2_is_zero(&test_i));

@@ -117,7 +117,7 @@ int main(){
       slow_mul(fg, f, nf, g, ng);
       
       for(e = 0; e < nf + ng - 1; e++){   // Verify answer term by term
-	assert(fp2_isequal(h[e], fg[e])==1);
+	assert(fp2_is_equal(&h[e], &fg[e])==1);
       }
     }
   }
@@ -154,7 +154,7 @@ int main(){
 
 
       for(e = 0; e < nf + ng - 1; e++){   // Verify answer term by term
-	assert(fp2_isequal(h[e], fg[e])==1);
+	assert(fp2_is_equal(&h[e], &fg[e])==1);
       }
     }
   }
@@ -223,7 +223,7 @@ int main(){
 	  //Compare with expected
 	  e = 0;
 	  while(e < nf+ng-1 && e < n){
-	    assert(fp2_isequal(h[e], fg[e]) == 1);
+	    assert(fp2_is_equal(&h[e], &fg[e]) == 1);
 	    e++;
 	  }
 	  while(e < n){
@@ -262,7 +262,7 @@ int main(){
 	poly_mul_middle(g, g, ng, f, nf);
       
 	for(e = 0; e < ng; e++){
-	  assert(fp2_isequal(h[e+nf-ng], g[e])==1);
+	  assert(fp2_is_equal(&h[e+nf-ng], &g[e])==1);
 	}
       }
     }
@@ -303,7 +303,7 @@ int main(){
 
 	// Compare
 	for(e = 0; e < nf+ng-1; e++){
-	  assert(fp2_isequal(fg[e], h[e])==1);
+	  assert(fp2_is_equal(&fg[e], &h[e])==1);
 	}
       }
     }		 
@@ -356,7 +356,7 @@ int main(){
 	// Compare to root
 	assert (len == DEG[0]+1);
 	for(e = 0; e < len; e++){
-	  assert(fp2_isequal(H[0][e], h[e])==1);
+	  assert(fp2_is_equal(&H[0][e], &h[e])==1);
 	}
       clear_tree(H, 0, tree_size);
       for(i = 0; i < tree_size; i++){
@@ -417,7 +417,7 @@ int main(){
 	// Compare to root
 	assert (len == DEG[0]+1);
 	for(e = 0; e < len; e++){
-	  assert(fp2_isequal(H[0][e], h[e])==1);
+	  assert(fp2_is_equal(&H[0][e], &h[e])==1);
 	}
       clear_tree(H, 0, tree_size);
       for(i = 0; i < tree_size; i++){
