@@ -423,8 +423,7 @@ void ec_curve_normalize(ec_curve_t *new, ec_isom_t *isom, const ec_curve_t *old)
     fp2_sqrt(&t0);
     ec_curve_t E;
     fp2_copy(&E.A, &t0);
-    fp_mont_setone(E.C.re);
-    fp_set(E.C.im, 0);
+    fp2_set_one(&E.C);
     ec_isomorphism(isom, old, &E);
     fp2_copy(&new->A, &E.A);
     fp2_copy(&new->C, &E.C);
@@ -478,8 +477,7 @@ void ec_isomorphism(ec_isom_t* isom, const ec_curve_t* from, const ec_curve_t* t
         fp2_neg(&t4, &t4);
 
     // Mont -> SW -> SW -> Mont
-    fp_mont_setone(t0.re);
-    fp_set(t0.im, 0);
+    fp2_set_one(&t0);
     fp2_add(&isom->D, &t0, &t0);
     fp2_add(&isom->D, &isom->D, &t0);
     fp2_mul(&isom->D, &isom->D, &from->C);

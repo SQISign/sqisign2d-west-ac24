@@ -25,7 +25,7 @@ void poly_mul(poly h, const poly f, const int lenf, const poly g, const int leng
 	if(leng == 0)
 	{
 		for(i = 0; i < lenf-1; i++)
-			fp2_set(&h[i], 0);
+			fp2_set_zero(&h[i]);
 		return;
 	}
 
@@ -239,7 +239,7 @@ void poly_mul_low(poly h, const int n, const poly f, const int lenf, const poly 
 	{
 		int i;
 		for(i = 0; i < n; i++)
-			fp2_set(&h[i], 0);
+			fp2_set_zero(&h[i]);
 
 		return;
 	}
@@ -257,7 +257,7 @@ void poly_mul_low(poly h, const int n, const poly f, const int lenf, const poly 
 		int i;
 		poly_mul(h, f, lenf, g, leng);
 		for(i = lenf + leng - 1; i < n; i++)
-			fp2_set(&h[i], 0);
+			fp2_set_zero(&h[i]);
 
 		return;
 	}
@@ -573,7 +573,7 @@ void poly_mul_middle(poly h, const poly g, const int leng, const poly f, const i
 		for(i = 0; i < lenf - 1; i++)
 			fp2_copy(&f1[i], &f[i+1]);
 
-		fp2_set(&f1[lenf-1], 0);
+		fp2_set_zero(&f1[lenf-1]);
 		quasi_poly_mul_middle(h, g, leng, f1, lenf);
 		return;
 	}
@@ -583,7 +583,7 @@ void poly_mul_middle(poly h, const poly g, const int leng, const poly f, const i
 	{
 		// f1 = [0]+f[:]
 		fp2_t f1[lenf+1];
-		fp2_set(&f1[0], 0);
+		fp2_set_zero(&f1[0]);
 		for(i = 0; i < lenf; i++)
 			fp2_copy(&f1[i+1], &f[i]);
 
@@ -813,7 +813,7 @@ void poly_mul_selfreciprocal(poly h, const poly g, const int leng, const poly f,
 			poly_mul(h, g, half, f, half);
 			poly_mul(h1, g, half, &(f[half]), half);
 
-			fp2_set(&h[leng-1], 0);
+			fp2_set_zero(&h[leng-1]);
 			for(i = 0; i < half; i++)
 			{
 				fp2_add(&h[half+i], &h[half+i], &h1[i]);
@@ -1010,7 +1010,7 @@ void product(fp2_t *c, const fp2_t F[], const int n)
 	// Given an array F of n constant polynomials, writes their product to c
 	int i;
 
-	fp_mont_setone((*c).re);fp_set((*c).im,0);
+	fp2_set_one(c);
 
 	// Empty list must returns 1
 	if (n == 0)

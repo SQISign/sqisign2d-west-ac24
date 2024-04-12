@@ -353,7 +353,7 @@ bool dlog_run()
     cycles = 0;
     for (n = 0; n < BENCH_LOOPS; n++)
     {
-        fprandom_test(k); fprandom_test(l);
+        fp_random_test(k); fp_random_test(l);
         xDBLMUL(&R, &P, k, &Q, l, &PQ, &AC);
         cycles1 = cpucycles();
         ec_dlog_2(scalarP, scalarQ, &PQ2, &R, &AC);
@@ -384,7 +384,7 @@ bool dlog_run()
     cycles = 0;
     for (n = 0; n < BENCH_LOOPS; n++)
     {
-        fprandom_test(k); fprandom_test(l);
+        fp_random_test(k); fp_random_test(l);
         xDBLMUL(&R, &P, k, &Q, l, &PQ, &AC);
         cycles1 = cpucycles();
         ec_dlog_3(scalarP, scalarQ, &PQ2, &R, &AC);

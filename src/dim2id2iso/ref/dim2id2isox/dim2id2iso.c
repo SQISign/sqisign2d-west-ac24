@@ -797,15 +797,15 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         // TODO we can do better, the addition has been computed inside lift_basis
         jac_neg(&temp,&xyQ.P1);
         ADD(&xyPmQ.P1,&xyP.P1,&temp,&E0);
-        fp2_set(&xyP.P2.x,0);
-        fp2_set(&xyP.P2.y,1);
-        fp2_set(&xyP.P2.z,0);
-        fp2_set(&xyQ.P2.x,0);
-        fp2_set(&xyQ.P2.y,1);
-        fp2_set(&xyQ.P2.z,0);
-        fp2_set(&xyPmQ.P2.x,0);
-        fp2_set(&xyPmQ.P2.y,1);
-        fp2_set(&xyPmQ.P2.z,0);
+        fp2_set_zero(&xyP.P2.z);
+        fp2_set_one(&xyP.P2.y);
+        fp2_set_zero(&xyP.P2.z);
+        fp2_set_zero(&xyQ.P2.z);
+        fp2_set_one(&xyQ.P2.y);
+        fp2_set_zero(&xyQ.P2.z);
+        fp2_set_zero(&xyPmQ.P2.z);
+        fp2_set_one(&xyPmQ.P2.y);
+        fp2_set_zero(&xyPmQ.P2.z);
         theta_chain_eval_no_help(&V1,&Fu,&xyP,&E00);
         theta_chain_eval_no_help(&V2,&Fu,&xyQ,&E00);
         theta_chain_eval_no_help(&V1m2,&Fu,&xyPmQ,&E00);
@@ -865,15 +865,15 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         assert(bv);
         // TOC(t,"2nd fixed deg");
 
-        fp2_set(&xyP.P2.x,0);
-        fp2_set(&xyP.P2.y,1);
-        fp2_set(&xyP.P2.z,0);
-        fp2_set(&xyQ.P2.x,0);
-        fp2_set(&xyQ.P2.y,1);
-        fp2_set(&xyQ.P2.z,0);
-        fp2_set(&xyPmQ.P2.x,0);
-        fp2_set(&xyPmQ.P2.y,1);
-        fp2_set(&xyPmQ.P2.z,0);
+        fp2_set_zero(&xyP.P2.x);
+        fp2_set_one(&xyP.P2.y);
+        fp2_set_zero(&xyP.P2.z);
+        fp2_set_zero(&xyQ.P2.x);
+        fp2_set_one(&xyQ.P2.y);
+        fp2_set_zero(&xyQ.P2.z);
+        fp2_set_zero(&xyPmQ.P2.x);
+        fp2_set_one(&xyPmQ.P2.y);
+        fp2_set_zero(&xyPmQ.P2.z);
 
         // pushing the torsion points through Fv
         theta_chain_eval_no_help(&V1,&Fv,&xyP,&E00);
@@ -961,15 +961,15 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         // TODO we can do better, the addition has been computed inside lift_basis
         jac_neg(&temp,&xyQ.P1);
         ADD(&xyPmQ.P1,&xyP.P1,&temp,&E0);
-        fp2_set(&xyP.P2.x,0);
-        fp2_set(&xyP.P2.y,1);
-        fp2_set(&xyP.P2.z,0);
-        fp2_set(&xyQ.P2.x,0);
-        fp2_set(&xyQ.P2.y,1);
-        fp2_set(&xyQ.P2.z,0);
-        fp2_set(&xyPmQ.P2.x,0);
-        fp2_set(&xyPmQ.P2.y,1);
-        fp2_set(&xyPmQ.P2.z,0);
+        fp2_set_zero(&xyP.P2.x);
+        fp2_set_one(&xyP.P2.y);
+        fp2_set_zero(&xyP.P2.z);
+        fp2_set_zero(&xyQ.P2.x);
+        fp2_set_one(&xyQ.P2.y);
+        fp2_set_zero(&xyQ.P2.z);
+        fp2_set_zero(&xyPmQ.P2.x);
+        fp2_set_one(&xyPmQ.P2.y);
+        fp2_set_zero(&xyPmQ.P2.z);
         theta_chain_eval_no_help(&V1,&Fu,&xyP,&E00);
         theta_chain_eval_no_help(&V2,&Fu,&xyQ,&E00);
         theta_chain_eval_no_help(&V1m2,&Fu,&xyPmQ,&E00);
@@ -1169,15 +1169,15 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     // TODO we can do better, the addition has been computed inside lift_basis
     jac_neg(&temp,&xyQ.P1);
     ADD(&xyPmQ.P1,&xyP.P1,&temp,&E01.E1);
-    fp2_set(&xyP.P2.x,0);
-    fp2_set(&xyP.P2.y,1);
-    fp2_set(&xyP.P2.z,0);
-    fp2_set(&xyQ.P2.x,0);
-    fp2_set(&xyQ.P2.y,1);
-    fp2_set(&xyQ.P2.z,0);
-    fp2_set(&xyPmQ.P2.x,0);
-    fp2_set(&xyPmQ.P2.y,1);
-    fp2_set(&xyPmQ.P2.z,0);
+    fp2_set_zero(&xyP.P2.x);
+    fp2_set_one(&xyP.P2.y);
+    fp2_set_zero(&xyP.P2.z);
+    fp2_set_zero(&xyQ.P2.x);
+    fp2_set_one(&xyQ.P2.y);
+    fp2_set_zero(&xyQ.P2.z);
+    fp2_set_zero(&xyPmQ.P2.x);
+    fp2_set_one(&xyPmQ.P2.y);
+    fp2_set_zero(&xyPmQ.P2.z);
     theta_chain_eval_no_help(&T1,isog,&xyP,&E01);
     theta_chain_eval_no_help(&T2,isog,&xyQ,&E01);
     theta_chain_eval_no_help(&T1m2,isog,&xyPmQ,&E01);

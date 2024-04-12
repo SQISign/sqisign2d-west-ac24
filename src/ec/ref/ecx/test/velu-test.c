@@ -8,7 +8,7 @@
 #include "ec.h"
 #include "test-basis.h"
 
-void random_scalar(fp_t k, const uint8_t j)
+void random_scalar(digit_t* k, const uint8_t j)
 {
     for(int i = 0; i < NWORDS_FIELD; i++)
         k[i] = rand();
@@ -47,7 +47,7 @@ uint8_t isrational(ec_point_t const T, fp2_t const a)
 }
 
 // ladder3pt computes x(P + [m]Q)
-void ladder3pt(ec_point_t *R, fp_t const m, ec_point_t const *P, ec_point_t const *Q, ec_point_t const *PQ, ec_point_t const *A)
+void ladder3pt(ec_point_t *R, digit_t* const m, ec_point_t const *P, ec_point_t const *Q, ec_point_t const *PQ, ec_point_t const *A)
 {
 	ec_point_t X0, X1, X2;
 	copy_point(&X0, Q);
@@ -80,14 +80,14 @@ int main()
 {
 	
 	fp2_t fp2_0, fp2_1;
-	fp2_set(&fp2_0, 0);
-	fp_mont_setone(fp2_1.re);fp_set(fp2_1.im,0);
+	fp2_set_zero(&fp2_0);
+	fp2_set_zero(&fp2_1);
 
 	int i, j;
 
 	ec_point_t A, B, T;
-	fp2_set(&A.x, 0);
-	fp_mont_setone(A.z.re);fp_set(A.z.im,0);
+	fp2_set_zero(&A.x);
+	fp2_set_one(&A.z);
 	
 	// fp2_add(&A.x, &A.z, &A.x);	// 1
 	// fp2_add(&A.x, &A.x, &A.x);	// 2
@@ -107,23 +107,17 @@ int main()
 	ec_point_t PA, QA, PQA, PB, QB, PQB, RA, RB;
 
 	// Writing the public projective x-coordinate points into Montogmery domain
-	fp2_tomont(&(PA.x), &(xPA));
-	fp_mont_setone(PA.z.re);fp_set(PA.z.im,0);
-	fp2_tomont(&(QA.x), &(xQA));
-	fp_mont_setone(QA.z.re);fp_set(QA.z.im,0);
-	fp2_tomont(&(PQA.x), &(xPQA));
-	fp_mont_setone(PQA.z.re);fp_set(PQA.z.im,0);
+	fp2_set_one(&PA.z);
+	fp2_set_one(&QA.z);
+	fp2_set_one(&PQA.z);
 
 	assert( isrational(PA, a) );
 	assert( isrational(QA, a) );
 	assert( isrational(PQA, a) );
 
-	fp2_tomont(&(PB.x), &(xPB));
-	fp_mont_setone(PB.z.re);fp_set(PB.z.im,0);
-	fp2_tomont(&(QB.x), &(xQB));
-	fp_mont_setone(QB.z.re);fp_set(QB.z.im,0);
-	fp2_tomont(&(PQB.x), &(xPQB));
-	fp_mont_setone(PQB.z.re);fp_set(PQB.z.im,0);
+	fp2_set_one(&PB.z);
+	fp2_set_one(&QB.z);
+	fp2_set_one(&PQB.z);
 
 	assert( !isrational(PB, a) );
 	assert( !isrational(QB, a) );
@@ -149,7 +143,7 @@ int main()
 	assert( !isinfinity(PQA) );
 
 	// --------------------------------------------------------------
-	fp_t m;
+	digit_t m[NWORDS_FIELD];
 	random_scalar(m, 0);
 	ladder3pt(&RA, m, &PA, &QA, &PQA, &A);
 	for (i = 0; i < P_LEN; i++)
@@ -192,8 +186,8 @@ int main()
 		kps_clear(i);
 	};
 
-	fp2_set(&A.x, 0);
-	fp_mont_setone(A.z.re);fp_set(A.z.im,0);
+	fp2_set_zero(&A.x);
+	fp2_set_one(&A.z);
 	
 	// fp2_add(&A.x, &A.z, &A.x);	// 1
 	// fp2_add(&A.x, &A.x, &A.x);	// 2
@@ -209,23 +203,17 @@ int main()
 
 	coeff(&a, A);
 	// Writing the public projective x-coordinate points into Montogmery domain
-	fp2_tomont(&(PA.x), &(xPA));
-	fp_mont_setone(PA.z.re);fp_set(PA.z.im,0);
-	fp2_tomont(&(QA.x), &(xQA));
-	fp_mont_setone(QA.z.re);fp_set(QA.z.im,0);
-	fp2_tomont(&(PQA.x), &(xPQA));
-	fp_mont_setone(PQA.z.re);fp_set(PQA.z.im,0);
+	fp2_set_one(&PA.z);
+	fp2_set_one(&QA.z);
+	fp2_set_one(&PQA.z);
 
 	assert( isrational(PA, a) );
 	assert( isrational(QA, a) );
 	assert( isrational(PQA, a) );
 
-	fp2_tomont(&(PB.x), &(xPB));
-	fp_mont_setone(PB.z.re);fp_set(PB.z.im,0);
-	fp2_tomont(&(QB.x), &(xQB));
-	fp_mont_setone(QB.z.re);fp_set(QB.z.im,0);
-	fp2_tomont(&(PQB.x), &(xPQB));
-	fp_mont_setone(PQB.z.re);fp_set(PQB.z.im,0);
+	fp2_set_one(&PB.z);
+	fp2_set_one(&QB.z);
+	fp2_set_one(&PQB.z);
 
 	assert( !isrational(PB, a) );
 	assert( !isrational(QB, a) );

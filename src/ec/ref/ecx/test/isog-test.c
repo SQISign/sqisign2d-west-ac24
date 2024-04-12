@@ -18,14 +18,11 @@ bool curve_equal(ec_curve_t* E1, ec_curve_t* E2){
 	return fp2_is_equal(&a, &b);
 }
 
-void random_scalar(fp_t k)
+void random_scalar(digit_t* k)
 {
     for(int i = 0; i < NWORDS_FIELD; i++)
         k[i] = rand();
 }
-
-
-
 
 // Affine Montgomery coefficient computation (A + 2C : 4C) --> A/C
 void coeff(fp2_t *B, ec_curve_t const *E)
@@ -41,7 +38,7 @@ void coeff(fp2_t *B, ec_curve_t const *E)
 }
 
 // ladder3pt computes x(P + [m]Q)
-void ladder3pt(ec_point_t *R, fp_t const m, ec_point_t const *P, ec_point_t const *Q, ec_point_t const *PQ, ec_point_t const *A)
+void ladder3pt(ec_point_t *R, digit_t * const m, ec_point_t const *P, ec_point_t const *Q, ec_point_t const *PQ, ec_point_t const *A)
 {
 	ec_point_t X0, X1, X2;
 	copy_point(&X0, Q);
@@ -108,11 +105,9 @@ int main(int argc, char* argv[])
 
 	// Initial curve with A = 0
 	ec_curve_t E;
-	fp2_set(&E.A, 0);
-	fp_mont_setone(E.C.re);
-	fp_set(E.C.im, 0);
+	fp2_set_zero(&E.A);
+	fp2_set_one(&E.C);
 
-	
 	for(int iter = 0; iter < TEST_LOOPS; iter++){
 		
 		printf("[%3d%%] Testing basis generation", 100 * iter / (int)TEST_LOOPS);
@@ -168,7 +163,7 @@ int main(int argc, char* argv[])
 		assert(ec_is_zero(&PpQ2));
 
 		// Check the complete_basis function
-		fp_t k;
+		digit_t k[NWORDS_FIELD];
 		random_scalar(k);
 		ladder3pt(&R, k, &B2.P, &B2.Q, &B2.PmQ, &A24);
 		ec_complete_basis_2(&B2, &E, &R);
@@ -372,9 +367,8 @@ int main(int argc, char* argv[])
 	// ----------------- TEST FOR NONZERO 2-ISOGENIES VS 4-ISOGENIES----------------- //
 
 	// Initial curve with A = 0
-	fp2_set(&E.A, 0);
-	fp_mont_setone(E.C.re);
-	fp_set(E.C.im, 0);
+	fp2_set_zero(&E.A);
+	fp2_set_one(&E.C);
 
 	for(int iter = 0; iter < TEST_LOOPS; iter++){
 
@@ -486,9 +480,8 @@ int main(int argc, char* argv[])
 	// ----------------- TEST FOR NONZERO 2^f ISOGENIES ----------------- //
 
 	// Initial curve with A = 0
-	fp2_set(&E.A, 0);
-	fp_mont_setone(E.C.re);
-	fp_set(E.C.im, 0);
+	fp2_set_zero(&E.A);
+	fp2_set_one(&E.C);
 
 	for(int iter = 0; iter < TEST_LOOPS; iter++){
 
@@ -527,7 +520,7 @@ int main(int argc, char* argv[])
 
 		// Generate 3^g-basis and a 2^f-kernel point
 		ec_basis_t B3;
-		fp_t k;
+		digit_t k[NWORDS_FIELD];
 		ec_point_t R;
 		ec_curve_to_basis_3(&B3, &E);
 		random_scalar(k);
@@ -584,9 +577,8 @@ int main(int argc, char* argv[])
 	// ----------------- TEST FOR 2^f ISOGENIES ----------------- //
 
 	// Initial curve with A = 0
-	fp2_set(&E.A, 0);
-	fp_mont_setone(E.C.re);
-	fp_set(E.C.im, 0);
+	fp2_set_zero(&E.A);
+	fp2_set_one(&E.C);
 
     cycles = 0;
 	for(int iter = 0; iter < TEST_LOOPS; iter++){
@@ -607,7 +599,7 @@ int main(int argc, char* argv[])
 
 		// Generate 3^g-basis and a 2^f-kernel point
 		ec_basis_t B3;
-		fp_t k;
+		digit_t k[NWORDS_FIELD];
 		ec_point_t R;
 		ec_curve_to_basis_3(&B3, &E);
 		random_scalar(k);
@@ -665,9 +657,8 @@ int main(int argc, char* argv[])
 	// ----------------- TEST FOR 3^g ISOGENIES ----------------- //
 
 	// Initial curve with A = 0
-	fp2_set(&E.A, 0);
-	fp_mont_setone(E.C.re);
-	fp_set(E.C.im, 0);
+	fp2_set_zero(&E.A);
+	fp2_set_one(&E.C);
 
 	for(int iter = 0; iter < TEST_LOOPS; iter++){
 
@@ -688,7 +679,7 @@ int main(int argc, char* argv[])
 
 		// Compute bases and a kernel point
 		ec_basis_t B2, B3;
-		fp_t k;
+		digit_t k[NWORDS_FIELD];
 		ec_point_t R;
 		ec_curve_to_basis_2(&B2, &E,POWER_OF_2);
 		ec_curve_to_basis_3(&B3, &E);
@@ -750,9 +741,8 @@ int main(int argc, char* argv[])
 		printf("\r\x1b[K");
 
 		// Initial curve with A = 0
-		fp2_set(&E.A, 0);
-		fp_mont_setone(E.C.re);
-		fp_set(E.C.im, 0);
+		fp2_set_zero(&E.A);
+		fp2_set_one(&E.C);
 
 		// Curve coefficient A24=(A+2C:4C)
 		ec_point_t A24;
@@ -767,19 +757,14 @@ int main(int argc, char* argv[])
 
 		// Compute kernel points
 		ec_point_t P, Q, PQ, R_plus, R_minus;
-		fp_t k;
-		fp2_tomont(&P.x, &xPA);
-		fp2_tomont(&Q.x, &xQA);
-		fp2_tomont(&PQ.x, &xPQA);
-		fp_mont_setone(P.z.re);
-		fp_set(P.z.im, 0);
+		digit_t k[NWORDS_FIELD];
+		fp2_set_one(&P.z);
+
 		fp2_copy(&Q.z, &P.z);
 		fp2_copy(&PQ.z, &P.z);
 		random_scalar(k);
 		ladder3pt(&R_plus, k, &P, &Q, &PQ, &A24);
-		fp2_tomont(&P.x, &xPB);
-		fp2_tomont(&Q.x, &xQB);
-		fp2_tomont(&PQ.x, &xPQB);
+
 		random_scalar(k);
 		ladder3pt(&R_minus, k, &P, &Q, &PQ, &A24);
 
@@ -881,9 +866,8 @@ int main(int argc, char* argv[])
 	// ----------------- TEST FOR ISOMORPHISMS ----------------- //
 
 	// Initial curve with A = 0
-	fp2_set(&E.A, 0);
-	fp_mont_setone(E.C.re);
-	fp_set(E.C.im, 0);
+	fp2_set_zero(&E.A);
+	fp2_set_one(&E.C);
 
 	for(int iter = 0; iter < TEST_LOOPS; iter++){
 
@@ -987,7 +971,7 @@ int main(int argc, char* argv[])
 
 		// Compute a 2^e-isogeny
 		ec_isog_even_t isog;
-		fp_t k;
+		digit_t k[NWORDS_FIELD];
 		random_scalar(k);
 		ladder3pt(&R, k, &B.P, &B.Q, &B.PmQ, &A24);
 		fp2_copy(&isog.curve.A, &E.A);

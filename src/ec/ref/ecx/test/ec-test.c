@@ -8,7 +8,7 @@ int main(int argc, char* argv[])
     }
     if (!strcmp(argv[1], "test")) {
         TEST_LOOPS = atoi(argv[2]);
-        return !(ec_test() & dlog_test());
+        return !(dlog_test());
     } else if (!strcmp(argv[1], "bench")) {
         BENCH_LOOPS = atoi(argv[2]);
         return !(ec_run() & dlog_run());

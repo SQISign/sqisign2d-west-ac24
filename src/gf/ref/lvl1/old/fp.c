@@ -1,8 +1,7 @@
 #include "include/fp.h"
 
 // TODO: move to prime specific file
-const uint64_t p[NWORDS_FIELD] = { 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x1Afffffffffffff };
-
+const uint64_t p[NWORDS_FIELD] = { 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x4ffffffffffffff };
 
 void fp_set(digit_t* x, const digit_t val)
 { // Set field element x = val, where val has wordsize

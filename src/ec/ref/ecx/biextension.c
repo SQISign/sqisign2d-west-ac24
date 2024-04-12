@@ -71,15 +71,6 @@ void cubicalADD(ec_point_t* R, ec_point_t const* P, ec_point_t const* Q, fp2_t c
     fp2_mul(&R->x, ixPQ, &t2);
 }
 
-/*
-void ec_anti_normalize(ec_point_t* P){
-    fp2_inv(&P->x);
-    fp2_mul(&P->z, &P->z, &P->x);
-    fp_mont_setone(P->x.re);
-    fp_set(P->x.im, 0);
-}
-*/
-
 // given cubical reps of P+Q, Q, P, return P+2Q, 2Q
 void biextDBL(ec_point_t* PQQ, ec_point_t* QQ, ec_point_t const* PQ, ec_point_t const* Q, fp2_t const* ixP, ec_point_t const* A24)
 {
@@ -209,8 +200,8 @@ void to_cubical_i(ec_point_t* Q, ec_point_t* P, fp2_t* ixP, fp2_t* ixQ) {
     fp2_mul(ixQ, &Q->z, &t[2]);
     fp2_mul(&P->x, &P->x, &t[1]);
     fp2_mul(&Q->x, &Q->x, &t[3]);
-    fp2_setone(&P->z);
-    fp2_setone(&Q->z);
+    fp2_set_one(&P->z);
+    fp2_set_one(&Q->z);
 }
 
 /* (Do we need this?)

@@ -46,10 +46,11 @@ void xisog_2(ec_point_t* B, ec_point_t const P)
 // TODO we may be more efficient than that ? 
 void xisog_2_singular(ec_point_t* B24, ec_point_t A24){
 	fp2_t t0, four;
-	fp_mont_setone(four.re);
-	fp_set(four.im, 0);
-	fp2_add(&four, &four, &four);
-	fp2_add(&four, &four, &four);
+	// fp_mont_setone(four.re);
+	// fp_set(four.im, 0);
+	// fp2_add(&four, &four, &four);
+	// fp2_add(&four, &four, &four);
+	fp2_set_small(&four, 4);
 	fp2_add(&t0, &A24.x, &A24.x);
 	fp2_sub(&t0, &t0, &A24.z);
 	fp2_add(&t0, &t0, &t0);
