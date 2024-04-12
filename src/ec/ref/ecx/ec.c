@@ -190,8 +190,13 @@ void swap_points(ec_point_t* P, ec_point_t* Q, const digit_t option)
 { // Swap points
   // If option = 0 then P <- P and Q <- Q, else if option = 0xFF...FF then P <- Q and Q <- P
     // digit_t temp;
-    fp2_cswap(&(P->x), &(Q->x), option);
-    fp2_cswap(&(P->z), &(Q->z), option);
+    // TODO
+    uint32_t ctl;
+    if (option != 0){
+        ctl = 0xFFFFFFFF;
+    }
+    fp2_cswap(&(P->x), &(Q->x), ctl);
+    fp2_cswap(&(P->z), &(Q->z), ctl);
 }
 
 void copy_point(ec_point_t* P, ec_point_t const* Q)

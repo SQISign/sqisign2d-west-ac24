@@ -36,6 +36,45 @@ bool fp_test(void)
     else { printf("  GF(p) equality tests... FAILED"); printf("\n"); return false; }
     printf("\n");
 
+    // Test half
+    passed = 1;
+    for (n=0; n<TEST_LOOPS; n++)
+    {
+        fp_random_test(&a);
+        
+        fp_add(&b, &a, &a);
+        fp_half(&c, &b);
+        if (fp_is_equal(&a, &c) == 0) { passed=0; break; }
+    
+        fp_random_test(&a);
+        
+        fp_half(&b, &a);
+        fp_add(&c, &b, &b);
+        if (fp_is_equal(&a, &c) == 0) { passed=0; break; }
+    }
+    if (passed==1) printf("  GF(p) half test ................................................. PASSED");
+    else { printf("  GF(p) half tests... FAILED"); printf("\n"); return false; }
+    printf("\n");
+
+    // Test set small
+    passed = 1;
+    for (n=0; n<TEST_LOOPS; n++)
+    {
+        fp_set_one(&a);
+        fp_add(&b, &a, &a);
+        fp_set_small(&c, (uint32_t)2);
+        if (fp_is_equal(&b, &c) == 0) { passed=0; break; }
+    
+        fp_set_one(&a);
+        fp_add(&b, &a, &a);
+        fp_add(&b, &b, &b);
+        fp_set_small(&c, 4);
+        if (fp_is_equal(&b, &c) == 0) { passed=0; break; }
+    }
+    if (passed==1) printf("  GF(p) set small test ............................................ PASSED");
+    else { printf("  GF(p) set small... FAILED"); printf("\n"); return false; }
+    printf("\n");
+
     // Field addition
     passed = 1;
     for (n=0; n<TEST_LOOPS; n++)

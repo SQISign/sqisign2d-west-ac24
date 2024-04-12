@@ -17,7 +17,6 @@ void fp2_set_zero(fp2_t* x)
 
 void fp2_set_one(fp2_t* x)
 {
-
     fp_set_one(&(x->re));
     fp_set_zero(&(x->im));
 }
@@ -39,7 +38,7 @@ bool fp2_is_equal(const fp2_t* a, const fp2_t* b)
 bool fp2_is_one(const fp2_t* a)
 { // Is a GF(p^2) element one?
   // Returns 1 (true) if a=0, 0 (false) otherwise
-    return fp_is_equal(&(a->re), &ONE) && fp_is_equal(&(a->im), &ZERO);
+    return fp_is_equal(&(a->re), &ONE) & fp_is_zero(&(a->im));
 }
 
 void fp2_copy(fp2_t* x, const fp2_t* y)
@@ -273,11 +272,11 @@ int fp2_cmp(fp2_t* a, fp2_t* b){
 
 // exponentiation 
 // TODO could be improved
-void fp2_pow(fp2_t *out,const fp2_t * x,const uint64_t *exp,const int size) {
+void fp2_pow(fp2_t *out,const fp2_t * x,const digit_t *exp,const int size) {
 
     fp2_t acc;
-    uint64_t exp_tmp[size];
-    uint64_t bit;
+    digit_t exp_tmp[size];
+    digit_t bit;
 
     memcpy((digit_t*)exp_tmp, (digit_t*)exp, size*RADIX/8);
     fp2_copy(&acc, x);
@@ -294,7 +293,7 @@ void fp2_pow(fp2_t *out,const fp2_t * x,const uint64_t *exp,const int size) {
 
 }
 
-void digit_print(char *name, uint64_t *a) {
+void digit_print(char *name, digit_t *a) {
     printf("%s0x = ", name);
     for(int i = NWORDS_FIELD - 1; i >=0; i--)
         printf("%016llx", a[i]);

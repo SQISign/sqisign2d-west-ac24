@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
 
 		// Construct basis for 2^f torsion
 		ec_basis_t B2;
-		ec_curve_to_basis_2(&B2, &E,POWER_OF_2);
+		ec_curve_to_basis_2(&B2, &E, POWER_OF_2);
 
 		// Check that basis is rational
 		assert(ec_is_on_curve(&E, &B2.P));

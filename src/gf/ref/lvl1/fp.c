@@ -11,7 +11,7 @@ fp_sqrt(fp_t * x)
 bool
 fp_is_square(const fp_t * a)
 {
-    return -1 != gf5248_legendre(a);
+    return 1 == gf5248_legendre(a) || 0 == gf5248_legendre(a);
 }
 
 // TODO should we modify fp_inv to take an out
