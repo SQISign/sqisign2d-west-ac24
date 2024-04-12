@@ -208,6 +208,8 @@ bool dlog_test()
     fp2_set_one(&PQ.z);
 
     fp2_set_one(&AC.C);
+    memcpy(tpFdiv2, THREEpFdiv2, NWORDS_ORDER*RADIX/8);
+    memcpy(tpF, THREEpF, NWORDS_ORDER*RADIX/8);
 
     copy_point(&PQ2.P, &P);
     copy_point(&PQ2.Q, &Q);
@@ -325,6 +327,9 @@ bool dlog_run()
     printf("Benchmarking dlog2: \n\n");
 
     // dlog2 computation
+    fp2_w64(&P.x,  xP2_data);
+    fp2_w64(&Q.x,  xQ2_data);
+    fp2_w64(&PQ.x, xPQ2_data);
     fp2_set_one(&P.z);
     fp2_set_one(&Q.z);
     fp2_set_one(&PQ.z);
@@ -352,6 +357,9 @@ bool dlog_run()
 
     // dlog3 computation
 
+    fp2_w64(&P.x,  xP3_data);
+    fp2_w64(&Q.x,  xQ3_data);
+    fp2_w64(&PQ.x, xPQ3_data);
     fp2_set_one(&P.z);
     fp2_set_one(&Q.z);
     fp2_set_one(&PQ.z);
