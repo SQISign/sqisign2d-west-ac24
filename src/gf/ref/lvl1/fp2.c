@@ -48,6 +48,11 @@ void fp2_copy(fp2_t* x, const fp2_t* y)
     fp_copy(&(x->im), &(y->im));
 }
 
+void fp2_w64(fp2_t * out, const uint64_t data[2][4]){
+    fp_w64(&(out->re), data[0]);
+    fp_w64(&(out->im), data[1]);
+}
+
 void fp2_cswap(fp2_t *a, fp2_t *b, uint32_t ctl){
     fp_swap(&(a->re), &(b->re), ctl);
     fp_swap(&(a->im), &(b->im), ctl);

@@ -13,6 +13,8 @@ typedef struct fp2_t {
 void fp2_cswap(fp2_t *a, fp2_t *b, const uint32_t ctl);
 
 void fp2_copy(fp2_t* x, const fp2_t* y);
+void fp2_w64(fp2_t* out, const uint64_t data[2][4]);
+
 void fp2_set_small(fp2_t* x, const uint32_t val);
 void fp2_set_one(fp2_t* x);
 void fp2_set_zero(fp2_t *a);
