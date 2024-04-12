@@ -21,6 +21,8 @@ bool ec_is_zero(ec_point_t const* P)
 void ec_init(ec_point_t* P)
 { // Initialize point as identity element (1:0)
     fp2_set_one(&(P->x));
+    fp2_set_zero(&(P->z));
+
 }
 
 void ec_set_zero(ec_point_t *P)
@@ -189,8 +191,16 @@ void swap_points(ec_point_t* P, ec_point_t* Q, const digit_t option)
   // If option = 0 then P <- P and Q <- Q, else if option = 0xFF...FF then P <- Q and Q <- P
     // digit_t temp;
 
-    fp2_cswap(&(P->x), &(Q->x), option);
-    fp2_cswap(&(P->z), &(Q->z), option);
+    // fp2_cswap(&(P->x), &(Q->x), option);
+    // fp2_cswap(&(P->z), &(Q->z), option);
+
+    if (option != 0){
+            ec_point_t tmp1;
+            copy_point(&tmp1, P);
+            copy_point(P, Q);
+            copy_point(Q, &tmp1);
+    }
+
 
     // for (int i = 0; i < NWORDS_FIELD; i++) {
     //     temp = option & (P->x.re[i] ^ Q->x.re[i]);
@@ -648,7 +658,9 @@ void ec_j_inv(fp2_t* j_inv, const ec_curve_t* curve){
 
 static void jac_init(jac_point_t* P)
 { // Initialize Montgomery in Jacobian coordinates as identity element (0:1:0)
+    fp2_set_zero(&(P->x));
     fp2_set_one(&(P->y));
+    fp2_set_zero(&(P->z));
 }
 
 bool is_jac_equal(const jac_point_t* P, const jac_point_t* Q)

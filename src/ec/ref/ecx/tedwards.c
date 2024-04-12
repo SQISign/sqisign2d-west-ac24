@@ -13,7 +13,11 @@ void ted_init(ted_point_t* P)
     // memset((digit_t*)P, 0, NWORDS_FIELD*RADIX*8/8);
     // one[0] = 1;
     // fp_tomont(P->x.re, one);
-    fp2_set_one(&(P->x));
+    fp2_set_zero(&(P->x));
+    fp2_set_one(&(P->y));
+    fp2_set_one(&(P->z));
+    fp2_set_zero(&(P->t));
+
 }
 
 void copy_ted_point(ted_point_t* P, ted_point_t const* Q)
