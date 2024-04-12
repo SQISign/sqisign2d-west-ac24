@@ -69,7 +69,7 @@ int biextension_test()
     TOC_clock(t,"Weil pairing");
 
     printf("Testing order of Weil pairing\n");
-    fp2_setone(&one);
+    fp2_set_one(&one);
     fp2_exp_2e(&r2, e-1, &r1);
     assert(!fp2_is_equal(&r2, &one));
     fp2_exp_2e(&r2, e, &r1);

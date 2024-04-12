@@ -58,8 +58,7 @@ static void difference_point(ec_point_t* PQ, const ec_point_t* P, const ec_point
     
     fp2_sub(&PQ->z, &P->x, &Q->x);  // P - Q
     fp2_mul(&t2, &P->x, &Q->x);     // P*Q
-    fp_mont_setone(t1.re);
-    fp_set(t1.im, 0);
+    fp2_set_one(&t1);
     fp2_sub(&t3, &t2, &t1);         // P*Q-1
     fp2_mul(&t0, &PQ->z, &t3);      // (P-Q)*(P*Q-1)
     fp2_sqr(&PQ->z, &PQ->z);        // (P-Q)^2
@@ -84,15 +83,14 @@ void ec_curve_to_basis_2_to_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int *h
     // normalize
     ec_curve_normalize_A24(curve);
 
-    fp_mont_setone(x.re);
-    fp_set(x.im, 0);
+    fp2_set_one(&x);
 
     int count=0; 
 
     // Find P
     while(1){
         count++;
-        fp_add(x.im, x.re, x.im);
+        fp_add(&(x.im), &(x.re), &(x.im));
 
         // Check if point is rational
         fp2_sqr(&t0, &curve->C);
@@ -104,8 +102,7 @@ void ec_curve_to_basis_2_to_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int *h
         fp2_mul(&t1, &t1, &x);
         if(fp2_is_square(&t1)){
             fp2_copy(&P.x, &x);
-            fp_mont_setone(P.z.re);
-            fp_set(P.z.im, 0);
+            fp2_set_one(&P.z);
         }
         else
             continue;
@@ -133,7 +130,7 @@ void ec_curve_to_basis_2_to_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int *h
     // Find Q
     while(1){
         count++;
-        fp_add(x.im, x.re, x.im);
+        fp_add(&(x.im), &(x.re), &(x.im));
 
         // Check if point is rational
         fp2_sqr(&t0, &curve->C);
@@ -145,8 +142,7 @@ void ec_curve_to_basis_2_to_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int *h
         fp2_mul(&t1, &t1, &x);
         if(fp2_is_square(&t1)){
             fp2_copy(&Q.x, &x);
-            fp_mont_setone(Q.z.re);
-            fp_set(Q.z.im, 0);
+            fp2_set_one(&Q.z);
         }
         else
             continue;
@@ -188,8 +184,7 @@ void ec_curve_to_basis_2_to_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int *h
     fp2_mul(&Q.x, &Q.x, &P.z);
     fp2_mul(&Q.x, &Q.x, &curve->C);
     fp2_mul(&E.A, &E.A, &t0);
-    fp_mont_setone(P.z.re);
-    fp_set(P.z.im, 0);
+    fp2_set_one(&P.z);
     fp2_copy(&Q.z, &P.z);
     fp2_copy(&E.C, &P.z);
 
@@ -207,17 +202,15 @@ void ec_curve_to_basis_2_from_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int 
     // normalize
     ec_curve_normalize_A24(curve);
 
-    fp_mont_setone(x.re);
-    fp_set(x.im, 0);
+    fp2_set_one(&x);
 
     int count=0; 
 
     for (int i=0;i<hint[0];i++) {
-        fp_add(x.im, x.re, x.im);
+        fp_add(&(x.im), &(x.re), &(x.im));
     }
     fp2_copy(&P.x, &x);
-    fp_mont_setone(P.z.re);
-    fp_set(P.z.im, 0);
+    fp2_set_one(&P.z);
 
     // getting the actual point 
     // Clear odd factors from the order
@@ -231,12 +224,11 @@ void ec_curve_to_basis_2_from_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int 
 
 
     for (int i=0;i<hint[1];i++) {
-        fp_add(x.im, x.re, x.im);
+        fp_add(&(x.im), &(x.re), &(x.im));
     }
 
     fp2_copy(&Q.x, &x);
-    fp_mont_setone(Q.z.re);
-    fp_set(Q.z.im, 0);
+    fp2_set_one(&Q.z);
 
     // Clear odd factors from the order
     xMULv2(&Q, &Q, p_cofactor_for_2f, P_COFACTOR_FOR_2F_BITLENGTH, &curve->A24);
@@ -258,8 +250,7 @@ void ec_curve_to_basis_2_from_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int 
     fp2_mul(&Q.x, &Q.x, &P.z);
     fp2_mul(&Q.x, &Q.x, &curve->C);
     fp2_mul(&E.A, &E.A, &t0);
-    fp_mont_setone(P.z.re);
-    fp_set(P.z.im, 0);
+    fp2_set_one(&P.z);
     fp2_copy(&Q.z, &P.z);
     fp2_copy(&E.C, &P.z);
 
@@ -276,12 +267,11 @@ void ec_curve_to_basis_2(ec_basis_t *PQ2, ec_curve_t *curve,int f){
     // normalize
     ec_curve_normalize_A24(curve);
 
-    fp_mont_setone(x.re);
-    fp_set(x.im, 0);
+    fp2_set_one(&x);
 
     // Find P
     while(1){
-        fp_add(x.im, x.re, x.im);
+        fp_add(&(x.im), &(x.re), &(x.im));
 
         // Check if point is rational
         fp2_sqr(&t0, &curve->C);
@@ -293,8 +283,7 @@ void ec_curve_to_basis_2(ec_basis_t *PQ2, ec_curve_t *curve,int f){
         fp2_mul(&t1, &t1, &x);
         if(fp2_is_square(&t1)){
             fp2_copy(&P.x, &x);
-            fp_mont_setone(P.z.re);
-            fp_set(P.z.im, 0);
+            fp2_set_one(&P.z);
         }
         else
             continue;
@@ -318,7 +307,7 @@ void ec_curve_to_basis_2(ec_basis_t *PQ2, ec_curve_t *curve,int f){
     
     // Find Q
     while(1){
-        fp_add(x.im, x.re, x.im);
+        fp_add(&(x.im), &(x.re), &(x.im));
 
         // Check if point is rational
         fp2_sqr(&t0, &curve->C);
@@ -330,8 +319,7 @@ void ec_curve_to_basis_2(ec_basis_t *PQ2, ec_curve_t *curve,int f){
         fp2_mul(&t1, &t1, &x);
         if(fp2_is_square(&t1)){
             fp2_copy(&Q.x, &x);
-            fp_mont_setone(Q.z.re);
-            fp_set(Q.z.im, 0);
+            fp2_set_one(&Q.z);
         }
         else
             continue;
@@ -370,8 +358,7 @@ void ec_curve_to_basis_2(ec_basis_t *PQ2, ec_curve_t *curve,int f){
     fp2_mul(&Q.x, &Q.x, &P.z);
     fp2_mul(&Q.x, &Q.x, &curve->C);
     fp2_mul(&E.A, &E.A, &t0);
-    fp_mont_setone(P.z.re);
-    fp_set(P.z.im, 0);
+    fp2_set_one(&P.z);
     fp2_copy(&Q.z, &P.z);
     fp2_copy(&E.C, &P.z);
 
@@ -398,10 +385,9 @@ void ec_complete_basis_2(ec_basis_t* PQ2, const ec_curve_t* curve, const ec_poin
         xDBLv2(&P2, &P2, &A24);
 
     // Find Q
-    fp_mont_setone(x.re);
-    fp_set(x.im, 0);
+    fp2_set_one(&x);
     while(1){
-        fp_add(x.im, x.re, x.im);
+        fp_add(&(x.im), &(x.re), &(x.im));
 
         // Check if point is rational
         fp2_sqr(&t0, &curve->C);
@@ -413,8 +399,7 @@ void ec_complete_basis_2(ec_basis_t* PQ2, const ec_curve_t* curve, const ec_poin
         fp2_mul(&t1, &t1, &x);
         if(fp2_is_square(&t1)){
             fp2_copy(&Q.x, &x);
-            fp_mont_setone(Q.z.re);
-            fp_set(Q.z.im, 0);
+            fp2_set_one(&Q.z);
         }
         else
             continue;
@@ -450,8 +435,7 @@ void ec_complete_basis_2(ec_basis_t* PQ2, const ec_curve_t* curve, const ec_poin
     fp2_mul(&Q.x, &Q.x, &P->z);
     fp2_mul(&Q.x, &Q.x, &curve->C);
     fp2_mul(&E.A, &E.A, &t0);
-    fp_mont_setone(PP.z.re);
-    fp_set(PP.z.im, 0);
+    fp2_set_one(&PP.z);
     fp2_copy(&Q.z, &PP.z);
     fp2_copy(&E.C, &PP.z);
 
@@ -475,12 +459,11 @@ void ec_curve_to_basis_3(ec_basis_t* PQ3, const ec_curve_t* curve){
     fp2_sub(&A3.z, &A24.x, &A24.z);
     fp2_copy(&A3.x, &A24.x);
 
-    fp_mont_setone(x.re);
-    fp_set(x.im, 0);
+    fp2_set_one(&x);
 
     // Find P
     while(1){
-        fp_add(x.im, x.re, x.im);
+        fp_add(&(x.im), &(x.re), &(x.im));
 
         // Check if point is rational
         fp2_sqr(&t0, &curve->C);
@@ -492,8 +475,7 @@ void ec_curve_to_basis_3(ec_basis_t* PQ3, const ec_curve_t* curve){
         fp2_mul(&t1, &t1, &x);
         if(fp2_is_square(&t1)){
             fp2_copy(&P.x, &x);
-            fp_mont_setone(P.z.re);
-            fp_set(P.z.im, 0);
+            fp2_set_one(&P.z);
         }
         else
             continue;
@@ -513,7 +495,7 @@ void ec_curve_to_basis_3(ec_basis_t* PQ3, const ec_curve_t* curve){
     
     // Find Q
     while(1){
-        fp_add(x.im, x.re, x.im);
+        fp_add(&(x.im), &(x.re), &(x.im));
 
         // Check if point is rational
         fp2_sqr(&t0, &curve->C);
@@ -525,8 +507,7 @@ void ec_curve_to_basis_3(ec_basis_t* PQ3, const ec_curve_t* curve){
         fp2_mul(&t1, &t1, &x);
         if(fp2_is_square(&t1)){
             fp2_copy(&Q.x, &x);
-            fp_mont_setone(Q.z.re);
-            fp_set(Q.z.im, 0);
+            fp2_set_one(&Q.z);
         }
         else
             continue;
@@ -564,8 +545,7 @@ void ec_curve_to_basis_3(ec_basis_t* PQ3, const ec_curve_t* curve){
     fp2_mul(&Q.x, &Q.x, &P.z);
     fp2_mul(&Q.x, &Q.x, &curve->C);
     fp2_mul(&E.A, &E.A, &t0);
-    fp_mont_setone(P.z.re);
-    fp_set(P.z.im, 0);
+    fp2_set_one(&P.z);
     fp2_copy(&Q.z, &P.z);
     fp2_copy(&E.C, &P.z);
 
@@ -589,12 +569,11 @@ void ec_curve_to_basis_6(ec_basis_t* PQ6, const ec_curve_t* curve){
     fp2_sub(&A3.z, &A24.x, &A24.z);
     fp2_copy(&A3.x, &A24.x);
 
-    fp_mont_setone(x.re);
-    fp_set(x.im, 0);
+    fp2_set_one(&x);
 
     // Find P
     while(1){
-        fp_add(x.im, x.re, x.im);
+        fp_add(&(x.im), &(x.re), &(x.im));
 
         // Check if point is rational
         fp2_sqr(&t0, &curve->C);
@@ -606,8 +585,7 @@ void ec_curve_to_basis_6(ec_basis_t* PQ6, const ec_curve_t* curve){
         fp2_mul(&t1, &t1, &x);
         if(fp2_is_square(&t1)){
             fp2_copy(&P.x, &x);
-            fp_mont_setone(P.z.re);
-            fp_set(P.z.im, 0);
+            fp2_set_one(&P.z);
         }
         else
             continue;
@@ -634,7 +612,7 @@ void ec_curve_to_basis_6(ec_basis_t* PQ6, const ec_curve_t* curve){
 
     // Find Q
     while(1){
-        fp_add(x.im, x.re, x.im);
+        fp_add(&(x.im), &(x.re), &(x.im));
 
         // Check if point is rational
         fp2_sqr(&t0, &curve->C);
@@ -646,8 +624,7 @@ void ec_curve_to_basis_6(ec_basis_t* PQ6, const ec_curve_t* curve){
         fp2_mul(&t1, &t1, &x);
         if(fp2_is_square(&t1)){
             fp2_copy(&Q.x, &x);
-            fp_mont_setone(Q.z.re);
-            fp_set(Q.z.im, 0);
+            fp2_set_one(&Q.z);
         }
         else
             continue;
@@ -695,8 +672,7 @@ void ec_curve_to_basis_6(ec_basis_t* PQ6, const ec_curve_t* curve){
     fp2_mul(&Q.x, &Q.x, &P.z);
     fp2_mul(&Q.x, &Q.x, &curve->C);
     fp2_mul(&E.A, &E.A, &t0);
-    fp_mont_setone(P.z.re);
-    fp_set(P.z.im, 0);
+    fp2_set_one(&P.z);
     fp2_copy(&Q.z, &P.z);
     fp2_copy(&E.C, &P.z);
 

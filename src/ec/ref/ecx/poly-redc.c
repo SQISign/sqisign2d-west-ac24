@@ -17,7 +17,7 @@ void reciprocal(poly h, fp2_t *c, const poly f, const int lenf, const int n){
     for(i = 0; i < lenf; i++)
       fp2_copy(&fpad[i], &f[i]);
     for(i = lenf; i < n; i++)
-      fp2_set(&fpad[i], 0);
+      fp2_set_zero(&fpad[i]);
     reciprocal(h, c, fpad, n, n);
     return;
   }
@@ -25,7 +25,7 @@ void reciprocal(poly h, fp2_t *c, const poly f, const int lenf, const int n){
   // Trivial case
   if(n == 0)
   {
-    fp2_set(&*c, 0);
+    fp2_set_zero(&*c);
     return;
   }
 
@@ -33,7 +33,7 @@ void reciprocal(poly h, fp2_t *c, const poly f, const int lenf, const int n){
   if(n == 1)
   {
     fp2_copy(&*c, &f[0]);
-    fp_mont_setone(h[0].re);fp_set(h[0].im,0);
+    fp2_set_one(&h[0]);
     return;
   }
 
@@ -131,7 +131,7 @@ void poly_redc(poly h, const poly g, const int leng, const poly f, const int len
     for(i = 0; i < leng; i++)
       fp2_copy(&h[i], &g[i]);
     for(i = leng; i < lenf-1; i++)
-      fp2_set(&h[i], 0);
+      fp2_set_zero(&h[i]);
     return;
   }
 
@@ -250,7 +250,7 @@ void reciprocal_tree(poly *R, fp2_t *A, const int leng, const poly H[], const in
     for(i = 0; i < lenr && i < DEG[root]+1; i++)
       fp2_copy(&R[root][i], &H[root][DEG[root]-i]);
     for(i = DEG[root]+1; i < lenr; i++){
-      fp2_set(&R[root][i], 0);
+      fp2_set_zero(&R[root][i]);
     }
     reciprocal(R[root], &(A[root]), R[root], lenr, lenr);
   }

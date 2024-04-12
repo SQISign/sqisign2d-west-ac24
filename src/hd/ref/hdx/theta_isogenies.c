@@ -20,19 +20,17 @@ void theta_print(char *name, theta_point_t P) {
 
 void fp2_sett(fp2_t *a,int t) {
     if (t==1) {
-        fp2_setone(a);
+        fp2_set_one(a);
     }
     else if (t==0) {
-        fp2_set(a,0);
+        fp2_set_zero(a);
     }
     else if (t==-1) {
-        fp2_setone(a);
+        fp2_set_one(a);
         fp2_neg(a,a);
     }
     else {
-        fp2_set(a,t);
-        fp_tomont(a->re,a->re);
-        fp_tomont(a->im,a->im);
+        fp2_set_small(a,t);
     }
 }
 

@@ -290,9 +290,9 @@ int hd_chain_test() {
     assert(test_point_order_twof(&test,&E0,length+2));
     assert(test_jac_order_twof(&input_no_help.P1,&E0,length+2));
     assert(ec_is_equal(&test,&T1m2.P1));
-    fp2_set(&input_no_help.P2.x,0);
-    fp2_set(&input_no_help.P2.y,1);
-    fp2_set(&input_no_help.P2.z,0);
+    fp2_set_zero(&input_no_help.P2.x);
+    fp2_set_one(&input_no_help.P2.y);
+    fp2_set_zero(&input_no_help.P2.z);
 
     jac_to_xz(&test,&input_no_help.P2);
     assert(ec_is_zero(&test));

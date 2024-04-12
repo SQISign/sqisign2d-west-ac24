@@ -21,16 +21,13 @@ static int TEST_LOOPS  = 128;       // Number of iterations per test
 
 // VERY NOT SECURE (testing only)
 void fp2_random(fp2_t *a){
-    for(int i = 0; i < NWORDS_FIELD; i++){
-        a->re[i] = rand();
-        a->im[i] = rand();
-    }
-    // Normalize
-    fp2_t one;
-    fp_mont_setone(one.re);fp_set(one.im,0);
-    fp2_mul(&*a, &*a, &one);
+
+	fp_set_small(&a->re, rand());
+	fp_set_small(&a->im, rand());
+	fp2_neg(a, a);
+
     // Update seed
-    srand((unsigned) a->re[0]);
+    srand((unsigned) a->re.v0);
 }
 
 // Affine Montgomery coefficient computation (A + 2C : 4C) --> A/C
@@ -66,7 +63,7 @@ uint8_t isrational(ec_point_t const T, fp2_t const a)
 }
 
 // ladder3pt computes x(P + [m]Q)
-void ladder3pt(ec_point_t* R, fp_t const m, ec_point_t const* P, ec_point_t const* Q, ec_point_t const* PQ, ec_point_t const* A)
+void ladder3pt(ec_point_t* R, digit_t* const m, ec_point_t const* P, ec_point_t const* Q, ec_point_t const* PQ, ec_point_t const* A)
 {
 	ec_point_t X0, X1, X2;
 	copy_point(&X0, Q);
@@ -121,14 +118,14 @@ int main(int argc, char* argv[])
 	}
 
 	fp2_t fp2_0, fp2_1;
-	fp2_set(&fp2_0, 0);
-	fp_mont_setone(fp2_1.re);fp_set(fp2_1.im,0);
+	fp2_set_zero(&fp2_0);
+	fp2_set_one(&fp2_1);
 
 	int i, j;
 
 	ec_point_t A;
-	fp2_set(&A.x, 0);
-	fp_mont_setone(A.z.re);fp_set(A.z.im,0);
+	fp2_set_zero(&A.x);
+	fp2_set_one(&A.z);
 
 	fp2_add(&A.z, &A.z, &A.z);	// 2C
 	fp2_add(&A.x, &A.x, &A.z);	// A' + 2C
@@ -143,12 +140,10 @@ int main(int argc, char* argv[])
 	ec_point_t PA, QA, PQA, PB, QB, PQB;
 
 	// Writing the public projective x-coordinate points into Montogmery domain
-	fp2_tomont(&(PA.x), &(xPA));
-	fp_mont_setone(PA.z.re);fp_set(PA.z.im,0);
-	fp2_tomont(&(QA.x), &(xQA));
-	fp_mont_setone(QA.z.re);fp_set(QA.z.im,0);
-	fp2_tomont(&(PQA.x), &(xPQA));
-	fp_mont_setone(PQA.z.re);fp_set(PQA.z.im,0);
+	fp2_set_one(&PA.z);
+	fp2_set_one(&QA.z);
+	fp2_set_one(&PQA.x);
+	fp2_set_one(&PQA.z);
 
 	assert( isrational(PA, a) );
 	assert( isrational(QA, a) );
@@ -199,12 +194,9 @@ int main(int argc, char* argv[])
 		assert( isinfinity(PQ[j]) );	// It must be now the point at infinity
 	};
 	// Writing the public projective x-coordinate points into Montogmery domain
-	fp2_tomont(&(PB.x), &(xPB));
-	fp_mont_setone(PB.z.re);fp_set(PB.z.im,0);
-	fp2_tomont(&(QB.x), &(xQB));
-	fp_mont_setone(QB.z.re);fp_set(QB.z.im,0);
-	fp2_tomont(&(PQB.x), &(xPQB));
-	fp_mont_setone(PQB.z.re);fp_set(PQB.z.im,0);
+	fp2_set_one(&PB.z);
+	fp2_set_one(&QB.z);
+	fp2_set_one(&PQB.z);
 
 	assert( !isrational(PB, a) );
 	assert( !isrational(QB, a) );
@@ -256,23 +248,18 @@ int main(int argc, char* argv[])
 	fp2_t m;
 
 	// Writing the public projective x-coordinate points into Montogmery domain
-	fp2_tomont(&(PA.x), &(xPA));
-	fp_mont_setone(PA.z.re);fp_set(PA.z.im,0);
-	fp2_tomont(&(QA.x), &(xQA));
-	fp_mont_setone(QA.z.re);fp_set(QA.z.im,0);
-	fp2_tomont(&(PQA.x), &(xPQA));
-	fp_mont_setone(PQA.z.re);fp_set(PQA.z.im,0);
+
+	fp2_set_one(&PA.z);
+	fp2_set_one(&QA.z);
+	fp2_set_one(&PQA.z);
 
 	assert( isrational(PA, a) );
 	assert( isrational(QA, a) );
 	assert( isrational(PQA, a) );
 	
-	fp2_tomont(&(PB.x), &(xPB));
-	fp_mont_setone(PB.z.re);fp_set(PB.z.im,0);
-	fp2_tomont(&(QB.x), &(xQB));
-	fp_mont_setone(QB.z.re);fp_set(QB.z.im,0);
-	fp2_tomont(&(PQB.x), &(xPQB));
-	fp_mont_setone(PQB.z.re);fp_set(PQB.z.im,0);
+	fp2_set_one(&PB.z);
+	fp2_set_one(&QB.z);
+	fp2_set_one(&PQB.z);
 
 	assert( !isrational(PB, a) );
 	assert( !isrational(QB, a) );
@@ -286,7 +273,15 @@ int main(int argc, char* argv[])
 		fflush(stdout);
 		printf("\r\x1b[K");
 		fp2_random(&m);
-		ladder3pt(&(R[0]), m.re, &PA, &QA, &PQA, &A);
+		// TODO: this is a horrible hack
+		fp2_random(&m);
+		digit_t m_big_int[4];
+		m_big_int[0] = m.re.v0;
+		m_big_int[1] = m.re.v1;
+		m_big_int[2] = m.re.v2;
+		m_big_int[3] = m.re.v3;
+
+		ladder3pt(&(R[0]), m_big_int, &PA, &QA, &PQA, &A);
 		assert( isrational(R[0], a) );
 		for (k = 0; k < P_LEN; k++)
 		{
@@ -305,8 +300,14 @@ int main(int argc, char* argv[])
 			assert( isinfinity(R[i]) );		// It must be now the point at infinity
 		};
 
+		// TODO: this is a horrible hack
 		fp2_random(&m);
-		ladder3pt(&(R[P_LEN]), m.re, &PB, &QB, &PQB, &A);
+		m_big_int[0] = m.re.v0;
+		m_big_int[1] = m.re.v1;
+		m_big_int[2] = m.re.v2;
+		m_big_int[3] = m.re.v3;
+
+		ladder3pt(&(R[P_LEN]), m_big_int, &PB, &QB, &PQB, &A);
 		assert( !isrational(R[P_LEN], a) );
 		for (k = P_LEN; k < (P_LEN+M_LEN); k++)
 		{
