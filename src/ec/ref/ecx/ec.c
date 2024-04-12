@@ -190,32 +190,8 @@ void swap_points(ec_point_t* P, ec_point_t* Q, const digit_t option)
 { // Swap points
   // If option = 0 then P <- P and Q <- Q, else if option = 0xFF...FF then P <- Q and Q <- P
     // digit_t temp;
-
-    // fp2_cswap(&(P->x), &(Q->x), option);
-    // fp2_cswap(&(P->z), &(Q->z), option);
-
-    if (option != 0){
-            ec_point_t tmp1;
-            copy_point(&tmp1, P);
-            copy_point(P, Q);
-            copy_point(Q, &tmp1);
-    }
-
-
-    // for (int i = 0; i < NWORDS_FIELD; i++) {
-    //     temp = option & (P->x.re[i] ^ Q->x.re[i]);
-    //     P->x.re[i] = temp ^ P->x.re[i];
-    //     Q->x.re[i] = temp ^ Q->x.re[i];
-    //     temp = option & (P->x.im[i] ^ Q->x.im[i]);
-    //     P->x.im[i] = temp ^ P->x.im[i];
-    //     Q->x.im[i] = temp ^ Q->x.im[i];
-    //     temp = option & (P->z.re[i] ^ Q->z.re[i]);
-    //     P->z.re[i] = temp ^ P->z.re[i];
-    //     Q->z.re[i] = temp ^ Q->z.re[i];
-    //     temp = option & (P->z.im[i] ^ Q->z.im[i]);
-    //     P->z.im[i] = temp ^ P->z.im[i];
-    //     Q->z.im[i] = temp ^ Q->z.im[i];
-    // }
+    fp2_cswap(&(P->x), &(Q->x), option);
+    fp2_cswap(&(P->z), &(Q->z), option);
 }
 
 void copy_point(ec_point_t* P, ec_point_t const* Q)
