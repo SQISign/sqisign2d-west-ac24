@@ -281,7 +281,7 @@ gf5248_neg(gf5248 *d, const gf5248 *a)
  * If ctl == 0xFFFFFFFF, then *a1 is copied into *d.
  * ctl MUST be either 0x00000000 or 0xFFFFFFFF.
  */
-inline void
+static inline void
 gf5248_select(gf5248 *d, const gf5248 *a0, const gf5248 *a1, uint32_t ctl)
 {
 	uint64_t cw = (uint64_t)*(int32_t *)&ctl;
@@ -296,7 +296,7 @@ gf5248_select(gf5248 *d, const gf5248 *a0, const gf5248 *a1, uint32_t ctl)
  * If ctl == 0xFFFFFFFF, then the contents of *a and *b are swapped.
  * ctl MUST be either 0x00000000 or 0xFFFFFFFF.
  */
-inline void
+static inline void
 gf5248_cswap(gf5248 *a, gf5248 *b, uint32_t ctl)
 {
 	uint64_t cw = (uint64_t)*(int32_t *)&ctl;
@@ -310,7 +310,7 @@ gf5248_cswap(gf5248 *a, gf5248 *b, uint32_t ctl)
 /*
  * d <- a/2
  */
-inline void
+static inline void
 gf5248_half(gf5248 *d, const gf5248 *a)
 {
 	uint64_t d0, d1, d2, d3;
@@ -464,7 +464,7 @@ gf5248_mul_small(gf5248 *d, const gf5248 *a, uint32_t x)
  * d <- x
  * Input value x (32-bit integer) is converted to field element x mod q.
  */
-inline void
+static inline void
 gf5248_set_small(gf5248 *d, uint32_t x)
 {
 	// We want Montgomery representation, i.e. x*2^256 mod q.

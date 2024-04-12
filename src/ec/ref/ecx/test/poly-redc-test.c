@@ -46,7 +46,7 @@ int main(){
       poly_mul_low(h, n, f, lenf, h, n);
 
       // Compare with expected
-      assert(fp2_isequal(h[0],c));
+      assert(fp2_is_equal(&h[0], &c));
       for(e = 1;  e < n; e++)
 	assert(fp2_is_zero(&h[e]));
       free(h);
@@ -129,7 +129,7 @@ int main(){
 
       // Comapre results
       for(e = leng_red-1; e >= 0; e--)
-	      assert(fp2_isequal(h[e], g[e]));
+	      assert(fp2_is_equal(&h[e], &g[e]));
       for(e = leng_red; e < lenf-1; e++)
 	      assert(fp2_is_zero(&h[e]));
       
@@ -192,7 +192,7 @@ int main(){
       fp2_set_zero(&f[e]);
     }
     poly_mul_low(f, lenf, f, lenf, R[root], lenf);
-    assert(fp2_isequal(f[0], A[root]));
+    assert(fp2_is_equal(&f[0], &A[root]));
     for(e = 1; e < lenf; e++){
       assert(fp2_is_zero(&f[e]));
     }
@@ -229,7 +229,7 @@ int main(){
 	    fp2_set_zero(&f[e]);
     }
 	  poly_mul_low(f, lenf, f, lenf, R[root], lenf);
-	  assert(fp2_isequal(f[0], A[root]));
+	  assert(fp2_is_equal(&f[0], &A[root]));
 	  for(e = 1; e < lenf; e++){
 	    assert(fp2_is_zero(&f[e]));
     }
@@ -321,7 +321,7 @@ int main(){
       // Compare results
       fp2_inv(&REM1[i]);
       fp2_mul(&REM1[i], &REM1[i], &REM2[i]);
-      assert(fp2_isequal(REM1[i], ratio));
+      assert(fp2_is_equal(&REM1[i], &ratio));
     }
 		 
     // Clean up
@@ -438,7 +438,7 @@ int main(){
       // Compare results
       fp2_inv(&REM1[i]);
       fp2_mul(&REM1[i], &REM1[i], &REM2[i]);
-      assert(fp2_isequal(REM1[i], ratio));
+      assert(fp2_is_equal(&REM1[i], &ratio));
     }
 		 
     // Clean up

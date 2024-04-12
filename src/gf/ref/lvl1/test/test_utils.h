@@ -1,3 +1,7 @@
+#ifndef test_utils_h__
+#define test_utils_h__
+
+
 #include "../include/fp.h"
 #include "../include/fp2.h"
 #include <stdlib.h>
@@ -13,4 +17,4 @@ void fp2_random_test(fp2_t* a);
 // Comparison of u64 for qsort
 int cmp_u64(const void *v1, const void *v2);
 
-
+#endif

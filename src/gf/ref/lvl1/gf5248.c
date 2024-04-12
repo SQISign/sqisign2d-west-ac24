@@ -2,7 +2,7 @@
  * This code is derived from discussions with Thomas Pornin
  */
 
-#include "gf5248.h"
+#include "include/gf5248.h"
 
 // see gf5248.h
 const gf5248 gf5248_ZERO = {
