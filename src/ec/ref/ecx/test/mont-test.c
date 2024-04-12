@@ -6,6 +6,7 @@
 #include "isog.h"
 #include "test-basis.h"
 #include <bench.h> 
+#include "test_extras.h"
 
 static int BENCH_LOOPS = 1000;       // Number of iterations per bench
 static int TEST_LOOPS  = 128;       // Number of iterations per test
@@ -19,15 +20,10 @@ static int TEST_LOOPS  = 128;       // Number of iterations per test
 //         } while (fp_issmaller((uint64_t *)k, keyspace_size[j]));
 // }
 
-// VERY NOT SECURE (testing only)
-void fp2_random(fp2_t *a){
-
-	fp_set_small(&a->re, rand());
-	fp_set_small(&a->im, rand());
-	fp2_neg(a, a);
-
-    // Update seed
-    srand((unsigned) a->re.v0);
+void random_scalar(digit_t* k)
+{
+    for(int i = 0; i < NWORDS_FIELD; i++)
+        k[i] = rand();
 }
 
 // Affine Montgomery coefficient computation (A + 2C : 4C) --> A/C
@@ -245,7 +241,7 @@ int main(int argc, char* argv[])
 		assert( isinfinity(PQ[j]) );	// It must be now the point at infinity
 	};
 
-	fp2_t m;
+	digit_t m[4];
 
 	// Writing the public projective x-coordinate points into Montogmery domain
 
@@ -272,16 +268,9 @@ int main(int argc, char* argv[])
 		printf("[%3d%%] Testing EC differential arithmetic", 100 * j / TEST_LOOPS);
 		fflush(stdout);
 		printf("\r\x1b[K");
-		fp2_random(&m);
-		// TODO: this is a horrible hack
-		fp2_random(&m);
-		digit_t m_big_int[4];
-		m_big_int[0] = m.re.v0;
-		m_big_int[1] = m.re.v1;
-		m_big_int[2] = m.re.v2;
-		m_big_int[3] = m.re.v3;
 
-		ladder3pt(&(R[0]), m_big_int, &PA, &QA, &PQA, &A);
+		random_scalar(m);
+		ladder3pt(&(R[0]), m, &PA, &QA, &PQA, &A);
 		assert( isrational(R[0], a) );
 		for (k = 0; k < P_LEN; k++)
 		{
@@ -301,13 +290,8 @@ int main(int argc, char* argv[])
 		};
 
 		// TODO: this is a horrible hack
-		fp2_random(&m);
-		m_big_int[0] = m.re.v0;
-		m_big_int[1] = m.re.v1;
-		m_big_int[2] = m.re.v2;
-		m_big_int[3] = m.re.v3;
-
-		ladder3pt(&(R[P_LEN]), m_big_int, &PB, &QB, &PQB, &A);
+		random_scalar(m);
+		ladder3pt(&(R[P_LEN]), m, &PB, &QB, &PQB, &A);
 		assert( !isrational(R[P_LEN], a) );
 		for (k = P_LEN; k < (P_LEN+M_LEN); k++)
 		{
@@ -336,10 +320,10 @@ int main(int argc, char* argv[])
     cycles = 0;
 	ec_point_t PP[TEST_LOOPS], EE[TEST_LOOPS];
 	for(int i = 0; i < TEST_LOOPS; i++){
-		fp2_random(&PP[i].x);
-		fp2_random(&PP[i].z);
-		fp2_random(&EE[i].x);
-		fp2_random(&EE[i].z);
+		fp2_random_test(&PP[i].x);
+		fp2_random_test(&PP[i].z);
+		fp2_random_test(&EE[i].x);
+		fp2_random_test(&EE[i].z);
 	}
     cycles1 = cpucycles(); 
 	for(int i = 0; i < TEST_LOOPS; i++){
@@ -354,12 +338,12 @@ int main(int argc, char* argv[])
     cycles = 0;
 	ec_point_t KK0[TEST_LOOPS], KK1[TEST_LOOPS], KK2[TEST_LOOPS];
 	for(int i = 0; i < TEST_LOOPS; i++){
-		fp2_random(&KK0[i].x);
-		fp2_random(&KK0[i].z);
-		fp2_random(&KK1[i].x);
-		fp2_random(&KK1[i].z);
-		fp2_random(&KK2[i].x);
-		fp2_random(&KK2[i].z);
+		fp2_random_test(&KK0[i].x);
+		fp2_random_test(&KK0[i].z);
+		fp2_random_test(&KK1[i].x);
+		fp2_random_test(&KK1[i].z);
+		fp2_random_test(&KK2[i].x);
+		fp2_random_test(&KK2[i].z);
 	}
     cycles1 = cpucycles(); 
 	for(int i = 0; i < TEST_LOOPS; i++){

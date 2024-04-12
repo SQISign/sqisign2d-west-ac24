@@ -10,7 +10,7 @@ add_executable(poly-redc.test_${SVARIANT_LOWER} ${ECX_DIR}/test/poly-redc-test.c
 	target_include_directories(poly-redc.test_${SVARIANT_LOWER} PUBLIC ${INC_GF_${SVARIANT_UPPER}} ${INC_PRECOMP_${SVARIANT_UPPER}} ${PROJECT_SOURCE_DIR}/include  ../include  ${INC_EC} ${INC_COMMON})
 	target_link_libraries(poly-redc.test_${SVARIANT_LOWER} ${LIB_GF_${SVARIANT_UPPER}} ${LIB_EC_${SVARIANT_UPPER}})
 	
-add_executable(mont.test_${SVARIANT_LOWER} ${ECX_DIR}/test/mont-test.c)
+add_executable(mont.test_${SVARIANT_LOWER} ${ECX_DIR}/test/mont-test.c ${ECX_DIR}/test/test_extras.c ${ECX_DIR}/test/sha3.c)
 	target_include_directories(mont.test_${SVARIANT_LOWER} PUBLIC ${INC_GF_${SVARIANT_UPPER}} ${INC_INTBIG} ${INC_PRECOMP_${SVARIANT_UPPER}} ${PROJECT_SOURCE_DIR}/include  ../include ${INC_EC} ${INC_COMMON} .)
 	target_link_libraries(mont.test_${SVARIANT_LOWER} ${LIB_PRECOMP_${SVARIANT_UPPER}} ${LIB_INTBIG} ${LIB_GF_${SVARIANT_UPPER}} ${LIB_EC_${SVARIANT_UPPER}})
 
