@@ -56,15 +56,15 @@ static void ibz_vec_4_print2(char *name, const ibz_vec_4_t *vec){
 void commit(ec_curve_t *E_com, quat_left_ideal_t *lideal_com) {
     
     int found=1;
-    ibz_t n;
+    ibz_t n,adj;
     ibz_init(&n);
-
+    ibz_init(&adj);
     // generate a random ideal of random norm for the secret ideal
     // TODO make a clean constant for this
-    generate_random_prime(&n,1,140);
+    generate_random_prime(&n,1,128);
 
     theta_chain_t F;
-    found = fixed_degree_isogeny(&F,lideal_com,&n,1);
+    found = fixed_degree_isogeny(&F,lideal_com,&n,&adj,1);
 
 
     // it's always the second curve
@@ -73,6 +73,7 @@ void commit(ec_curve_t *E_com, quat_left_ideal_t *lideal_com) {
     assert(found);
 
     ibz_finalize(&n);
+    ibz_finalize(&adj);
 }
 
 

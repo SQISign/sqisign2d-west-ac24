@@ -29,14 +29,14 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
  * @param isog Output : a dim2 isogeny encoding an isogeny of degree u
  * @param lideal Output : an ideal of norm u
  * @param u : integer
- * @param extra_info : bit indicating if we want to use some the torsion with extra information
+ * @param adjust : adjusting factor
  * @param small : bit indicating if we the value of u is "small" meaning that we expect it to be around sqrt{p}, in that case we use a length slightly above 
  * @returns a bit indicating if the computation succeeded  
  * 
- * F is an isogeny encoding an isogeny phi : E0 -> Eu of degree u 
+ * F is an isogeny encoding an isogeny [adjust]*phi : E0 -> Eu of degree u * adjust^2
  * note that the codomain of F can be either Eu x Eu' or Eu' x Eu for some curve Eu'  
 */
-int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *u, int small);
+int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *u, ibz_t *adjust, int small);
 
 
 

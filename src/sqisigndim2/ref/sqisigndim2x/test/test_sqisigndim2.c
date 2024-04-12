@@ -93,7 +93,6 @@ int test_sqisign(int repeat, uint64_t bench)
 {
     int res = 1;
 
-    int num_sig =10;
 
     public_key_t pk;
     secret_key_t sk;
@@ -146,12 +145,21 @@ int test_sqisign(int repeat, uint64_t bench)
 
     float ms;
 
+    public_key_t pks[bench];
+    secret_key_t sks[bench];
+    signature_t sigs[bench];
+    for (int i=0; i< bench; i++) {
+        public_key_init(&(pks[i]));
+        secret_key_init(&(sks[i]));
+        secret_sig_init(&(sigs[i]));
+    }
+
     printf("\n\nBenchmarking signatures\n");
     t = tic();
     t0 = rdtsc();
     for (int i = 0; i < bench; ++i)
     {
-        protocols_keygen(&pk, &sk);
+        protocols_keygen(&pks[i], &sks[i]);
     }
     t1 = rdtsc();
     // ms = tac();
@@ -163,7 +171,7 @@ int test_sqisign(int repeat, uint64_t bench)
     t0 = rdtsc();
     for (int i = 0; i < bench; ++i)
     {
-        int val = protocols_sign(&sig, &pk, &sk, msg, 32, 0);
+        int val = protocols_sign(&(sigs[i]), &(pks[i]), &(sks[i]), msg, 32, 0);
     }
     t1 = rdtsc();
     // ms = tac();
@@ -175,7 +183,7 @@ int test_sqisign(int repeat, uint64_t bench)
     t0 = rdtsc();
     for (int i = 0; i < bench; ++i)
     {
-        int check = protocols_verif(&sig,&pk,msg,32);
+        int check = protocols_verif(&(sigs[i]),&(pks[i]),msg,32);
         if (!check) {
             printf("verif failed ! \n");
         } 
@@ -189,6 +197,12 @@ int test_sqisign(int repeat, uint64_t bench)
     public_key_finalize(&pk);
     secret_key_finalize(&sk);
     secret_sig_finalize(&sig);
+
+    for (int i=0; i< bench; i++) {
+        public_key_init(&(pks[i]));
+        secret_key_init(&(sks[i]));
+        secret_sig_init(&(sigs[i]));
+    }
 
     return res;
 }

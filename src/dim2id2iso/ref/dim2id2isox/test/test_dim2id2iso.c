@@ -5,18 +5,21 @@
 
 int dim2id2iso_test_fixed_degree_isogeny() {
 
-    ibz_t u,two_pow;
+    ibz_t u,two_pow,adjust_u;
+    ibz_t tmp;
     quat_left_ideal_t lideal;
     ibz_init(&u);
+    ibz_init(&adjust_u);
+    ibz_init(&tmp);
     ibz_init(&two_pow);   
     quat_left_ideal_init(&lideal);
 
     // u is 3 times a random prime 
-    generate_random_prime(&u,1,TORSION_PLUS_EVEN_POWER-10);
+    generate_random_prime(&u,1,110);
     ibz_mul(&u,&u,&ibz_const_three);
 
     theta_chain_t F;
-    fixed_degree_isogeny(&F,&lideal,&u,0);
+    fixed_degree_isogeny(&F,&lideal,&u,&adjust_u,0);
 
     // now we check that we get a correct codomain in the end
     // by evaluating some point and checking the pairing
@@ -69,10 +72,12 @@ int dim2id2iso_test_fixed_degree_isogeny() {
     A24_from_AC(&A24, &AC);
     weil(&w2,TORSION_PLUS_EVEN_POWER,&Tev1.P2,&Tev2.P2,&Tev3.P2,&A24);
     ibz_pow(&two_pow,&ibz_const_two,F.length);
-    ibz_sub(&two_pow,&two_pow,&u);
+    ibz_mul(&tmp,&adjust_u,&adjust_u);
+    ibz_mul(&tmp,&tmp,&u);
+    ibz_sub(&two_pow,&two_pow,&tmp);
     // now we are checking that one of the two is equal to the correct value 
     digit_t digit_u[NWORDS_ORDER]={0};
-    ibz_to_digit_array(digit_u,&u);
+    ibz_to_digit_array(digit_u,&tmp);
     fp2_t test_pow;
     fp2_pow(&test_pow,&w0,digit_u,NWORDS_ORDER);
 
@@ -97,7 +102,8 @@ int dim2id2iso_test_fixed_degree_isogeny() {
         assert(0);
     }
     
-
+    ibz_finalize(&adjust_u);
+    ibz_finalize(&tmp);
     ibz_finalize(&u);
     ibz_finalize(&two_pow);
     quat_left_ideal_finalize(&lideal);
