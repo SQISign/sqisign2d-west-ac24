@@ -107,9 +107,9 @@ int main()
 	ec_point_t PA, QA, PQA, PB, QB, PQB, RA, RB;
 
 	// Writing the public projective x-coordinate points into Montogmery domain
-	fp2_w64(&PA.x,  xPA_data);
-	fp2_w64(&QA.x,  xQA_data);
-	fp2_w64(&PQA.x, xPQA_data);
+	fp2_from_w64(&PA.x,  xPA_data);
+	fp2_from_w64(&QA.x,  xQA_data);
+	fp2_from_w64(&PQA.x, xPQA_data);
 	fp2_set_one(&PA.z);
 	fp2_set_one(&QA.z);
 	fp2_set_one(&PQA.z);
@@ -118,9 +118,9 @@ int main()
 	assert( isrational(QA, a) );
 	assert( isrational(PQA, a) );
 
-	fp2_w64(&PB.x,  xPB_data);
-	fp2_w64(&QB.x,  xQB_data);
-	fp2_w64(&PQB.x, xPQB_data);
+	fp2_from_w64(&PB.x,  xPB_data);
+	fp2_from_w64(&QB.x,  xQB_data);
+	fp2_from_w64(&PQB.x, xPQB_data);
 	fp2_set_one(&PB.z);
 	fp2_set_one(&QB.z);
 	fp2_set_one(&PQB.z);
@@ -209,9 +209,9 @@ int main()
 
 	coeff(&a, A);
 	// Writing the public projective x-coordinate points into Montogmery domain
-	fp2_w64(&PA.x,  xPA_data);
-	fp2_w64(&QA.x,  xQA_data);
-	fp2_w64(&PQA.x, xPQA_data);
+	fp2_from_w64(&PA.x,  xPA_data);
+	fp2_from_w64(&QA.x,  xQA_data);
+	fp2_from_w64(&PQA.x, xPQA_data);
 	fp2_set_one(&PA.z);
 	fp2_set_one(&QA.z);
 	fp2_set_one(&PQA.z);
@@ -220,9 +220,9 @@ int main()
 	assert( isrational(QA, a) );
 	assert( isrational(PQA, a) );
 
-	fp2_w64(&PB.x,  xPB_data);
-	fp2_w64(&QB.x,  xQB_data);
-	fp2_w64(&PQB.x, xPQB_data);
+	fp2_from_w64(&PB.x,  xPB_data);
+	fp2_from_w64(&QB.x,  xQB_data);
+	fp2_from_w64(&PQB.x, xPQB_data);
 	fp2_set_one(&PB.z);
 	fp2_set_one(&QB.z);
 	fp2_set_one(&PQB.z);

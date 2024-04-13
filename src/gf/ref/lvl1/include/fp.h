@@ -42,7 +42,8 @@ void fp_set_zero(fp_t * a);
 void fp_set_one(fp_t * a);
 
 // Copy a value
-#define fp_w64 gf5248_w64
+#define fp_to_w64 gf5248_to_w64
+#define fp_from_w64 gf5248_from_w64
 void fp_copy(fp_t * out, const fp_t * a);
 
 // Encoding and decoding of bytes

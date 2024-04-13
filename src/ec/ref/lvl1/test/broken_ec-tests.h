@@ -33,7 +33,7 @@ bool ec_test()
     passed = 1;
     uint64_t xP_data[2][4] = {{0xDFD70ED0861BD329, 0x20ACD3758C7F5540, 0x3DCCDC007277F80A, 0x18D6D2A22981DCE1}, 
                               {0x3C23730A3F08F38C, 0x98BB973AFD3D954D, 0x8D98ADFC2829AE8A, 0x21A2464D6369AFBA}};
-    fp2_w64(&P.x, xP_data);
+    fp2_from_w64(&P.x, xP_data);
     fp2_set_one(&P.z);
     fp2_set_one(&AC.z);
 
@@ -47,7 +47,7 @@ bool ec_test()
     uint64_t xR_data[2][4] = {{0x5950EE0A4AF90FC8, 0x16488065A0A98B08, 0xCE65322229DA0FD1, 0x270A35FF781EE204}, 
                                {0x564447FD9EC57F6B, 0x2EE24E984294F729, 0x53A6C7360E972C71, 0x4FCF4B9928A7C7E}};
 
-    fp2_w64(&R.x, xR_data);
+    fp2_from_w64(&R.x, xR_data);
     printf("%llu\n", S.x.re.v0);
     printf("%llu\n", AC.z.re.v3);
 
@@ -61,7 +61,7 @@ bool ec_test()
     
     uint64_t xQ_data[2][4] = {{0xC46076A670C70053, 0x97517AFA3AB9ED13, 0x349644C942EDF993, 0xBB4A4DB6F29AF9E},
                               {0x8B47629FB5A15BB0, 0x4EC6E809953C1A10, 0x1F83F0EC6CBB84D6, 0x1D8417C1D33265D3}};
-    fp2_w64(&Q.x, xQ_data);
+    fp2_from_w64(&Q.x, xQ_data);
     fp2_set_one(&Q.z);
     
     // Q.x.re.v0 = 0xC46076A670C70053; Q.x.re.v1 = 0x97517AFA3AB9ED13; Q.x.re.v2 = 0x349644C942EDF993; Q.x.re.v3 = 0xBB4A4DB6F29AF9E;
@@ -73,7 +73,7 @@ bool ec_test()
     // PQ.z.re.v0 = 0x01;
     uint64_t xPQ_data[2][4] = {{0x853F66D11BE5534F, 0x27C8FD4E52D03D4A, 0xF88EA78D0A0C29D2, 0x2F6DFB07D397A067},
                               {0xE8DBC4AA34434BA1, 0x7A73AE182636F8A0, 0x419EC260137868EB, 0x129B3E301703D43F}};
-    fp2_w64(&PQ.x, xPQ_data);
+    fp2_from_w64(&PQ.x, xPQ_data);
     fp2_set_one(&PQ.z);
 
     fp2_copy(&S.x, &Q.x);
@@ -87,7 +87,7 @@ bool ec_test()
     // R.x.im.v0 = 0x6F731BA6FD227BDE; R.x.im.v1 = 0x14C12335341167F8; R.x.im.v2 = 0xECA7B60F7866E27A; R.x.im.v3 = 0x2A7A79A152880457;
     uint64_t xRR_data[2][4] = {{0xED0BEB8F93AB4FF9, 0x27CF508B80CD49BF, 0x38A6134DFA04B2BA, 0x27B4CB15E109EF1F},
                                {0x6F731BA6FD227BDE, 0x14C12335341167F8, 0xECA7B60F7866E27A, 0x2A7A79A152880457}};
-    fp2_w64(&R.x, xRR_data);
+    fp2_from_w64(&R.x, xRR_data);
     if (fp2_is_equal(&R.x, &S.x) == 0) { passed=0; goto out0; };
     // if (compare_words((digit_t*)&R.x, (digit_t*)&S.x, NWORDS_FIELD*2) != 0) { passed = 0; goto out0; }
     
@@ -167,9 +167,9 @@ bool dlog_test()
     // dlog2 testing
     passed = 1;
     
-    fp2_w64(&P.x,  xP2_data);
-    fp2_w64(&Q.x,  xQ2_data);
-    fp2_w64(&PQ.x, xPQ2_data);
+    fp2_from_w64(&P.x,  xP2_data);
+    fp2_from_w64(&Q.x,  xQ2_data);
+    fp2_from_w64(&PQ.x, xPQ2_data);
     fp2_set_one(&P.z);
     fp2_set_one(&Q.z);
     fp2_set_one(&PQ.z);
@@ -215,9 +215,9 @@ bool dlog_test()
     // dlog3 testing
     passed = 1;
     
-    fp2_w64(&P.x,  xP3_data);
-    fp2_w64(&Q.x,  xQ3_data);
-    fp2_w64(&PQ.x, xPQ3_data);
+    fp2_from_w64(&P.x,  xP3_data);
+    fp2_from_w64(&Q.x,  xQ3_data);
+    fp2_from_w64(&PQ.x, xPQ3_data);
     fp2_set_one(&P.z);
     fp2_set_one(&Q.z);
     fp2_set_one(&PQ.z);
@@ -342,9 +342,9 @@ bool dlog_run()
     printf("Benchmarking dlog2: \n\n");
 
     // dlog2 computation
-    fp2_w64(&P.x,  xP2_data);
-    fp2_w64(&Q.x,  xQ2_data);
-    fp2_w64(&PQ.x, xPQ2_data);
+    fp2_from_w64(&P.x,  xP2_data);
+    fp2_from_w64(&Q.x,  xQ2_data);
+    fp2_from_w64(&PQ.x, xPQ2_data);
     fp2_set_one(&P.z);
     fp2_set_one(&Q.z);
     fp2_set_one(&PQ.z);
@@ -372,9 +372,9 @@ bool dlog_run()
 
     // dlog3 computation
 
-    fp2_w64(&P.x,  xP3_data);
-    fp2_w64(&Q.x,  xQ3_data);
-    fp2_w64(&PQ.x, xPQ3_data);
+    fp2_from_w64(&P.x,  xP3_data);
+    fp2_from_w64(&Q.x,  xQ3_data);
+    fp2_from_w64(&PQ.x, xPQ3_data);
     fp2_set_one(&P.z);
     fp2_set_one(&Q.z);
     fp2_set_one(&PQ.z);

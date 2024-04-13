@@ -759,9 +759,9 @@ int main(int argc, char* argv[])
 		ec_point_t P, Q, PQ, R_plus, R_minus;
 		digit_t k[NWORDS_FIELD];
 
-		fp2_w64(&P.x,  xPA_data);
-		fp2_w64(&Q.x,  xQA_data);
-		fp2_w64(&PQ.x, xPQA_data);
+		fp2_from_w64(&P.x,  xPA_data);
+		fp2_from_w64(&Q.x,  xQA_data);
+		fp2_from_w64(&PQ.x, xPQA_data);
 		fp2_set_one(&P.z);
 		fp2_set_one(&Q.z);
 		fp2_set_one(&PQ.z);
@@ -769,9 +769,9 @@ int main(int argc, char* argv[])
 		random_scalar(k);
 		ladder3pt(&R_plus, k, &P, &Q, &PQ, &A24);
 
-		fp2_w64(&P.x,  xPB_data);
-		fp2_w64(&Q.x,  xQB_data);
-		fp2_w64(&PQ.x, xPQB_data);
+		fp2_from_w64(&P.x,  xPB_data);
+		fp2_from_w64(&Q.x,  xQB_data);
+		fp2_from_w64(&PQ.x, xPQB_data);
 		fp2_set_one(&P.z);
 		fp2_set_one(&Q.z);
 		fp2_set_one(&PQ.z);

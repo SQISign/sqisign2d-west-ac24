@@ -312,9 +312,11 @@ void hash_to_challenge(ibz_vec_2_t *scalars, const ec_curve_t *com_curve, const 
         fp2_t j1, j2;
         ec_j_inv(&j1, com_curve);
         ec_j_inv(&j2, &pk->curve);
-        memcpy(buf, &j1, sizeof(j1));
-        memcpy(buf + sizeof(j1), &j2, sizeof(j2));
-        memcpy(buf + sizeof(j1) + sizeof(j2), message, length);
+        gf5248_encode(buf, &j1);
+        gf5248_encode(buf + 32, &j2); // TODO use defined constant
+        // memcpy(buf, &j1, sizeof(j1));
+        // memcpy(buf + sizeof(j1), &j2, sizeof(j2));
+        memcpy(buf + 64, message, length); // TODO use defined constant
     }
 
     //TODO(security) omit some vectors, notably (a,1) with gcd(a,6)!=1 but also things like (2,3)?
@@ -849,7 +851,6 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     copy_curve(&mem,&Echall);
 
     if (sig->two_resp_length>0) {
-
         // computing the small two chain
         ec_curve_t E_chall_2;
         copy_curve(&E_chall_2,&Echall);

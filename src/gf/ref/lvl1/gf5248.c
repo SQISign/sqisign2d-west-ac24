@@ -671,7 +671,21 @@ dec64le(const void *src)
 }
 
 void 
-gf5248_w64(gf5248 *out, const uint64_t data[4])
+gf5248_to_w64(uint64_t data[4], const gf5248 *a)
+{	
+	// Perform Mont. reduction for Canonical
+	// rep.
+	gf5248 b;
+	inner_gf5248_montgomery_reduce(&b, a);
+    // Set the words from input data
+	data[0] = b.v0;
+	data[1] = b.v1;
+	data[2] = b.v2;
+	data[3] = b.v3;
+}
+
+void 
+gf5248_from_w64(gf5248 *out, const uint64_t data[4])
 {
     // Set the words from input data
 	out->v0 = data[0];

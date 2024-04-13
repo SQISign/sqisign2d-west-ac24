@@ -873,7 +873,8 @@ uint32_t gf5248_decode(gf5248 *d, const void *src);
 void gf5248_decode_reduce(gf5248 *d, const void *src, size_t len);
 
 // TODO
-void gf5248_w64(gf5248 *out, const uint64_t data[4]);
+void gf5248_to_w64(uint64_t data[4], const gf5248 *a);
+void gf5248_from_w64(gf5248 *out, const uint64_t data[4]);
 
 #ifdef __cplusplus
 }

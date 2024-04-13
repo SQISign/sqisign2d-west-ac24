@@ -47,9 +47,14 @@ void fp2_copy(fp2_t* x, const fp2_t* y)
     fp_copy(&(x->im), &(y->im));
 }
 
-void fp2_w64(fp2_t * out, const uint64_t data[2][4]){
-    fp_w64(&(out->re), data[0]);
-    fp_w64(&(out->im), data[1]);
+void fp2_from_w64(fp2_t * out, const uint64_t data[2][4]){
+    fp_from_w64(&(out->re), data[0]);
+    fp_from_w64(&(out->im), data[1]);
+}
+
+void fp2_to_w64(uint64_t data[2][4], const fp2_t * a){
+    fp_to_w64(data[0], &(a->re));
+    fp_to_w64(data[0], &(a->im));
 }
 
 void fp2_cswap(fp2_t *a, fp2_t *b, uint32_t ctl){
@@ -229,16 +234,9 @@ int fp2_cmp(fp2_t* a, fp2_t* b){
 
     // TODO: very ugly hack...
     digit_t a_re[4];
-    a_re[0] = a->re.v0;
-    a_re[1] = a->re.v1;
-    a_re[2] = a->re.v2;
-    a_re[3] = a->re.v3;
-
     digit_t b_re[4];
-    b_re[0] = b->re.v0;
-    b_re[1] = b->re.v1;
-    b_re[2] = b->re.v2;
-    b_re[3] = b->re.v3;
+    fp_to_w64(a_re, &(a->re));
+    fp_to_w64(b_re, &(b->re));
 
     for(int i = NWORDS_FIELD-1; i >= 0; i--){
         if(a_re[i] > b_re[i])
@@ -249,16 +247,9 @@ int fp2_cmp(fp2_t* a, fp2_t* b){
 
     // TODO: very ugly hack...
     digit_t a_im[4];
-    a_im[0] = a->im.v0;
-    a_im[1] = a->im.v1;
-    a_im[2] = a->im.v2;
-    a_im[3] = a->im.v3;
-
     digit_t b_im[4];
-    b_im[0] = b->im.v0;
-    b_im[1] = b->im.v1;
-    b_im[2] = b->im.v2;
-    b_im[3] = b->im.v3;
+    fp_to_w64(a_im, &(a->im));
+    fp_to_w64(b_im, &(b->im));
 
     for(int i = NWORDS_FIELD-1; i >= 0; i--){
         if(a_im[i] > b_im[i])
