@@ -307,7 +307,7 @@ void sample_response(quat_alg_elem_t *x, const quat_lattice_t *lattice, ibz_t co
 // compute the challenge as the hash of the message and the commitment curve and public key
 void hash_to_challenge(ibz_vec_2_t *scalars, const ec_curve_t *com_curve, const unsigned char *message, const public_key_t *pk, size_t length)
 {
-    unsigned char *buf = malloc(sizeof(fp2_t) + sizeof(fp2_t) + length);
+    unsigned char *buf = malloc(FP2_ENCODED_BYTES + FP2_ENCODED_BYTES + length);
     {
         fp2_t j1, j2;
         ec_j_inv(&j1, com_curve);
@@ -322,7 +322,7 @@ void hash_to_challenge(ibz_vec_2_t *scalars, const ec_curve_t *com_curve, const 
         digit_t digits[NWORDS_FIELD];
 
         //FIXME should use SHAKE128 for smaller parameter sets?
-        SHAKE256((void *) digits, sizeof(digits), buf, sizeof(fp2_t) + sizeof(fp2_t) + length);
+        SHAKE256((void *) digits, sizeof(digits), buf, FP2_ENCODED_BYTES + FP2_ENCODED_BYTES + length);
 
         ibz_set(&(*scalars)[1], 1); //FIXME
         ibz_copy_digit_array(&(*scalars)[1], digits);

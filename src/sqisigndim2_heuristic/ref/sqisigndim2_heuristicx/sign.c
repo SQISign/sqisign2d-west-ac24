@@ -197,7 +197,7 @@ int sample_response(quat_alg_elem_t *x, const quat_lattice_t *lattice, ibz_t con
 // compute the challenge as the hash of the message and the commitment curve and public key
 void hash_to_challenge(ibz_vec_2_t *scalars, const ec_curve_t *com_curve, const unsigned char *message, const public_key_t *pk, size_t length)
 {
-    unsigned char *buf = malloc(sizeof(fp2_t) + sizeof(fp2_t) + length);
+    unsigned char *buf = malloc(FP2_ENCODED_BYTES + FP2_ENCODED_BYTES + length);
     {
         fp2_t j1, j2;
         ec_j_inv(&j1, com_curve);
@@ -213,7 +213,7 @@ void hash_to_challenge(ibz_vec_2_t *scalars, const ec_curve_t *com_curve, const 
 
         //FIXME should use SHAKE128 for smaller parameter sets?
         // TODO we want to use a bit differently (first we hash first half and then derive the second half)
-        SHAKE256((void *) digits, sizeof(digits), buf, sizeof(fp2_t) + sizeof(fp2_t) + length);
+        SHAKE256((void *) digits, sizeof(digits), buf, FP2_ENCODED_BYTES + FP2_ENCODED_BYTES + length);
         for (int i=0;i<SQIsign2D_heuristic_challenge_hash_iteration;i++) {
             SHAKE256((void *) digits, sizeof(digits), (void *) digits, sizeof(digits));
         }
