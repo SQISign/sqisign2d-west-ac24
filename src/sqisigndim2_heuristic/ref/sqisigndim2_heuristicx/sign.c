@@ -202,9 +202,9 @@ void hash_to_challenge(ibz_vec_2_t *scalars, const ec_curve_t *com_curve, const 
         fp2_t j1, j2;
         ec_j_inv(&j1, com_curve);
         ec_j_inv(&j2, &pk->curve);
-        memcpy(buf, &j1, sizeof(j1));
-        memcpy(buf + sizeof(j1), &j2, sizeof(j2));
-        memcpy(buf + sizeof(j1) + sizeof(j2), message, length);
+        fp2_encode(buf, &j1);
+        fp2_encode(buf + FP2_ENCODED_BYTES, &j2); // TODO use defined constant
+        memcpy(buf + FP2_ENCODED_BYTES + FP2_ENCODED_BYTES, message, length); // TODO use defined constant
     }
 
     //TODO(security) omit some vectors, notably (a,1) with gcd(a,6)!=1 but also things like (2,3)?

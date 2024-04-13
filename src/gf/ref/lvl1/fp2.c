@@ -62,6 +62,23 @@ void fp2_cswap(fp2_t *a, fp2_t *b, uint32_t ctl){
     fp_swap(&(a->im), &(b->im), ctl);
 }
 
+// TODO test these!
+void fp2_encode(void *dst, const fp2_t *a){
+	uint8_t *buf = dst;
+	fp_encode(buf, &(a->re));
+	fp_encode(buf + 32, &(a->im));
+}
+
+// TODO test these!
+uint32_t fp2_decode(fp2_t *d, const void *src){
+    const uint8_t *buf = src;
+    uint32_t re, im;
+    
+    re = fp_decode(&(d->re), buf);
+    im = fp_decode(&(d->im), buf + 32);
+    return re & im;
+}
+
 // TODO: we should be more careful hardcoding things 
 // like this??
 fp2_t fp2_non_residue()
