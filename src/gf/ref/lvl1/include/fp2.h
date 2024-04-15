@@ -109,8 +109,8 @@ fp2_cswap(fp2_t *a, fp2_t *b, uint32_t ctl){
 
 // New functions
 void fp2_copy(fp2_t* x, const fp2_t* y);
-void fp2_from_w64(fp2_t* out, const uint64_t data[2][4]);
-void fp2_to_w64(uint64_t data[2][4], const fp2_t* a);
+void fp2_from_w64(fp2_t* out, const uint64_t data[2][NWORDS_FIELD]);
+void fp2_to_w64(uint64_t data[2][NWORDS_FIELD], const fp2_t* a);
 void fp2_encode(void *dst, const fp2_t *a);
 uint32_t fp2_decode(fp2_t *d, const void *src);
 fp2_t fp2_non_residue();

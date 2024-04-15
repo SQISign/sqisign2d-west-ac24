@@ -59,7 +59,6 @@ void fp2_inv(fp2_t* x)
 }
 
 void fp2_batched_inv(fp2_t *x, int len) {
-
     fp2_t t1[len],t2[len];
     fp2_t inverse;
 
@@ -105,18 +104,6 @@ void fp2_frob(fp2_t* x, const fp2_t* y)
     fp_neg(&(x->im), &(y->im));
 }
 
-// void fp2_tomont(fp2_t* x, const fp2_t* y)
-// { 
-//     fp_tomont(&(x->re), &(y->re));
-//     fp_tomont(&(x->im), &(y->im));
-// }
-
-// void fp2_frommont(fp2_t* x, const fp2_t* y)
-// {
-//     fp_frommont(&(x->re), &(y->re));
-//     fp_frommont(&(x->im), &(y->im));
-// }
-
 // NOTE: old, non-constant-time implementation. Could be optimized
 void fp2_sqrt(fp2_t* x)
 {
@@ -161,30 +148,25 @@ void fp2_sqrt(fp2_t* x)
 
 // Lexicographic comparison of two field elements. Returns +1 if x > y, -1 if x < y, 0 if x = y
 int fp2_cmp(fp2_t* a, fp2_t* b){
-
-    // TODO: very ugly hack...
-    digit_t a_re[4];
-    digit_t b_re[4];
-    fp_to_w64(a_re, &(a->re));
-    fp_to_w64(b_re, &(b->re));
+    digit_t a_arr[NWORDS_FIELD];
+    digit_t b_arr[NWORDS_FIELD];
+    fp_to_w64(a_arr, &(a->re));
+    fp_to_w64(b_arr, &(b->re));
 
     for(int i = NWORDS_FIELD-1; i >= 0; i--){
-        if(a_re[i] > b_re[i])
+        if(a_arr[i] > b_arr[i])
             return 1;
-        if(a_re[i] < b_re[i])
+        if(a_arr[i] < b_arr[i])
             return -1;
     }
 
-    // TODO: very ugly hack...
-    digit_t a_im[4];
-    digit_t b_im[4];
-    fp_to_w64(a_im, &(a->im));
-    fp_to_w64(b_im, &(b->im));
+    fp_to_w64(a_arr, &(a->im));
+    fp_to_w64(b_arr, &(b->im));
 
     for(int i = NWORDS_FIELD-1; i >= 0; i--){
-        if(a_im[i] > b_im[i])
+        if(a_arr[i] > b_arr[i])
             return 1;
-        if(a_im[i] < b_im[i])
+        if(a_arr[i] < b_arr[i])
             return -1;
     }
     return 0;
