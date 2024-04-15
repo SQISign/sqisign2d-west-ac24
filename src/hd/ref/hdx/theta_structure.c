@@ -1,56 +1,6 @@
 #include "theta_structure.h"
 #include <assert.h>
 
-
-
-
-
-/**
- * @brief Perform the hadamard transform on a theta point
- *
- * @param out Output: the theta_point 
- * @param in a theta point*  
- * in = (x,y,z,t)
- * out = (x+y+z+t, x-y+z-t, x+y-z-t, x-y-z+t)
- *  
-   */
-void hadamard(theta_point_t *out, const theta_point_t *in) {
-    fp2_t t1,t2,t3,t4;
-    
-    // t1 = x + y
-    fp2_add(&t1,&in->x,&in->y);
-    // t2 = x-y
-    fp2_sub(&t2,&in->x,&in->y);
-    // t3 = z+t
-    fp2_add(&t3,&in->z,&in->t);
-    // t4 = z-t
-    fp2_sub(&t4,&in->z,&in->t);
-
-    fp2_add(&out->x,&t1,&t3);
-    fp2_add(&out->y,&t2,&t4);
-    fp2_sub(&out->z,&t1,&t3);
-    fp2_sub(&out->t,&t2,&t4);
-}
-
-
-/**
- * @brief Square the coordinates and then perform the hadamard transform
- *
- * @param out Output: the theta_point 
- * @param in a theta point*  
- * in = (x,y,z,t)
- * out = (x^2+y^2+z^2+t^2, x^2-y^2+z^2-t^2, x^2+y^2-z^2-t^2, x^2-y^2-z^2+t^2)
- *  
-   */
-void to_squared_theta(theta_point_t *out,const theta_point_t *in) {
-    fp2_sqr(&out->x,&in->x);
-    fp2_sqr(&out->y,&in->y);
-    fp2_sqr(&out->z,&in->z);
-    fp2_sqr(&out->t,&in->t);
-    hadamard(out,out);
-}
-
-
 /**
  * @brief Perform the theta structure precomputation 
  *
