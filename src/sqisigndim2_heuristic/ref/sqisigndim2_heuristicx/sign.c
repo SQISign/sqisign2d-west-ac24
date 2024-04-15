@@ -732,7 +732,8 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     t =tic();
 
     // TODO make a clean constant for this
-    int pow_dim2_deg_resp = SQIsign2D_heuristic_challenge_hash_iteration - sig->two_resp_length;
+    int pow_dim2_deg_resp = SQIsign2D_response_heuristic_bound - sig->two_resp_length;
+    assert(TORSION_PLUS_EVEN_POWER == phi_chall.length + pow_dim2_deg_resp);
 
     // computing the isogeny
     // computing the small two chain
