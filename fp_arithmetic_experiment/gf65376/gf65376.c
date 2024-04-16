@@ -28,34 +28,6 @@ static const gf65376 MODULUS = {0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF,
 // TODO: this is wrong
 static const gf65376 INVT244 = {0, 0, 0, 0, 0, 0};
 
-// Normalize value *a into *d.
-static inline void inner_gf65376_normalize(gf65376 *d, const gf65376 *a) {
-  uint64_t d0, d1, d2, d3, d4, d5, m;
-  unsigned char cc;
-
-  // Subtract q.
-  cc = inner_gf65376_sbb(0,  a->v0, 0xFFFFFFFFFFFFFFFF, &d0);
-  cc = inner_gf65376_sbb(cc, a->v1, 0xFFFFFFFFFFFFFFFF, &d1);
-  cc = inner_gf65376_sbb(cc, a->v2, 0xFFFFFFFFFFFFFFFF, &d2);
-  cc = inner_gf65376_sbb(cc, a->v3, 0xFFFFFFFFFFFFFFFF, &d3);
-  cc = inner_gf65376_sbb(cc, a->v4, 0xFFFFFFFFFFFFFFFF, &d4);
-  cc = inner_gf65376_sbb(cc, a->v5, 0x40FFFFFFFFFFFFFF, &d5);
-
-  // Add back q if the result is negative.
-  (void)inner_gf65376_sbb(cc, 0, 0, &m);
-  cc = inner_gf65376_adc(0, d0, m, &d0);
-  cc = inner_gf65376_adc(cc, d1, m, &d1);
-  cc = inner_gf65376_adc(cc, d2, m, &d2);
-  cc = inner_gf65376_adc(cc, d3, m, &d3);
-  cc = inner_gf65376_adc(cc, d4, m, &d4);
-  (void)inner_gf65376_adc(cc, d5, m & 0x40FFFFFFFFFFFFFF, &d5);
-
-  d->v0 = d0;
-  d->v1 = d1;
-  d->v2 = d2;
-  d->v3 = d3;
-}
-
 // Expand the most significant bit of x into a full-width 64-bit word
 // (0x0000000000000000 or 0xFFFFFFFFFFFFFFFF).
 static inline uint64_t sgnw(uint64_t x) {
@@ -82,48 +54,54 @@ static void gf65376_lin(gf65376 *d, const gf65376 *u, const gf65376 *v,
   gf65376_select(&tv, v, &tv, (uint32_t)sg);
 
   // Linear combination over plain integers.
-  uint64_t d0, d1, d2, d3, t;
+  uint64_t d0, d1, d2, d3, d4, d5, t;
   inner_gf65376_umul_x2(d0, t, tu.v0, f, tv.v0, g);
   inner_gf65376_umul_x2_add(d1, t, tu.v1, f, tv.v1, g, t);
   inner_gf65376_umul_x2_add(d2, t, tu.v2, f, tv.v2, g, t);
   inner_gf65376_umul_x2_add(d3, t, tu.v3, f, tv.v3, g, t);
+  inner_gf65376_umul_x2_add(d4, t, tu.v4, f, tv.v4, g, t);
+  inner_gf65376_umul_x2_add(d5, t, tu.v5, f, tv.v5, g, t);
 
-  // Reduction: split into low part (248 bits) and high part
-  // (71 bits, since t can be up to 63 bits). If the high
-  // part is h, then:
-  //    h*2^248 = (h mod 5)*2^248 + floor(h/5)  mod q
-  uint64_t h0 = (d3 >> 56) | (t << 8);
-  uint64_t h1 = t >> 56;
-  d3 &= 0x00FFFFFFFFFFFFFF;
-  uint64_t z0, z1, quo0, rem0, quo1, rem1;
-  inner_gf65376_umul(z0, z1, h0, 0xCCCCCCCCCCCCCCCD);
-  (void)z0;
-  quo0 = z1 >> 2;
-  rem0 = h0 - (5 * quo0);
-  quo1 = (h1 * 0xCD) >> 10;
-  rem1 = h1 - (5 * quo1);
+  inner_gf65376_partial_reduce(d, d0, d1, d2, d3, d4, d5);
+  // // Reduction: split into low part (248 bits) and high part
+  // // (71 bits, since t can be up to 63 bits). If the high
+  // // part is h, then:
+  // //    h*2^248 = (h mod 5)*2^248 + floor(h/5)  mod q
+  // uint64_t h0 = (d5 >> 56) | (t << 8);
+  // uint64_t h1 = t >> 56;
+  // d5 &= 0x00FFFFFFFFFFFFFF;
+  // uint64_t z0, z1, quo0, rem0, quo1, rem1;
+  // inner_gf65376_umul(z0, z1, h0, 0xFC0FC0FC0FC0FC1);
+  // (void)z0;
+  // quo0 = z1 >> 2;
+  // rem0 = h0 - (65 * quo0);
+  // // TODO
+  // // quo1 = (h1 * 0xCD) >> 10;
+  // // rem1 = h1 - (5 * quo1);
+  // quo1 = h1 / 65;
+  // rem1 = h1 - (65 * quo1);
 
-  // h = rem0 + 5*quo0 + (rem1 + 5*quo1)*2^64
-  //   = rem0 + rem1 + 5*(quo0 + quo1*2^64 + rem1*((2^64 - 1)/5))
-  // We add rem0 and rem1 modulo 5, with an extra carry that
-  // goes into the folded part (multiple of 5).
-  uint64_t e, f0, f1;
-  unsigned char cc;
-  cc = inner_gf65376_adc(0, rem0 + 0xFFFFFFFFFFFFFFFA, rem1, &e);
-  cc = inner_gf65376_adc(cc, quo0, rem1 * 0x3333333333333333, &f0);
-  (void)inner_gf65376_adc(cc, quo1, 0, &f1);
-  e -= 0xFFFFFFFFFFFFFFFA;
+  // // h = rem0 + 5*quo0 + (rem1 + 5*quo1)*2^64
+  // //   = rem0 + rem1 + 5*(quo0 + quo1*2^64 + rem1*((2^64 - 1)/5))
+  // // We add rem0 and rem1 modulo 5, with an extra carry that
+  // // goes into the folded part (multiple of 5).
+  // uint64_t e, f0, f1;
+  // unsigned char cc;
+  // cc = inner_gf65376_adc(0, rem0 + 0xFFFFFFFFFFFFFFFA, rem1, &e);
+  // cc = inner_gf65376_adc(cc, quo0, rem1 * 0x3333333333333333, &f0);
+  // (void)inner_gf65376_adc(cc, quo1, 0, &f1);
+  // e -= 0xFFFFFFFFFFFFFFFA;
 
-  // Now we only have to add e*2^248 + f0:f1 to the low part.
-  cc = inner_gf65376_adc(0, d0, f0, &d0);
-  cc = inner_gf65376_adc(cc, d1, f1, &d1);
-  cc = inner_gf65376_adc(cc, d2, 0, &d2);
-  (void)inner_gf65376_adc(cc, d3, e << 56, &d3);
+  // // Now we only have to add e*2^248 + f0:f1 to the low part.
+  // cc = inner_gf65376_adc(0, d0, f0, &d0);
+  // cc = inner_gf65376_adc(cc, d1, f1, &d1);
+  // cc = inner_gf65376_adc(cc, d2, 0, &d2);
+  // (void)inner_gf65376_adc(cc, d3, e << 56, &d3);
 
-  d->v0 = d0;
-  d->v1 = d1;
-  d->v2 = d2;
-  d->v3 = d3;
+  // d->v0 = d0;
+  // d->v1 = d1;
+  // d->v2 = d2;
+  // d->v3 = d3;
 }
 
 // d <- abs(floor((a*f + b*g) / 2^31))
@@ -147,8 +125,8 @@ static uint64_t lindiv31abs(gf65376 *d, const gf65376 *a, const gf65376 *b,
   g = (g ^ sg) - sg;
 
   // Apply the signs of f and g to the source operands.
-  uint64_t a0, a1, a2, a3, a4;
-  uint64_t b0, b1, b2, b3, b4;
+  uint64_t a0, a1, a2, a3, a4, a5, a6;
+  uint64_t b0, b1, b2, b3, b4, b5, b6;
   unsigned char cc;
 
   cc = inner_gf65376_sbb(0, a->v0 ^ sf, sf, &a0);

@@ -106,14 +106,10 @@ static void check_gf_ops(const uint8_t *va, const uint8_t *vb,
   mpz_fdiv_r(zd, zd, zq);
   CHECK(mpz_cmp(zc, zd) == 0);
 
-  // TODO: not working
-  // gf65376_half(&c, &a);
-  // gf65376_encode(vc, &c);
-  // mpz_import(zc, 48, -1, 1, -1, 0, vc);
-  // CHECK(mpz_cmp(zc, zq) < 0);
-  // mpz_mul_ui(zd, zc, 2);
-  // mpz_fdiv_r(zd, zd, zq);
-  // CHECK(mpz_cmp(za, zd) == 0);
+  // TODO: not working with gmp, but seems fine
+	gf65376_mul2(&c, &a);
+	gf65376_half(&d, &c);
+	CHECK(gf65376_equals(&a, &d) == 0xFFFFFFFF);
 
   uint32_t f = (uint32_t)vx[0]
   	| ((uint32_t)vx[1] << 8)

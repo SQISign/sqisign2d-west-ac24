@@ -340,7 +340,6 @@ gf65376_cswap(gf65376 *a, gf65376 *b, uint32_t ctl)
 /*
  * d <- a/2
  */
- // TODO: not sure this is correct
 static inline void
 gf65376_half(gf65376 *d, const gf65376 *a)
 {
@@ -394,6 +393,34 @@ inner_gf65376_partial_reduce(gf65376 *d,
 	d->v3 = d3;
 	d->v4 = d4;
 	d->v5 = d5;
+}
+
+// Inner function: Normalize value *a into *d.
+static inline void inner_gf65376_normalize(gf65376 *d, const gf65376 *a) {
+  uint64_t d0, d1, d2, d3, d4, d5, m;
+  unsigned char cc;
+
+  // Subtract q.
+  cc = inner_gf65376_sbb(0,  a->v0, 0xFFFFFFFFFFFFFFFF, &d0);
+  cc = inner_gf65376_sbb(cc, a->v1, 0xFFFFFFFFFFFFFFFF, &d1);
+  cc = inner_gf65376_sbb(cc, a->v2, 0xFFFFFFFFFFFFFFFF, &d2);
+  cc = inner_gf65376_sbb(cc, a->v3, 0xFFFFFFFFFFFFFFFF, &d3);
+  cc = inner_gf65376_sbb(cc, a->v4, 0xFFFFFFFFFFFFFFFF, &d4);
+  cc = inner_gf65376_sbb(cc, a->v5, 0x40FFFFFFFFFFFFFF, &d5);
+
+  // Add back q if the result is negative.
+  (void)inner_gf65376_sbb(cc, 0, 0, &m);
+  cc = inner_gf65376_adc(0, d0, m, &d0);
+  cc = inner_gf65376_adc(cc, d1, m, &d1);
+  cc = inner_gf65376_adc(cc, d2, m, &d2);
+  cc = inner_gf65376_adc(cc, d3, m, &d3);
+  cc = inner_gf65376_adc(cc, d4, m, &d4);
+  (void)inner_gf65376_adc(cc, d5, m & 0x40FFFFFFFFFFFFFF, &d5);
+
+  d->v0 = d0;
+  d->v1 = d1;
+  d->v2 = d2;
+  d->v3 = d3;
 }
 
 /*
