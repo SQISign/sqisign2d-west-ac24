@@ -22,7 +22,7 @@ void fp2_to_w64(uint64_t data[2][NWORDS_FIELD], const fp2_t * a){
 void fp2_encode(void *dst, const fp2_t *a){
 	uint8_t *buf = dst;
 	fp_encode(buf, &(a->re));
-	fp_encode(buf + 32, &(a->im));
+	fp_encode(buf + 48, &(a->im));
 }
 
 // TODO test these!
@@ -31,16 +31,16 @@ uint32_t fp2_decode(fp2_t *d, const void *src){
     uint32_t re, im;
     
     re = fp_decode(&(d->re), buf);
-    im = fp_decode(&(d->im), buf + 32);
+    im = fp_decode(&(d->im), buf + 48);
     return re & im;
 }
 
 // TODO: we should be more careful hardcoding things 
 // like this??
 fp2_t fp2_non_residue()
-{ // 2 + i is a quadratic non-residue for p1913
+{ // 6 + i is a quadratic non-residue for p1913
     fp2_t res;
-    fp_set_small(&res.re, 2);
+    fp_set_small(&res.re, 6);
     fp_set_one(&res.im);
     return res;
 }
@@ -213,6 +213,8 @@ void fp2_print(char *name, fp2_t const a){
     printf("%016llx", b.re.v1);
     printf("%016llx", b.re.v2);
     printf("%016llx", b.re.v3);
+    printf("%016llx", b.re.v4);
+    printf("%016llx", b.re.v5);
 
     printf(" + i*0x");
     
@@ -220,5 +222,8 @@ void fp2_print(char *name, fp2_t const a){
     printf("%016llx", b.im.v1);
     printf("%016llx", b.im.v2);
     printf("%016llx", b.im.v3);
+    printf("%016llx", b.im.v4);
+    printf("%016llx", b.im.v5);
+
     printf("\n");
 }
