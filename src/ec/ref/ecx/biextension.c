@@ -450,6 +450,7 @@ void to_cubical_basis_i(
     fp2_setone(&P2->z);
 }
 
+// Inline all the Weil pairing computations done in ec_dlog_2_weil
 void weil_dlog(digit_t* scalarP1, digit_t* scalarQ1,
                 digit_t* scalarP2, digit_t* scalarQ2,
                 uint64_t e,
