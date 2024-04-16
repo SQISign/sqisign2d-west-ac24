@@ -420,6 +420,8 @@ static inline void inner_gf65376_normalize(gf65376 *d, const gf65376 *a) {
   d->v1 = d1;
   d->v2 = d2;
   d->v3 = d3;
+  d->v4 = d4;
+  d->v5 = d5;
 }
 
 /*
