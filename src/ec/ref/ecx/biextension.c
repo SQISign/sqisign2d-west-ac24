@@ -32,7 +32,8 @@ void A24_from_AC(ec_point_t* A24, ec_point_t const* AC)
     ec_normalize(A24);
 }
 
-// this is exactly like xDBLv2
+// this is exactly like xDBLv2, except we use the fact that P is normalised
+// to gain a multiplication
 // Warning: for now we need to assume that A24 is normalised, ie C24=1.
 // (maybe add an assert?)
 void cubicalDBL(ec_point_t* Q, ec_point_t const* P, ec_point_t const* A24)
@@ -87,6 +88,7 @@ void biextDBL(ec_point_t* PQQ, ec_point_t* QQ, ec_point_t const* PQ, ec_point_t 
     cubicalDBL(QQ, Q, A24);
 }
 
+// iterative biextension doubling
 void biext_ladder_2e(uint64_t e, ec_point_t* PnQ, ec_point_t* nQ, ec_point_t const* PQ, ec_point_t const* Q, fp2_t const* ixP, ec_point_t const* A24)
 {
     copy_point(PnQ, PQ);
@@ -96,6 +98,8 @@ void biext_ladder_2e(uint64_t e, ec_point_t* PnQ, ec_point_t* nQ, ec_point_t con
     }
 }
 
+// compute the monodromy ratio of cubical points [(P+nQ)/P] / [(nQ)/0]
+// (not used)
 void ratio(fp2_t* r, ec_point_t const* PnQ, ec_point_t const* nQ, ec_point_t const* P) 
 {
     // Sanity tests
@@ -107,7 +111,7 @@ void ratio(fp2_t* r, ec_point_t const* PnQ, ec_point_t const* nQ, ec_point_t con
     fp2_mul(r, r, &PnQ->x);
 }
 
-// Compute the ratio X/Z as a (X:Z) point to avoid a division
+// Compute the ratio X/Z above as a (X:Z) point to avoid a division
 void point_ratio(ec_point_t* R, ec_point_t const* PnQ, ec_point_t const* nQ, ec_point_t const* P) 
 {
     // Sanity tests
@@ -118,12 +122,14 @@ void point_ratio(ec_point_t* R, ec_point_t const* PnQ, ec_point_t const* nQ, ec_
     fp2_copy(&R->z, &PnQ->x);
 }
 
+// (X(P):Z(P))->x(P)
 void x_coord(fp2_t* r, ec_point_t const* P) {
     fp2_copy(r, &P->z);
     fp2_inv(r);
     fp2_mul(r, r, &P->x);
 }
 
+// compute the cubical translation of P by a point of 2-torsion T
 void translate(ec_point_t* P, ec_point_t const* T)
 {
     fp2_t t0, t1, t2;
@@ -146,6 +152,8 @@ void translate(ec_point_t* P, ec_point_t const* T)
     }
 }
 
+// Compute the monodromy P+2^e Q (in level 1)
+// The suffix _i means that we are given 1/x(P) as parameter.
 // Warning: to get meaningful result when using the monodromy to compute
 // pairings, we need P, Q, PQ, A24 to be normalised
 // (this is not strictly necessary, but care need to be taken when they are not normalised. Only handle the normalised case for now)
@@ -168,6 +176,7 @@ void monodromy(ec_point_t* r, uint64_t e, ec_point_t const* PQ, ec_point_t const
 
 // This version computes the monodromy with respect to the biextension
 // associated to 2(0_E), so the square of the monodromy above
+// (not used)
 void monodromy2(fp2_t* r, uint64_t e, ec_point_t const* PQ, ec_point_t const* Q, ec_point_t const* P, ec_point_t const* A24)
 {
     fp2_t ixP;
@@ -222,12 +231,14 @@ void to_cubical_c(ec_point_t* P, ec_point_t* A24, ec_point_t const* P_, ec_point
 */
 
 // non reduced Tate pairing, PQ should be P+Q in (X:Z) coordinates
+// Assume the cubical points are normalised, and that we have 1/x(P)
 void non_reduced_tate_n(fp2_t* r, uint64_t e, ec_point_t* P, ec_point_t* Q, ec_point_t* PQ, fp2_t const* ixP, ec_point_t* A24) {
     ec_point_t R;
     monodromy_i(&R, e, PQ, Q, P, ixP, A24);
     x_coord(r, &R);
 }
 
+// Same as above, but first normalise the points
 void non_reduced_tate(fp2_t* r, uint64_t e, ec_point_t* P, ec_point_t* Q, ec_point_t* PQ, ec_point_t* A24) {
     // to_cubical(Q, P);
     fp2_t ixP, ixQ;
@@ -250,6 +261,7 @@ void weil_n(fp2_t* r, uint64_t e, ec_point_t const* P, ec_point_t const* Q, ec_p
 }
 
 // Weil pairing, PQ should be P+Q in (X:Z) coordinates
+// Normalise the points and call the code above
 // The code will crash (division by 0) if either P or Q is (0:1)
 void weil(fp2_t* r, uint64_t e, ec_point_t* P, ec_point_t* Q, ec_point_t* PQ, ec_point_t* A24) {
     fp2_t ixP, ixQ;
