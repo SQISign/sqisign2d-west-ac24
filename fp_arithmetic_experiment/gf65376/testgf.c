@@ -48,15 +48,15 @@ static void check_gf_ops(const uint8_t *va, const uint8_t *vb,
 
 
   gf65376_decode_reduce(&a, va, 48);
-	gf65376_decode_reduce(&b, vb, 48);
-	mpz_import(za, 48, -1, 1, -1, 0, va);
-	mpz_import(zb, 48, -1, 1, -1, 0, vb);
+  gf65376_decode_reduce(&b, vb, 48);
+  mpz_import(za, 48, -1, 1, -1, 0, va);
+  mpz_import(zb, 48, -1, 1, -1, 0, vb);
 
-	gf65376_encode(vc, &a);
-	mpz_import(zc, 48, -1, 1, -1, 0, vc);
-	CHECK(mpz_cmp(zc, zq) < 0);
-	mpz_fdiv_r(zd, za, zq);
-	CHECK(mpz_cmp(zc, zd) == 0);
+  gf65376_encode(vc, &a);
+  mpz_import(zc, 48, -1, 1, -1, 0, vc);
+  CHECK(mpz_cmp(zc, zq) < 0);
+  mpz_fdiv_r(zd, za, zq);
+  CHECK(mpz_cmp(zc, zd) == 0);
 
   gf65376_add(&c, &a, &b);
   gf65376_encode(vc, &c);
@@ -157,24 +157,24 @@ static void check_gf_ops(const uint8_t *va, const uint8_t *vb,
   	CHECK(mpz_cmp(zc, zd) == 0);
   }
 
-  // if (gf65376_iszero(&b)) {
-  // 	CHECK(gf65376_div(&c, &a, &b) == 0);
-  // 	CHECK(gf65376_iszero(&c) == 0xFFFFFFFF);
-  // 	CHECK(gf65376_invert(&c, &b) == 0);
-  // 	CHECK(gf65376_iszero(&c) == 0xFFFFFFFF);
-  // } else {
-  // 	CHECK(gf65376_div(&c, &a, &b) == 0xFFFFFFFF);
-  // 	gf65376_mul(&d, &c, &b);
-  // 	CHECK(gf65376_equals(&a, &d));
-  // 	CHECK(gf65376_invert(&c, &b) == 0xFFFFFFFF);
-  // 	gf65376_mul(&c, &c, &b);
-  // 	CHECK(gf65376_equals(&c, &gf65376_ONE) == 0xFFFFFFFF);
-  // 	gf65376_encode(vc, &c);
-  // 	CHECK(vc[0] == 1);
-  // 	for (size_t k = 1; k < 48; k ++) {
-  // 		CHECK(vc[k] == 0);
-  // 	}
-  // }
+  if (gf65376_iszero(&b)) {
+  	CHECK(gf65376_div(&c, &a, &b) == 0);
+  	CHECK(gf65376_iszero(&c) == 0xFFFFFFFF);
+  	CHECK(gf65376_invert(&c, &b) == 0);
+  	CHECK(gf65376_iszero(&c) == 0xFFFFFFFF);
+  } else {
+  	CHECK(gf65376_div(&c, &a, &b) == 0xFFFFFFFF);
+  	gf65376_mul(&d, &c, &b);
+  	CHECK(gf65376_equals(&a, &d));
+  	CHECK(gf65376_invert(&c, &b) == 0xFFFFFFFF);
+  	gf65376_mul(&c, &c, &b);
+  	CHECK(gf65376_equals(&c, &gf65376_ONE) == 0xFFFFFFFF);
+  	gf65376_encode(vc, &c);
+  	CHECK(vc[0] == 1);
+  	for (size_t k = 1; k < 48; k ++) {
+  		CHECK(vc[k] == 0);
+  	}
+  }
 }
 
 static void test_gf65376(void) {
@@ -187,8 +187,8 @@ static void test_gf65376(void) {
   check_gf_ops(va, vb, vx);
   gf65376_decode_reduce(&a, va, 48);
   CHECK(gf65376_iszero(&a) == 0xFFFFFFFF);
-  // CHECK(gf65376_legendre(&a) == 0);
-  // CHECK(gf65376_sqrt(&a, &a) == 0xFFFFFFFF);
+  CHECK(gf65376_legendre(&a) == 0);
+  CHECK(gf65376_sqrt(&a, &a) == 0xFFFFFFFF);
   CHECK(gf65376_iszero(&a) == 0xFFFFFFFF);
   printf(".");
   fflush(stdout);
@@ -236,8 +236,8 @@ static void test_gf65376(void) {
     uint8_t vt[48];
     gf65376_square(&s, &a);
     gf65376_neg(&s2, &s);
-    // CHECK(gf65376_legendre(&s) == 1);
-    // CHECK(gf65376_legendre(&s2) == -1);
+    CHECK(gf65376_legendre(&s) == 1);
+    CHECK(gf65376_legendre(&s2) == -1);
     CHECK(gf65376_sqrt(&t, &s) == 0xFFFFFFFF);
     gf65376_encode(vt, &t);
     CHECK((vt[0] & 0x01) == 0);
@@ -444,34 +444,34 @@ speed_square(void)
 		(double)tt[15] / 6000.0, tmp[0]);
 }
 
-// static void
-// speed_div(void)
-// {
-// 	gf65376 xx[2], x, y;
-// 	uint64_t tt[20];
-// 	uint8_t tmp[48];
+static void
+speed_div(void)
+{
+	gf65376 xx[2], x, y;
+	uint64_t tt[20];
+	uint8_t tmp[48];
 
-// 	rand_gfs(xx, 2);
-// 	x = xx[0];
-// 	y = xx[1];
-// 	for (int i = 0; i < 20; i ++) {
-// 		uint64_t begin = core_cycles();
-// 		for (int j = 0; j < 1000; j ++) {
-// 			gf65376_div(&x, &x, &y);
-// 			gf65376_div(&y, &x, &y);
-// 			gf65376_div(&x, &x, &y);
-// 			gf65376_div(&y, &x, &y);
-// 			gf65376_div(&x, &x, &y);
-// 			gf65376_div(&y, &x, &y);
-// 		}
-// 		uint64_t end = core_cycles();
-// 		tt[i] = end - begin;
-// 	}
-// 	gf65376_encode(tmp, &y);
-// 	qsort(tt + 10, 10, sizeof tt[0], &cmp_u64);
-// 	printf("GF(65*2^376 - 1) div:                %11.2f   (%u)\n",
-// 		(double)tt[15] / 6000.0, tmp[0]);
-// }
+	rand_gfs(xx, 2);
+	x = xx[0];
+	y = xx[1];
+	for (int i = 0; i < 20; i ++) {
+		uint64_t begin = core_cycles();
+		for (int j = 0; j < 1000; j ++) {
+			gf65376_div(&x, &x, &y);
+			gf65376_div(&y, &x, &y);
+			gf65376_div(&x, &x, &y);
+			gf65376_div(&y, &x, &y);
+			gf65376_div(&x, &x, &y);
+			gf65376_div(&y, &x, &y);
+		}
+		uint64_t end = core_cycles();
+		tt[i] = end - begin;
+	}
+	gf65376_encode(tmp, &y);
+	qsort(tt + 10, 10, sizeof tt[0], &cmp_u64);
+	printf("GF(65*2^376 - 1) div:                %11.2f   (%u)\n",
+		(double)tt[15] / 6000.0, tmp[0]);
+}
 
 static void
 speed_sqrt(void)
@@ -495,28 +495,28 @@ speed_sqrt(void)
 		(double)tt[15] / 6000.0, tmp[0]);
 }
 
-// static void
-// speed_legendre(void)
-// {
-// 	gf65376 x;
-// 	uint64_t tt[20];
-// 	uint8_t tmp[48];
+static void
+speed_legendre(void)
+{
+	gf65376 x;
+	uint64_t tt[20];
+	uint8_t tmp[48];
 
-// 	rand_gfs(&x, 1);
-// 	for (int i = 0; i < 20; i ++) {
-// 		uint64_t begin = core_cycles();
-// 		for (int j = 0; j < 6000; j ++) {
-// 			int32_t ls = gf65376_legendre(&x);
-// 			x.v0 += 2 + ls;
-// 		}
-// 		uint64_t end = core_cycles();
-// 		tt[i] = end - begin;
-// 	}
-// 	gf65376_encode(tmp, &x);
-// 	qsort(tt + 10, 10, sizeof tt[0], &cmp_u64);
-// 	printf("GF(65*2^376 - 1) Legendre:           %11.2f   (%u)\n",
-// 		(double)tt[15] / 6000.0, tmp[0]);
-// }
+	rand_gfs(&x, 1);
+	for (int i = 0; i < 20; i ++) {
+		uint64_t begin = core_cycles();
+		for (int j = 0; j < 6000; j ++) {
+			int32_t ls = gf65376_legendre(&x);
+			x.v0 += 2 + ls;
+		}
+		uint64_t end = core_cycles();
+		tt[i] = end - begin;
+	}
+	gf65376_encode(tmp, &x);
+	qsort(tt + 10, 10, sizeof tt[0], &cmp_u64);
+	printf("GF(65*2^376 - 1) Legendre:           %11.2f   (%u)\n",
+		(double)tt[15] / 6000.0, tmp[0]);
+}
 #endif
 
 int main(void) {
@@ -527,9 +527,9 @@ int main(void) {
   	speed_sub();
   	speed_mul();
   	speed_square();
-  // 	speed_div();
+  	speed_div();
   	speed_sqrt();
-  // 	speed_legendre();
+  	speed_legendre();
   #endif
   return 0;
 }
