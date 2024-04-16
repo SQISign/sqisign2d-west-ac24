@@ -284,7 +284,7 @@ gf65376_neg(gf65376 *d, const gf65376 *a)
 	(void)inner_gf65376_sbb(cc, (uint64_t)0x81FFFFFFFFFFFFFF, a->v5, &d5);
 
 	// Subtract q if the value is not lower than 2^251.
-	f = d3 >> 63;
+	f = d5 >> 63;
 	cc =  inner_gf65376_adc(0,  d0, f, &d0);
 	cc =  inner_gf65376_adc(cc, d1, 0, &d1);
 	cc =  inner_gf65376_adc(cc, d2, 0, &d2);
