@@ -20,7 +20,7 @@ endif()
 if(SQISIGN_BUILD_TYPE STREQUAL "broadwell")
 	SET(SVARIANT_S "lvl1")
 else()
-	SET(SVARIANT_S "lvl1;lvl3")
+	SET(SVARIANT_S "lvl1;lvl3;lvl5")
 endif()
 
 include(.cmake/flags.cmake)
