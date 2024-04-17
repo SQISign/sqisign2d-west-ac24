@@ -38,9 +38,10 @@ uint32_t fp2_decode(fp2_t *d, const void *src){
 // TODO: we should be more careful hardcoding things 
 // like this??
 fp2_t fp2_non_residue()
-{ // 6 + i is a quadratic non-residue for p1913
+{ // 4 + i is a quadratic non-residue for GF(p^2)
+  // for p = 27*2**500 - 1 and modulus x^2 + 1
     fp2_t res;
-    fp_set_small(&res.re, 6);
+    fp_set_small(&res.re, 4);
     fp_set_one(&res.im);
     return res;
 }
