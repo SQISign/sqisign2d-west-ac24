@@ -392,7 +392,8 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
     // we start by enumerating a set of small vectors 
     // global parameters for the enumerate
     // TODO may be overshot and we may improve this by sampling inside an hyperball instead 
-    int m =1+2+2*number_sum_square;
+    // TODO make this a proper constant
+    int m =1+ ( ibz_bitsize(&QUATALG_PINFTY.p)/120 )  +2*number_sum_square;
     int m4 = (2*m+1)*(2*m+1)*(2*m+1)*(2*m+1)-1;
     int m3 = (2*m+1)*(2*m+1)*(2*m+1);
     int m2 = (2*m+1)*(2*m+1);
@@ -447,17 +448,15 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
     // printf("number of elements = %d / %d (value of m=%d) \n",index,m4,m);
     // TOC(t,"\nenum");
     
-    
     // sorting the list
     quicksort(small_norms,small_vecs,0,index);
     // TOC(t,"sorting + enum");
-
    
     int found=0;
     int count=0;
     // starting to try solutions
 
-    // TODO try to go through d1,d2 by increasing size of the products d1*d2
+    // TODO try to go through couples (d1,d2) by increasing size of the products d1*d2
 
     // this was a failed attempt to speed-up this algorithm.
     // since we set it to one, we could simply remove it
@@ -682,9 +681,11 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     // such that u*d1 + v*d2 = 2^TORSION_PLUS_EVEN_POWER and there are ideals of norm d1,d2 equivalent to ideal
     // beta1 and beta2 are elements of norm nd1, nd2 where n=n(lideal)
     int found = find_uv(u,v,coeffs,beta1,beta2,d1,d2,&TORSION_PLUS_2POWER,number_sum_square,lideal,Bpoo);
+    
     // TOC(t,"\n \ntotal time to find u,v");
 
     if (!found) {
+        printf("didn't find uv \n");
         return 0;
     }
    

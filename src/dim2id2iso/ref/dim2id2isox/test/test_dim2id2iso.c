@@ -142,8 +142,8 @@ int dim2id2iso_test_find_uv() {
     ibz_init(&d1);ibz_init(&d2);
 
     // computation of lideal_small
-    generate_random_prime(&n1,1,128);
-    generate_random_prime(&n2,1,256);
+    generate_random_prime(&n1,1,ibz_bitsize(&QUATALG_PINFTY.p)/2);
+    generate_random_prime(&n2,1,ibz_bitsize(&QUATALG_PINFTY.p));
     ibz_mul(&temp,&n1,&n2);
     found = found && represent_integer(&gen,&temp,&QUATALG_PINFTY);
     assert(found);
@@ -237,8 +237,8 @@ int dim2id2iso_test_dimid2iso() {
     ibz_init(&d1);ibz_init(&d2);
 
     // computation of lideal_small
-    generate_random_prime(&n1,1,128);
-    generate_random_prime(&n2,1,256);
+    generate_random_prime(&n1,1,ibz_bitsize(&QUATALG_PINFTY.p)/2);
+    generate_random_prime(&n2,1,ibz_bitsize(&QUATALG_PINFTY.p));
     ibz_mul(&temp,&n1,&n2);
     found = found && represent_integer(&gen,&temp,&QUATALG_PINFTY);
     assert(found);

@@ -1753,7 +1753,7 @@ void sampling_random_ideal_O0(quat_left_ideal_t *lideal,ibz_t *norm) {
     quat_alg_elem_init(&gen);
 
     // TODO make a cleaner provable version of this
-    generate_random_prime(&n_temp,1,256);
+    generate_random_prime(&n_temp,1,ibz_bitsize(&QUATALG_PINFTY.p));
     ibz_mul(&n_temp,norm,&n_temp);
     found = found && represent_integer(&gen,&n_temp,&QUATALG_PINFTY);
     assert(found);

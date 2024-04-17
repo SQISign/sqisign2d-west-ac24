@@ -41,7 +41,7 @@ void protocols_keygen(public_key_t *pk, secret_key_t *sk) {
 
     // generate a random ideal of random norm for the secret ideal
     // TODO make a clean function for all of that and  
-    generate_random_prime(&n,1,128);
+    generate_random_prime(&n,1,ibz_bitsize(&QUATALG_PINFTY.p)/2);
     sampling_random_ideal_O0(&sk->secret_ideal,&n);
 
     // ideal to isogeny clapotis

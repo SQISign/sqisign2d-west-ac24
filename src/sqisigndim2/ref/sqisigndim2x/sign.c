@@ -71,7 +71,7 @@ void commit(ec_curve_t *E_com, ec_basis_t *basis_even_com, quat_left_ideal_t *li
     ibz_init(&n);
 
     // generate a random ideal of random norm for the secret ideal
-    generate_random_prime(&n,1,128);
+    generate_random_prime(&n,1,ibz_bitsize(&QUATALG_PINFTY.p)/2-5);
     sampling_random_ideal_O0(lideal_com,&n);
 
     // ideal to isogeny clapotis
@@ -205,7 +205,8 @@ void sample_response(quat_alg_elem_t *x, const quat_lattice_t *lattice, ibz_t co
     // }
     // printf("]");
 
-    int err = quat_lattice_lll(&lll, lattice, &(QUATALG_PINFTY.p), 1000);
+    // TODO make this a proper constant
+    int err = quat_lattice_lll(&lll, lattice, &(QUATALG_PINFTY.p), 500 * (ibz_bitsize(&QUATALG_PINFTY.p)/120) );
     assert(!err);
 
     ibz_copy(&(x->denom), &(lattice->denom));
@@ -442,7 +443,10 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     ibz_pow(&tmp,&ibz_const_two,exp_diadic_val_full_resp);
     ibz_div(&degree_odd_resp,&remain,&degree_full_resp,&tmp);
     assert(ibz_cmp(&remain,&ibz_const_zero)==0);
-    assert( (2*ibz_bitsize(&degree_odd_resp)) < ibz_bitsize(&QUATALG_PINFTY.p));
+    #ifndef NDEBUG 
+        ibz_mul(&tmp,&degree_odd_resp,&degree_odd_resp);
+        assert( ibz_cmp(&QUATALG_PINFTY.p,&tmp)>0);
+    #endif 
 
     // creating the ideal
     quat_alg_conj(&resp_quat,&resp_quat);

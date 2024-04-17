@@ -61,7 +61,7 @@ void commit(ec_curve_t *E_com, quat_left_ideal_t *lideal_com) {
     ibz_init(&adj);
     // generate a random ideal of random norm for the secret ideal
     // TODO make a clean constant for this
-    generate_random_prime(&n,1,128);
+    generate_random_prime(&n,1,ibz_bitsize(&QUATALG_PINFTY.p)/2);
 
     theta_chain_t F;
     found = fixed_degree_isogeny(&F,lideal_com,&n,&adj,1);

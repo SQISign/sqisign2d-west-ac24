@@ -98,6 +98,7 @@ int hd_chain_test() {
     // point_print("P2",B0_two.Q);
     // point_print("P1m2",B0_two.PmQ);
 
+    printf("%ld \n",TORSION_PLUS_EVEN_POWER);
 
     #ifndef NDEBUG
         assert(test_point_order_twof(&B0_two.P,&E0,TORSION_PLUS_EVEN_POWER));
@@ -349,7 +350,13 @@ int main() {
 
     printf("Running hd module unit tests\n");
 
-    res = res & hd_chain_test();
+    if (TORSION_PLUS_EVEN_POWER<250) {
+        res = res & hd_chain_test();
+    }
+    else {
+        printf("the hd test was only coded for level 1, try dim2id2iso test \n");
+    }
+    
 
     if(!res){
         printf("\nSome tests failed!\n");
