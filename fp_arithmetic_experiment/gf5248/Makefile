@@ -23,5 +23,7 @@ test_fp: src/bin/test_fp.c
 test_fp2: src/bin/test_fp2.c
 	$(CC) $(SRC) src/bin/test_fp2.c -o test_fp2 $(FLAGS)
 
-
+clean:
+	rm test_fp
+	rm test_fp2
 # ========================================================================

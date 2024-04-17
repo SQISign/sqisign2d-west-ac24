@@ -378,6 +378,7 @@ inner_gf65376_partial_reduce(gf65376 *d,
 	// to the low part.
 
 	// TODO, how can i do this with mul and shifts?
+	// quo = (h * 0xFC0FC0FC0FC0FC1) << 2;
 	quo = h / 65;
 	rem = h - (65 * quo);
 	cc =  inner_gf65376_adc(0,  a0, quo, &d0);
@@ -421,6 +422,8 @@ static inline void inner_gf65376_normalize(gf65376 *d, const gf65376 *a) {
   d->v1 = d1;
   d->v2 = d2;
   d->v3 = d3;
+  d->v4 = d4;
+  d->v5 = d5;
 }
 
 /*

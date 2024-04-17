@@ -1,5 +1,4 @@
 #include "gf65376.h"
-#include <stdio.h>
 
 // see gf65376.h
 const gf65376 gf65376_ZERO = {0, 0, 0, 0, 0, 0};
@@ -24,9 +23,10 @@ static const gf65376 MODULUS = {0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF,
                                 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF,
                                 0xFFFFFFFFFFFFFFFF, 0x40FFFFFFFFFFFFFF};
 
-// 1/2^244 (in Montgomery representation).
-// TODO: this is wrong
-static const gf65376 INVT244 = {0, 0, 0, 0, 0, 0};
+// 1/2^380 (in Montgomery representation).
+static const gf65376 INVT380 = {0x0000000000000010, 0x0000000000000000, 
+                                0x0000000000000000, 0x0000000000000000, 
+                                0x0000000000000000, 0x0000000000000000};
 
 // Expand the most significant bit of x into a full-width 64-bit word
 // (0x0000000000000000 or 0xFFFFFFFFFFFFFFFF).
@@ -62,46 +62,69 @@ static void gf65376_lin(gf65376 *d, const gf65376 *u, const gf65376 *v,
   inner_gf65376_umul_x2_add(d4, t, tu.v4, f, tv.v4, g, t);
   inner_gf65376_umul_x2_add(d5, t, tu.v5, f, tv.v5, g, t);
 
-  inner_gf65376_partial_reduce(d, d0, d1, d2, d3, d4, d5);
-  // // Reduction: split into low part (248 bits) and high part
-  // // (71 bits, since t can be up to 63 bits). If the high
-  // // part is h, then:
-  // //    h*2^248 = (h mod 5)*2^248 + floor(h/5)  mod q
-  // uint64_t h0 = (d5 >> 56) | (t << 8);
-  // uint64_t h1 = t >> 56;
-  // d5 &= 0x00FFFFFFFFFFFFFF;
-  // uint64_t z0, z1, quo0, rem0, quo1, rem1;
-  // inner_gf65376_umul(z0, z1, h0, 0xFC0FC0FC0FC0FC1);
-  // (void)z0;
-  // quo0 = z1 >> 2;
-  // rem0 = h0 - (65 * quo0);
-  // // TODO
-  // // quo1 = (h1 * 0xCD) >> 10;
-  // // rem1 = h1 - (5 * quo1);
-  // quo1 = h1 / 65;
-  // rem1 = h1 - (65 * quo1);
+  // Reduction: split into low part (376 bits) and high part
+  // (71 bits, since t can be up to 63 bits). If the high
+  // part is h, then:
+  //    h*2^376 = (h mod 65)*2^376 + floor(h/65)  mod q
+  uint64_t h0 = (d5 >> 56) | (t << 8);
+  uint64_t h1 = t >> 56;
+  d5 &= 0x00FFFFFFFFFFFFFF;
 
-  // // h = rem0 + 5*quo0 + (rem1 + 5*quo1)*2^64
-  // //   = rem0 + rem1 + 5*(quo0 + quo1*2^64 + rem1*((2^64 - 1)/5))
-  // // We add rem0 and rem1 modulo 5, with an extra carry that
-  // // goes into the folded part (multiple of 5).
-  // uint64_t e, f0, f1;
+
+  uint64_t z0, z1, quo0, rem0, quo1, rem1;
+  inner_gf65376_umul(z0, z1, h0, 0xFC0FC0FC0FC0FC1);
+  (void)z0;
+  quo0 = z1 >> 2;
+  rem0 = h0 - (65 * quo0);
+  assert(quo0 == h0 / 65);
+  assert(rem0 == h0 % 65);
+
+  // TODO: don't use /
+  // quo1 = (h1 * 0xCD) >> 10;
+  // rem1 = h1 - (5 * quo1);
+  quo1 = h1 / 65;
+  rem1 = h1 - (65 * quo1);
+
+  // h = rem0 + 65*quo0 + (rem1 + 65*quo1)*2^64
+  //   = rem0 + rem1 + 65*(quo0 + quo1*2^64 + rem1*((2^64 - 1)/65))
+  // We add rem0 and rem1 modulo 65, with an extra carry that
+  // goes into the folded part (multiple of 65).
+  uint64_t e, f0, f1;
+  unsigned char cc;
+  cc = inner_gf65376_adc(0, rem0 + 0xffffffffffffffbe, rem1, &e);
+  cc = inner_gf65376_adc(cc, quo0, rem1 * 0x3f03f03f03f03f0, &f0);
+  cc = inner_gf65376_adc(cc, quo1, 0, &f1);
+  assert(cc == 0);
+  e -= 0xffffffffffffffbe;
+
+  // Now we only have to add e*2^384 + f0:f1 to the low part.
+  cc = inner_gf65376_adc(0,  d0, f0, &d0);
+  cc = inner_gf65376_adc(cc, d1, f1, &d1);
+  cc = inner_gf65376_adc(cc, d2, 0,  &d2);
+  cc = inner_gf65376_adc(cc, d3, 0,  &d3);
+  cc = inner_gf65376_adc(cc, d4, 0,  &d4);
+  (void)inner_gf65376_adc(cc, d5, e << 56, &d5);
+
+  // TODO:
+  //
+  // This method is more naive and always seems to work
+  // but I don't understand why we always have that h1 = 0
+  //
   // unsigned char cc;
-  // cc = inner_gf65376_adc(0, rem0 + 0xFFFFFFFFFFFFFFFA, rem1, &e);
-  // cc = inner_gf65376_adc(cc, quo0, rem1 * 0x3333333333333333, &f0);
-  // (void)inner_gf65376_adc(cc, quo1, 0, &f1);
-  // e -= 0xFFFFFFFFFFFFFFFA;
+	// cc =  inner_gf65376_adc(0,  d0, quo0, &d0);
+	// cc =  inner_gf65376_adc(cc, d1, 0, &d1);
+	// cc =  inner_gf65376_adc(cc, d2, 0, &d2);
+	// cc =  inner_gf65376_adc(cc, d3, 0, &d3);
+	// cc =  inner_gf65376_adc(cc, d4, 0, &d4);
+	// cc = inner_gf65376_adc(cc, d5, rem0 << 56, &d5);
+  // assert(cc == 0);
 
-  // // Now we only have to add e*2^248 + f0:f1 to the low part.
-  // cc = inner_gf65376_adc(0, d0, f0, &d0);
-  // cc = inner_gf65376_adc(cc, d1, f1, &d1);
-  // cc = inner_gf65376_adc(cc, d2, 0, &d2);
-  // (void)inner_gf65376_adc(cc, d3, e << 56, &d3);
-
-  // d->v0 = d0;
-  // d->v1 = d1;
-  // d->v2 = d2;
-  // d->v3 = d3;
+  d->v0 = d0;
+  d->v1 = d1;
+  d->v2 = d2;
+  d->v3 = d3;
+  d->v4 = d4;
+  d->v5 = d5;
 }
 
 // d <- abs(floor((a*f + b*g) / 2^31))
@@ -129,45 +152,57 @@ static uint64_t lindiv31abs(gf65376 *d, const gf65376 *a, const gf65376 *b,
   uint64_t b0, b1, b2, b3, b4, b5, b6;
   unsigned char cc;
 
-  cc = inner_gf65376_sbb(0, a->v0 ^ sf, sf, &a0);
+  cc = inner_gf65376_sbb(0,  a->v0 ^ sf, sf, &a0);
   cc = inner_gf65376_sbb(cc, a->v1 ^ sf, sf, &a1);
   cc = inner_gf65376_sbb(cc, a->v2 ^ sf, sf, &a2);
   cc = inner_gf65376_sbb(cc, a->v3 ^ sf, sf, &a3);
-  (void)inner_gf65376_sbb(cc, 0, 0, &a4);
+  cc = inner_gf65376_sbb(cc, a->v4 ^ sf, sf, &a4);
+  cc = inner_gf65376_sbb(cc, a->v5 ^ sf, sf, &a5);
+  (void)inner_gf65376_sbb(cc, 0, 0, &a6);
 
-  cc = inner_gf65376_sbb(0, b->v0 ^ sg, sg, &b0);
+  cc = inner_gf65376_sbb(0,  b->v0 ^ sg, sg, &b0);
   cc = inner_gf65376_sbb(cc, b->v1 ^ sg, sg, &b1);
   cc = inner_gf65376_sbb(cc, b->v2 ^ sg, sg, &b2);
   cc = inner_gf65376_sbb(cc, b->v3 ^ sg, sg, &b3);
-  (void)inner_gf65376_sbb(cc, 0, 0, &b4);
+  cc = inner_gf65376_sbb(cc, b->v4 ^ sg, sg, &b4);
+  cc = inner_gf65376_sbb(cc, b->v5 ^ sg, sg, &b5);
+  (void)inner_gf65376_sbb(cc, 0, 0, &b6);
 
   // Compute a*f + b*g into d0:d1:d2:d3:d4. Since f and g are at
   // most 2^31, we can add two 128-bit products with no overflow.
   // Note: a4 and b4 are both in {0, -1}.
-  uint64_t d0, d1, d2, d3, d4, t;
+  uint64_t d0, d1, d2, d3, d4, d5, d6, t;
   inner_gf65376_umul_x2(d0, t, a0, f, b0, g);
   inner_gf65376_umul_x2_add(d1, t, a1, f, b1, g, t);
   inner_gf65376_umul_x2_add(d2, t, a2, f, b2, g, t);
   inner_gf65376_umul_x2_add(d3, t, a3, f, b3, g, t);
-  d4 = t - (a4 & f) - (b4 & g);
+  inner_gf65376_umul_x2_add(d4, t, a4, f, b4, g, t);
+  inner_gf65376_umul_x2_add(d5, t, a5, f, b5, g, t);
+  d6 = t - (a6 & f) - (b6 & g);
 
   // Right-shift the value by 31 bits.
   d0 = (d0 >> 31) | (d1 << 33);
   d1 = (d1 >> 31) | (d2 << 33);
   d2 = (d2 >> 31) | (d3 << 33);
   d3 = (d3 >> 31) | (d4 << 33);
+  d4 = (d4 >> 31) | (d5 << 33);
+  d5 = (d5 >> 31) | (d6 << 33);
 
   // If the result is negative, negate it.
-  t = sgnw(d4);
-  cc = inner_gf65376_sbb(0, d0 ^ t, t, &d0);
-  cc = inner_gf65376_sbb(cc, d1 ^ t, t, &d1);
-  cc = inner_gf65376_sbb(cc, d2 ^ t, t, &d2);
-  (void)inner_gf65376_sbb(cc, d3 ^ t, t, &d3);
+  t = sgnw(d6);
+  cc =  inner_gf65376_sbb(0,  d0 ^ t, t, &d0);
+  cc =  inner_gf65376_sbb(cc, d1 ^ t, t, &d1);
+  cc =  inner_gf65376_sbb(cc, d2 ^ t, t, &d2);
+  cc =  inner_gf65376_sbb(cc, d3 ^ t, t, &d3);
+  cc =  inner_gf65376_sbb(cc, d4 ^ t, t, &d4);
+  (void)inner_gf65376_sbb(cc, d5 ^ t, t, &d5);
 
   d->v0 = d0;
   d->v1 = d1;
   d->v2 = d2;
   d->v3 = d3;
+  d->v4 = d4;
+  d->v5 = d5;
   return t;
 }
 
@@ -243,25 +278,29 @@ uint32_t gf65376_div(gf65376 *d, const gf65376 *x, const gf65376 *y) {
   u = *x;
   v = gf65376_ZERO;
 
-  // Generic loop does 15*31 = 465 inner iterations.
-  for (int i = 0; i < 15; i++) {
+  // Generic loop does 23*31 = 713 inner iterations.
+  for (int i = 0; i < 23; i++) {
     // Get approximations of a and b over 64 bits:
     //  - If len(a) <= 64 and len(b) <= 64, then we just use
     //    their values (low limbs).
     //  - Otherwise, with n = max(len(a), len(b)), we use:
     //       (a mod 2^31) + 2^31*floor(a / 2^(n - 33))
     //       (b mod 2^31) + 2^31*floor(b / 2^(n - 33))
+    uint64_t m5 = a.v5 | b.v5;
+    uint64_t m4 = a.v4 | b.v4;
     uint64_t m3 = a.v3 | b.v3;
     uint64_t m2 = a.v2 | b.v2;
     uint64_t m1 = a.v1 | b.v1;
-    uint64_t tnz3 = sgnw(m3 | -m3);
-    uint64_t tnz2 = sgnw(m2 | -m2) & ~tnz3;
-    uint64_t tnz1 = sgnw(m1 | -m1) & ~tnz3 & ~tnz2;
-    uint64_t tnzm = (m3 & tnz3) | (m2 & tnz2) | (m1 & tnz1);
-    uint64_t tnza = (a.v3 & tnz3) | (a.v2 & tnz2) | (a.v1 & tnz1);
-    uint64_t tnzb = (b.v3 & tnz3) | (b.v2 & tnz2) | (b.v1 & tnz1);
-    uint64_t snza = (a.v2 & tnz3) | (a.v1 & tnz2) | (a.v0 & tnz1);
-    uint64_t snzb = (b.v2 & tnz3) | (b.v1 & tnz2) | (b.v0 & tnz1);
+    uint64_t tnz5 = sgnw(m5 | -m5);
+    uint64_t tnz4 = sgnw(m4 | -m4) & ~tnz5;
+    uint64_t tnz3 = sgnw(m3 | -m3) & ~tnz5 & ~tnz4;
+    uint64_t tnz2 = sgnw(m2 | -m2) & ~tnz5 & ~tnz4 & ~tnz3;
+    uint64_t tnz1 = sgnw(m1 | -m1) & ~tnz5 & ~tnz4 & ~tnz3 & ~tnz2;
+    uint64_t tnzm = (m5 & tnz5) | (m4 & tnz4) | (m3 & tnz3) | (m2 & tnz2) | (m1 & tnz1);
+    uint64_t tnza = (a.v5 & tnz5) | (a.v4 & tnz4) | (a.v3 & tnz3) | (a.v2 & tnz2) | (a.v1 & tnz1);
+    uint64_t tnzb = (b.v5 & tnz5) | (b.v4 & tnz4) | (b.v3 & tnz3) | (b.v2 & tnz2) | (b.v1 & tnz1);
+    uint64_t snza = (a.v4 & tnz5) | (a.v3 & tnz4) | (a.v2 & tnz3) | (a.v1 & tnz2) | (a.v0 & tnz1);
+    uint64_t snzb = (b.v4 & tnz5) | (b.v3 & tnz4) | (b.v2 & tnz3) | (b.v1 & tnz2) | (b.v0 & tnz1);
 
     // If both len(a) <= 64 and len(b) <= 64, then:
     //    tnzm = 0
@@ -290,11 +329,11 @@ uint32_t gf65376_div(gf65376 *d, const gf65376 *x, const gf65376 *y) {
     //  - If len(a) <= 64 and len(b) <= 64, then:
     //       tnza = 0
     //       tnzb = 0
-    //       tnz1 = tnz2 = tnz3 = 0
+    //       tnz1 = tnz2 = tnz3 = tnz4 = tnz5 = 0
     //       we want to use the entire low words of a and b
     //  - Otherwise, we want to use the top 33 bits of tnza and
     //    tnzb, and the low 31 bits of the low words of a and b.
-    uint64_t tzx = ~(tnz1 | tnz2 | tnz3);
+    uint64_t tzx = ~(tnz1 | tnz2 | tnz3 | tnz4 | tnz5);
     tnza |= a.v0 & tzx;
     tnzb |= b.v0 & tzx;
     xa = (a.v0 & 0x7FFFFFFF) | (tnza & 0xFFFFFFFF80000000);
@@ -345,8 +384,8 @@ uint32_t gf65376_div(gf65376 *d, const gf65376 *x, const gf65376 *y) {
   }
 
   // If y is invertible, then the final GCD is 1, and
-  // len(a) + len(b) <= 37, so we can end the computation with
-  // the low words directly. We only need 35 iterations to reach
+  // len(a) + len(b) <= 53, so we can end the computation with
+  // the low words directly. We only need 51 iterations to reach
   // the point where b = 1.
   //
   // If y is zero, then v is unchanged (hence zero) and none of
@@ -358,7 +397,7 @@ uint32_t gf65376_div(gf65376 *d, const gf65376 *x, const gf65376 *y) {
   g0 = 0;
   f1 = 0;
   g1 = 1;
-  for (int j = 0; j < 35; j++) {
+  for (int j = 0; j < 51; j++) {
     uint64_t a_odd, swap, t0, t1, t2, t3;
     unsigned char cc;
     a_odd = -(xa & 1);
@@ -386,15 +425,15 @@ uint32_t gf65376_div(gf65376 *d, const gf65376 *x, const gf65376 *y) {
   // At the point:
   //  - Numerator and denominator were both in Montgomery representation,
   //    but the two factors R canceled each other.
-  //  - We have injected 31*15+35 = 500 extra factors of 2, hence we
-  //    must divide the result by 2^500.
+  //  - We have injected 31*23+51 = 764 extra factors of 2, hence we
+  //    must divide the result by 2^764.
   //  - However, we also want to obtain the result in Montgomery
   //    representation, i.e. multiply by 2^256. We thus want to
-  //    divide the current result by 2^(500 - 256) = 2^244.
+  //    divide the current result by 2^(764 - 384) = 2^380.
   //  - We do this division by using a Montgomery multiplication with
-  //    the Montgomery representation of 1/2^244, i.e. the integer
-  //    2^256/2^244 = 4096.
-  gf65376_mul(d, d, &INVT244);
+  //    the Montgomery representation of 1/2^380, i.e. the integer
+  //    2^384/2^380 = 16.
+  gf65376_mul(d, d, &INVT380); // TODO should we just do additions here?
   return r;
 }
 
@@ -422,19 +461,23 @@ int32_t gf65376_legendre(const gf65376 *x) {
   ls = 0; // running symbol information in bit 1.
 
   // Outer loop
-  for (int i = 0; i < 15; i++) {
+  for (int i = 0; i < 23; i++) {
     // Get approximations of a and b over 64 bits.
+    uint64_t m5 = a.v5 | b.v5;
+    uint64_t m4 = a.v4 | b.v4;
     uint64_t m3 = a.v3 | b.v3;
     uint64_t m2 = a.v2 | b.v2;
     uint64_t m1 = a.v1 | b.v1;
-    uint64_t tnz3 = sgnw(m3 | -m3);
-    uint64_t tnz2 = sgnw(m2 | -m2) & ~tnz3;
-    uint64_t tnz1 = sgnw(m1 | -m1) & ~tnz3 & ~tnz2;
-    uint64_t tnzm = (m3 & tnz3) | (m2 & tnz2) | (m1 & tnz1);
-    uint64_t tnza = (a.v3 & tnz3) | (a.v2 & tnz2) | (a.v1 & tnz1);
-    uint64_t tnzb = (b.v3 & tnz3) | (b.v2 & tnz2) | (b.v1 & tnz1);
-    uint64_t snza = (a.v2 & tnz3) | (a.v1 & tnz2) | (a.v0 & tnz1);
-    uint64_t snzb = (b.v2 & tnz3) | (b.v1 & tnz2) | (b.v0 & tnz1);
+    uint64_t tnz5 = sgnw(m5 | -m5);
+    uint64_t tnz4 = sgnw(m4 | -m4) & ~tnz5;
+    uint64_t tnz3 = sgnw(m3 | -m3) & ~tnz5 & ~tnz4;
+    uint64_t tnz2 = sgnw(m2 | -m2) & ~tnz5 & ~tnz4 & ~tnz3;
+    uint64_t tnz1 = sgnw(m1 | -m1) & ~tnz5 & ~tnz4 & ~tnz3 & ~tnz2;
+    uint64_t tnzm = (m5 & tnz5) | (m4 & tnz4) | (m3 & tnz3) | (m2 & tnz2) | (m1 & tnz1);
+    uint64_t tnza = (a.v5 & tnz5) | (a.v4 & tnz4) | (a.v3 & tnz3) | (a.v2 & tnz2) | (a.v1 & tnz1);
+    uint64_t tnzb = (b.v5 & tnz5) | (b.v4 & tnz4) | (b.v3 & tnz3) | (b.v2 & tnz2) | (b.v1 & tnz1);
+    uint64_t snza = (a.v4 & tnz5) | (a.v3 & tnz4) | (a.v2 & tnz3) | (a.v1 & tnz2) | (a.v0 & tnz1);
+    uint64_t snzb = (b.v4 & tnz5) | (b.v3 & tnz4) | (b.v2 & tnz3) | (b.v1 & tnz2) | (b.v0 & tnz1);
 
     int64_t s = lzcnt(tnzm);
     uint64_t sm = (uint64_t)((31 - s) >> 63);
@@ -444,7 +487,7 @@ int32_t gf65376_legendre(const gf65376 *x) {
     tnza <<= s;
     tnzb <<= s;
 
-    uint64_t tzx = ~(tnz1 | tnz2 | tnz3);
+    uint64_t tzx = ~(tnz1 | tnz2 | tnz3 | tnz4 | tnz5);
     tnza |= a.v0 & tzx;
     tnzb |= b.v0 & tzx;
     xa = (a.v0 & 0x7FFFFFFF) | (tnza & 0xFFFFFFFF80000000);
@@ -525,14 +568,14 @@ int32_t gf65376_legendre(const gf65376 *x) {
     b = nb;
   }
 
-  // Final iterations: values are at most 37 bits now. We do not
+  // Final iterations: values are at most 53 bits now. We do not
   // need to keep track of update coefficients. Just like the GCD,
-  // we need only 35 iterations, because after 35 iterations,
+  // we need only 51 iterations, because after 51 iterations,
   // value a is 0 or 1, and b is 1, and no further modification to
   // the Legendre symbol may happen.
   xa = a.v0;
   xb = b.v0;
-  for (int j = 0; j < 35; j++) {
+  for (int j = 0; j < 51; j++) {
     uint64_t a_odd, swap, t0, t1;
     unsigned char cc;
     a_odd = -(xa & 1);
