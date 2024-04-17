@@ -4,8 +4,9 @@
 // variable?
 void 
 fp_sqrt(fp_t * x)
-{
-    (void)gf27500_sqrt(x, x);
+{   
+    fp_t tmp = *x;
+    (void)gf27500_sqrt(x, &tmp);
 }
 
 bool
@@ -19,7 +20,8 @@ fp_is_square(const fp_t * a)
 void
 fp_inv(fp_t * x)
 {
-    (void)gf27500_invert(x, x);
+    fp_t tmp = *x;
+    (void)gf27500_invert(x, &tmp);
 }
 
 
