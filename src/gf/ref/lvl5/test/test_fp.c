@@ -75,6 +75,26 @@ bool fp_test(void)
     else { printf("  GF(p) set small... FAILED"); printf("\n"); return false; }
     printf("\n");
 
+    // Test neg
+    passed = 1;
+    for (n=0; n<TEST_LOOPS; n++)
+    {
+        fp_random_test(&a);
+        
+        // negate twice
+        fp_neg(&b, &a);
+        fp_neg(&c, &b);
+        if (fp_is_equal(&a, &c) == 0) { passed=0; break; }
+            
+        fp_neg(&b, &a);
+        fp_sqr(&c, &b);
+        fp_sqr(&a, &a);
+        if (fp_is_equal(&a, &c) == 0) { passed=0; break; }
+    }
+    if (passed==1) printf("  GF(p) neg test .................................................. PASSED");
+    else { printf("  GF(p) neg tests... FAILED"); printf("\n"); return false; }
+    printf("\n");
+
     // Field addition
     passed = 1;
     for (n=0; n<TEST_LOOPS; n++)
