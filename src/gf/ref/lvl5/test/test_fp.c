@@ -229,16 +229,6 @@ bool fp_test(void)
 
         fp_sqrt(&c);                      // c, d = ±sqrt(c) 
         fp_neg(&d, &c);
-
-        // Print debugging...
-        fp_encode(ab, &a);
-        fp_encode(cb, &c);
-        fp_encode(db, &d);
-
-        printf("a bytes %d, %d, %d, %d, %d\n\n", ab[0], ab[1], ab[2], ab[62], ab[63]);
-        printf("c bytes %d, %d, %d, %d, %d\n", cb[0], cb[1], cb[2], cb[62], cb[63]);
-        printf("d bytes %d, %d, %d, %d, %d\n\n\n", db[0], db[1], db[2], db[62], db[63]);
-
         if ((fp_is_equal(&a, &c) == 0) && (fp_is_equal(&a, &d) == 0)) { passed = 0; break; }
     }
     if (passed == 1) printf("  Square root, square tests........................................ PASSED");

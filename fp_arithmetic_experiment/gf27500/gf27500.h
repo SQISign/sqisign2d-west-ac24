@@ -1148,7 +1148,7 @@ gf27500_square(gf27500 *d, const gf27500 *a)
 
 	// Multiplication by two for all off diagonal
 	// terms
-	e15 = e15 >> 63;
+	e15 = e14 >> 63;
 	e14 = (e14 << 1) | (e13 >> 63);
 	e13 = (e13 << 1) | (e12 >> 63);
 	e12 = (e12 << 1) | (e11 >> 63);
