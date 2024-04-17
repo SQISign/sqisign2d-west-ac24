@@ -91,11 +91,11 @@ static void gf65376_lin(gf65376 *d, const gf65376 *u, const gf65376 *v,
   // goes into the folded part (multiple of 65).
   uint64_t e, f0, f1;
   unsigned char cc;
-  cc = inner_gf65376_adc(0, rem0 + 0xffffffffffffffbe, rem1, &e);
-  cc = inner_gf65376_adc(cc, quo0, rem1 * 0x3f03f03f03f03f0, &f0);
+  cc = inner_gf65376_adc(0, rem0 + 0xFFFFFFFFFFFFFFBE, rem1, &e);
+  cc = inner_gf65376_adc(cc, quo0, rem1 * 0x3F03F03F03F03F0, &f0);
   cc = inner_gf65376_adc(cc, quo1, 0, &f1);
   assert(cc == 0);
-  e -= 0xffffffffffffffbe;
+  e -= 0xFFFFFFFFFFFFFFBE;
 
   // Now we only have to add e*2^384 + f0:f1 to the low part.
   cc = inner_gf65376_adc(0,  d0, f0, &d0);
@@ -428,7 +428,7 @@ uint32_t gf65376_div(gf65376 *d, const gf65376 *x, const gf65376 *y) {
   //  - We have injected 31*23+51 = 764 extra factors of 2, hence we
   //    must divide the result by 2^764.
   //  - However, we also want to obtain the result in Montgomery
-  //    representation, i.e. multiply by 2^256. We thus want to
+  //    representation, i.e. multiply by 2^384. We thus want to
   //    divide the current result by 2^(764 - 384) = 2^380.
   //  - We do this division by using a Montgomery multiplication with
   //    the Montgomery representation of 1/2^380, i.e. the integer

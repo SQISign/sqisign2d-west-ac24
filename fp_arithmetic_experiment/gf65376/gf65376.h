@@ -373,10 +373,9 @@ inner_gf65376_partial_reduce(gf65376 *d,
 	h = a5 >> 56;
 	a5 &= 0x00FFFFFFFFFFFFFF;
 
-	// 5*2^248 = 1 mod q; hence, we add floor(h/5) + (h mod 5)*2^248
 	// 65*2^376 = 1 mod q; hence, we add floor(h/65) + (h mod 65)*2^376
 	// to the low part.
-
+	//
 	// TODO, how can i do this with mul and shifts?
 	// quo = (h * 0xFC0FC0FC0FC0FC1) << 2;
 	quo = h / 65;
@@ -459,9 +458,9 @@ gf65376_mul_small(gf65376 *d, const gf65376 *a, uint32_t x)
 	cc =  inner_gf65376_adc(cc, d4, hi, &d4);
 	inner_gf65376_umul(lo, d6, a->v5, b);
 	cc =  inner_gf65376_adc(cc, d5, lo, &d5);
-	(void)inner_gf65376_adc(cc, d6, 0, &d6);
+	(void)inner_gf65376_adc(cc, d6, 0,  &d6);
 
-	// Extract low 248-bit part, and the high part (at most 35 bits).
+	// Extract low 376-bit part, and the high part (at most 35 bits).
 	h = (d6 << 8) | (d5 >> 56);
 	d5 &= 0x00FFFFFFFFFFFFFF;
 
@@ -573,16 +572,16 @@ inner_gf65376_montgomery_reduce(gf65376 *d, const gf65376 *a)
 	(void)inner_gf65376_sbb(cc, g11, 0,  &g11);
 
 	// h = x + f*q  (we drop the low 384 bits).
-	cc =  inner_gf65376_adc(0,  g0, x0, &x0);
-	cc =  inner_gf65376_adc(cc, g1, x1, &x1);
-	cc =  inner_gf65376_adc(cc, g2, x2, &x2);
-	cc =  inner_gf65376_adc(cc, g3, x3, &x3);
-	cc =  inner_gf65376_adc(cc, g4, x4, &x4);
-	cc =  inner_gf65376_adc(cc, g5, x5, &x5);
-	cc =  inner_gf65376_adc(cc, g6, 0,  &d0);
-	cc =  inner_gf65376_adc(cc, g7, 0,  &d1);
-	cc =  inner_gf65376_adc(cc, g8, 0,  &d2);
-	cc =  inner_gf65376_adc(cc, g9, 0,  &d3);
+	cc =  inner_gf65376_adc(0,  g0,  x0, &x0);
+	cc =  inner_gf65376_adc(cc, g1,  x1, &x1);
+	cc =  inner_gf65376_adc(cc, g2,  x2, &x2);
+	cc =  inner_gf65376_adc(cc, g3,  x3, &x3);
+	cc =  inner_gf65376_adc(cc, g4,  x4, &x4);
+	cc =  inner_gf65376_adc(cc, g5,  x5, &x5);
+	cc =  inner_gf65376_adc(cc, g6,  0,  &d0);
+	cc =  inner_gf65376_adc(cc, g7,  0,  &d1);
+	cc =  inner_gf65376_adc(cc, g8,  0,  &d2);
+	cc =  inner_gf65376_adc(cc, g9,  0,  &d3);
 	cc =  inner_gf65376_adc(cc, g10, 0,  &d4);
 	(void)inner_gf65376_adc(cc, g11, 0,  &d5);
 
@@ -767,7 +766,7 @@ gf65376_mul(gf65376 *d, const gf65376 *a, const gf65376 *b)
 	//
 	// Low part is lo(e) = e0..e5 (384 bits).
 	// Let m = -1/q mod 2^384; we add (lo(e)*m mod 2^384)*q to the
-	// high part g = e6..e11 (766 bits).
+	// high part g = e6..e11 (382 bits).
 	//
 	// We have m = 65*2^376 + 1.
 	f0 = e0;
@@ -802,8 +801,8 @@ gf65376_mul(gf65376 *d, const gf65376 *a, const gf65376 *b)
 	// Add g = f*q to e0..e11.
 	// Since e0..e11 < 2^766 and f < 2^384, we know that the result
 	// is less than 2^766 + 2^384*65*2^376, which is less than 2^768.
-	// This is also a multiple of 2^256. We divide by 2^256 by simply
-	// dropping the low 256 bits (which are all equal to zero), and
+	// This is also a multiple of 2^384. We divide by 2^384 by simply
+	// dropping the low 384 bits (which are all equal to zero), and
 	// the result is less than 2**384
 	cc = inner_gf65376_adc(0,  g0, e0, &e0);
 	cc = inner_gf65376_adc(cc, g1, e1, &e1);
@@ -1060,12 +1059,12 @@ int32_t gf65376_legendre(const gf65376 *a);
 uint32_t gf65376_sqrt(gf65376 *d, const gf65376 *a);
 
 /*
- * Encode field element *a into buffer dst (exactly 32 bytes are written).
+ * Encode field element *a into buffer dst (exactly 48 bytes are written).
  */
 void gf65376_encode(void *dst, const gf65376 *a);
 
 /*
- * Decode source buffer src (exactly 32 bytes) into a field element *d.
+ * Decode source buffer src (exactly 48 bytes) into a field element *d.
  * If the source value is not a valid canonical encoding, then *d is zero
  * and the function returns 0x00000000; otherwise, the function returns
  * 0xFFFFFFFF.
