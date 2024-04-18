@@ -70,19 +70,14 @@ static void gf65376_lin(gf65376 *d, const gf65376 *u, const gf65376 *v,
   uint64_t h1 = t >> 56;
   d5 &= 0x00FFFFFFFFFFFFFF;
 
-
+  // NOTE: 0xFC0FC0FC0FC0FC1 = 65^-1 % 2^64
+  // NOTE: 0xC1 = 65^-1 % 2^8
   uint64_t z0, z1, quo0, rem0, quo1, rem1;
   inner_gf65376_umul(z0, z1, h0, 0xFC0FC0FC0FC0FC1);
   (void)z0;
   quo0 = z1 >> 2;
   rem0 = h0 - (65 * quo0);
-  assert(quo0 == h0 / 65);
-  assert(rem0 == h0 % 65);
-
-  // TODO: don't use /
-  // quo1 = (h1 * 0xCD) >> 10;
-  // rem1 = h1 - (5 * quo1);
-  quo1 = h1 / 65;
+  quo1 = (h1 * 0xC1) >> 14; // Only keep bottom two bits
   rem1 = h1 - (65 * quo1);
 
   // h = rem0 + 65*quo0 + (rem1 + 65*quo1)*2^64
