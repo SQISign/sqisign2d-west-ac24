@@ -1,7 +1,8 @@
 .DS_Store
 fp_testing
 
-testt_fp
+test_fp
 test_fp2
 testgf
+*/testgf
 *.o

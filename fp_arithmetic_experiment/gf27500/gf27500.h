@@ -409,6 +409,19 @@ inner_gf27500_partial_reduce(gf27500 *d,
 	// TODO, how can i do this with mul and shifts?
 	quo = h / 27;
 	rem = h - (27 * quo);
+	
+	// The idea here is h < 2^12, 0xA13 = 27^-1 % 2^12)
+	// h * 0xA13 will have at most 24 bits and h / 27 has
+	// at most 8 bits.
+	// So, if we compute (h * 0xA13) >> 16, we'll have the
+	// 8 bits which we need, but it's not working, so I am
+	// misunderstanding something here.
+	// uint64_t quo_var = (h * 0xA13) >> 16; // Keep only bottom 8 bits, but not working...
+
+	// printf("h      : %llu\n", h);
+	// printf("quo    : %llu\n", quo);
+	// printf("quo var: %llu\n\n", quo_var);
+
 	cc =  inner_gf27500_adc(0,  a0, quo, &d0);
 	cc =  inner_gf27500_adc(cc, a1, 0, &d1);
 	cc =  inner_gf27500_adc(cc, a2, 0, &d2);
