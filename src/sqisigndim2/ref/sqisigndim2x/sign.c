@@ -456,7 +456,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
 
     // now we compute the ideal_aux
     // computing the norm
-    pow_dim2_deg_resp = SQIsign2D_response_length;
+    pow_dim2_deg_resp = SQIsign2D_response_length - exp_diadic_val_full_resp;
     ibz_pow(&remain,&ibz_const_two,pow_dim2_deg_resp);
     ibz_sub(&tmp,&remain,&degree_odd_resp);
 
@@ -824,7 +824,7 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     // printf("challenge computation length : %d ",phi_chall.length);
     // TOC_clock(t,"");
 
-    int pow_dim2_deg_resp = SQIsign2D_response_length;
+    int pow_dim2_deg_resp = SQIsign2D_response_length - sig->two_resp_length;
 
     ec_basis_t B_chall_can,B_aux_can;
     ec_curve_t E_aux;
