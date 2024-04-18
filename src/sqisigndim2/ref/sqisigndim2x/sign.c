@@ -71,7 +71,7 @@ void commit(ec_curve_t *E_com, ec_basis_t *basis_even_com, quat_left_ideal_t *li
     ibz_init(&n);
 
     // generate a random ideal of random norm for the secret ideal
-    generate_random_prime(&n,1,ibz_bitsize(&QUATALG_PINFTY.p)/2-5);
+    generate_random_prime(&n,1,ibz_bitsize(&QUATALG_PINFTY.p)/2);
     sampling_random_ideal_O0(lideal_com,&n);
 
     // ideal to isogeny clapotis
@@ -497,6 +497,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     ec_dbl_iter(&Bcom0.Q,TORSION_PLUS_EVEN_POWER-pow_dim2_deg_resp-exp_diadic_val_full_resp-2,&E_com,&Bcom0.Q);
     ec_dbl_iter(&Bcom0.PmQ,TORSION_PLUS_EVEN_POWER-pow_dim2_deg_resp-exp_diadic_val_full_resp-2,&E_com,&Bcom0.PmQ);
 
+
     // now, we compute the isogeny Phi : Ecom x Eaux -> Echl' x Eaux' 
     // where Echl' is 2^exp_diadic_val_full_resp isogenous to Echal 
     // ker Phi = <(Bcom_can.P,Baux.P),(Bcom_can.Q,Baux.Q)>
@@ -656,11 +657,17 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     copy_point(&bas_sk.PmQ,&sk->canonical_basis.PmQ);
     phi_chall.curve = sk->curve;
     phi_chall.length = TORSION_PLUS_EVEN_POWER-backtracking;
+    assert(test_point_order_twof(&bas_sk.P,&sk->curve,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&bas_sk.Q,&sk->curve,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&bas_sk.PmQ,&sk->curve,TORSION_PLUS_EVEN_POWER));
     ec_biscalar_mul_ibz(&phi_chall.kernel,&sk->curve,&vec_chall[0],&vec_chall[1],&bas_sk,TORSION_PLUS_EVEN_POWER);
+    assert(test_point_order_twof(&phi_chall.kernel,&sk->curve,TORSION_PLUS_EVEN_POWER));
     for (int i=0;i<backtracking;i++) {
                 ec_dbl(&phi_chall.kernel,&sk->curve,&phi_chall.kernel);
     }
+    
     ec_curve_t Echall=sk->curve;
+    assert(test_point_order_twof(&phi_chall.kernel,&Echall,phi_chall.length));
     ec_eval_even(&Echall,&phi_chall,&bas_sk.P,1);
 
     #ifndef NDEBUG 

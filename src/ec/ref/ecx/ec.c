@@ -502,6 +502,7 @@ void xDBLMUL_bounded(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_po
     // fp2_add(&A24.x, &curve->C, &curve->C);    // Precomputation of A24=(A+2C:4C)
     // fp2_add(&A24.z, &A24.x, &A24.x);
     // fp2_add(&A24.x, &A24.x, &curve->A);
+
     // normalizing
     ec_curve_t E;
     copy_curve(&E,curve);
@@ -518,7 +519,7 @@ void xDBLMUL_bounded(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_po
 
         // TODO : clean this
         // this is an ugly fix to avoid unnecessary operations
-        bool apply =(i<=f+10);
+        bool apply =(i<=f + 2 + (BITS-TORSION_PLUS_EVEN_POWER) );
 
         h = r[2*i] + r[2*i+1];    // in {0, 1, 2}
         maskk = 0 - (h & 1);

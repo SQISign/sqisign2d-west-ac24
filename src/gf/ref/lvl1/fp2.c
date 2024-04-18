@@ -19,6 +19,7 @@ void fp2_to_w64(uint64_t data[2][NWORDS_FIELD], const fp2_t * a){
 }
 
 // TODO test these!
+// TODO clean constant for this
 void fp2_encode(void *dst, const fp2_t *a){
 	uint8_t *buf = dst;
 	fp_encode(buf, &(a->re));

@@ -22,7 +22,7 @@ void fp2_to_w64(uint64_t data[2][NWORDS_FIELD], const fp2_t * a){
 void fp2_encode(void *dst, const fp2_t *a){
 	uint8_t *buf = dst;
 	fp_encode(buf, &(a->re));
-	fp_encode(buf + 48, &(a->im));
+	fp_encode(buf + 64, &(a->im));
 }
 
 // TODO test these!
@@ -31,7 +31,7 @@ uint32_t fp2_decode(fp2_t *d, const void *src){
     uint32_t re, im;
     
     re = fp_decode(&(d->re), buf);
-    im = fp_decode(&(d->im), buf + 48);
+    im = fp_decode(&(d->im), buf + 64);
     return re & im;
 }
 
