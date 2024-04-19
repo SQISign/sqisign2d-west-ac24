@@ -107,8 +107,12 @@ fp2_cswap(fp2_t *a, fp2_t *b, uint32_t ctl){
     fp_swap(&(a->im), &(b->im), ctl);
 }
 
+static inline void 
+fp2_copy(fp2_t* x, const fp2_t* y){
+    *x = *y;
+}
+
 // New functions
-void fp2_copy(fp2_t* x, const fp2_t* y);
 void fp2_from_w64(fp2_t* out, const uint64_t data[2][NWORDS_FIELD]);
 void fp2_to_w64(uint64_t data[2][NWORDS_FIELD], const fp2_t* a);
 void fp2_encode(void *dst, const fp2_t *a);
@@ -122,6 +126,5 @@ int fp2_cmp(fp2_t* x, fp2_t* y);
 void fp2_batched_inv(fp2_t *x,int len);
 void fp2_pow(fp2_t *out,const fp2_t * x,const uint64_t *exp,const int size);
 void fp2_print(char *name, fp2_t const a);
-void digit_print(char *name,uint64_t *a);
 
 #endif

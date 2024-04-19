@@ -22,27 +22,6 @@ fp_inv(fp_t * x)
     (void)gf65376_invert(x, x);
 }
 
-
-void
-fp_copy(fp_t * out, const fp_t * a)
-{
-    out->v0 = a->v0;
-    out->v1 = a->v1;
-    out->v2 = a->v2;
-    out->v3 = a->v3;
-    out->v4 = a->v4;
-    out->v5 = a->v5;
-
-}
-
-void fp_set_zero(fp_t * a){
-    fp_copy(a, &ZERO);
-}
-
-void fp_set_one(fp_t * a){
-    fp_copy(a, &ONE);
-}
-
 /**********************                                    ***********************/
 /********************** The below should probably be moved ***********************/
 /**********************                                    ***********************/

@@ -37,35 +37,41 @@
 // Set a uint32 to an Fp value
 #define fp_set_small gf27500_set_small
 
-// For zero and one, we use predefined constants
-void fp_set_zero(fp_t * a);
-void fp_set_one(fp_t * a);
-
-// Copy a value
+// Copy a convert to and from little endian u64 words
 #define fp_to_w64 gf27500_to_w64
 #define fp_from_w64 gf27500_from_w64
-void fp_copy(fp_t * out, const fp_t * a);
 
 // Encoding and decoding of bytes
 #define fp_encode gf27500_encode
 #define fp_decode gf27500_decode
 #define fp_decode_reduce gf27500_decode_reduce
 
+// These functions are essentially useless because we can just
+// use = for the shallow copies we need, but they're here for
+// now until we do a larger refactoring
+static inline void
+fp_copy(fp_t * out, const fp_t * a)
+{
+    *out = *a;
+}
+
+static inline void
+fp_set_zero(fp_t * a)
+{
+    *a = ZERO;
+}
+
+static inline void
+fp_set_one(fp_t * a)
+{
+    *a = ONE;
+}
+
 // Functions defined in low level code but with different API
 void fp_inv(fp_t * a);
 void fp_sqrt(fp_t * a);
 bool fp_is_square(const fp_t * a);
 
-// TODO: I believe these functions should not be available
-// I believe the API should exist without the user thinking
-// about or knowing of the Montgomery form. If we need to set
-// small integers then we have `gf27500_set_small` which takes
-// and integer and internally does the conversion for us.
-//
-// KILL these functions
-// fp_to_mont()
-// fp_from_mont()
-// fp_set_one_mont()
 
 /**********************                                    ***********************/
 /********************** The below should probably be moved ***********************/

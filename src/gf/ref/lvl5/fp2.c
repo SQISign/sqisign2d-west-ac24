@@ -1,12 +1,7 @@
 #include "fp2.h"
+#include <encoded_sizes.h>
 
 /* Arithmetic modulo X^2 + 1 */
-
-void fp2_copy(fp2_t* x, const fp2_t* y)
-{
-    fp_copy(&(x->re), &(y->re));
-    fp_copy(&(x->im), &(y->im));
-}
 
 void fp2_from_w64(fp2_t * out, const uint64_t data[2][NWORDS_FIELD]){
     fp_from_w64(&(out->re), data[0]);
@@ -22,7 +17,7 @@ void fp2_to_w64(uint64_t data[2][NWORDS_FIELD], const fp2_t * a){
 void fp2_encode(void *dst, const fp2_t *a){
 	uint8_t *buf = dst;
 	fp_encode(buf, &(a->re));
-	fp_encode(buf + 64, &(a->im));
+	fp_encode(buf + FP_ENCODED_BYTES, &(a->im));
 }
 
 // TODO test these!
@@ -31,7 +26,7 @@ uint32_t fp2_decode(fp2_t *d, const void *src){
     uint32_t re, im;
     
     re = fp_decode(&(d->re), buf);
-    im = fp_decode(&(d->im), buf + 64);
+    im = fp_decode(&(d->im), buf + FP_ENCODED_BYTES);
     return re & im;
 }
 
@@ -65,23 +60,22 @@ void fp2_batched_inv(fp2_t *x, int len) {
 
     // x = x0,...,xn
     // t1 = x0, x0*x1, ... ,x0 * x1 * ... * xn
-    fp2_copy(&t1[0], &x[0]);
+    t1[0] = x[0];
     for (int i=1;i<len;i++) {
         fp2_mul(&t1[i], &t1[i-1], &x[i]);
     }
 
     // inverse = 1/ (x0 * x1 * ... * xn)
-    fp2_copy(&inverse, &t1[len-1]);
+    inverse = t1[len-1];
     fp2_inv(&inverse);
+    t2[0] = inverse;
 
-    fp2_copy(&t2[0],&inverse);
     // t2 = 1/ (x0 * x1 * ... * xn), 1/ (x0 * x1 * ... * x(n-1)) , ... , 1/xO
     for (int i=1;i<len;i++) {
         fp2_mul(&t2[i], &t2[i-1], &x[len-i]);
     }
 
-    fp2_copy(&x[0],&t2[len-1]);
-    
+    x[0] = t2[len-1];
     for (int i=1;i<len;i++){
         fp2_mul(&x[i], &t1[i-1], &t2[len-i-1]);
     }
@@ -101,7 +95,7 @@ bool fp2_is_square(const fp2_t* x)
 
 void fp2_frob(fp2_t* x, const fp2_t* y)
 {
-    fp_copy(&(x->re), &(y->re));
+    x->re = y->re;
     fp_neg(&(x->im), &(y->im));
 }
 
@@ -130,7 +124,7 @@ void fp2_sqrt(fp2_t* x)
 
     fp_add(&re, &(x->re), &sdelta);
     fp_half(&re, &re);
-    fp_copy(&tmp2, &re);
+    tmp2 = re;
 
     if (!fp_is_square(&tmp2)) {
         fp_sub(&re, &(x->re), &sdelta);
@@ -138,12 +132,12 @@ void fp2_sqrt(fp2_t* x)
     }
 
     fp_sqrt(&re);
-    fp_copy(&im, &re);
+    im = re;
 
     fp_inv(&im);
     fp_half(&im, &im);
     fp_mul(&(x->im), &im, &(x->im));   
-    fp_copy(&(x->re), &re); 
+    x->re = re; 
 }
 
 
@@ -183,7 +177,7 @@ void fp2_pow(fp2_t *out,const fp2_t * x,const digit_t *exp,const int size) {
     digit_t bit;
 
     memcpy((digit_t*)exp_tmp, (digit_t*)exp, size*RADIX/8);
-    fp2_copy(&acc, x);
+    acc = *x;
     fp2_set_one(out);
 
     for (int i = 0; i < NWORDS_FIELD*RADIX; i++) {
@@ -195,13 +189,6 @@ void fp2_pow(fp2_t *out,const fp2_t * x,const digit_t *exp,const int size) {
         fp2_sqr(&acc, &acc);
     }
 
-}
-
-void digit_print(char *name, digit_t *a) {
-    printf("%s0x = ", name);
-    for(int i = NWORDS_FIELD - 1; i >=0; i--)
-        printf("%016llx", a[i]);
-    printf("\n");
 }
 
 void fp2_print(char *name, fp2_t const a){
