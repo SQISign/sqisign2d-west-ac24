@@ -372,12 +372,9 @@ inner_gf65376_partial_reduce(gf65376 *d,
 	h = a5 >> 56;
 	a5 &= 0x00FFFFFFFFFFFFFF;
 
-	// 5*2^248 = 1 mod q; hence, we add floor(h/5) + (h mod 5)*2^248
 	// 65*2^376 = 1 mod q; hence, we add floor(h/65) + (h mod 65)*2^376
 	// to the low part.
-
-	// TODO, how can i do this with mul and shifts?
-	quo = h / 65;
+	quo = (h * 0xFC1) >> 18;
 	rem = h - (65 * quo);
 	cc =  inner_gf65376_adc(0,  a0, quo, &d0);
 	cc =  inner_gf65376_adc(cc, a1, 0, &d1);

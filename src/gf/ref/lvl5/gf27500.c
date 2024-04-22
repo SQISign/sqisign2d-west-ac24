@@ -82,11 +82,7 @@ static void gf27500_lin(gf27500 *d, const gf27500 *u, const gf27500 *v,
   (void)z0;
   quo0 = z1 >> 4;
   rem0 = h0 - (27 * quo0);
-  assert(quo0 == h0 / 27);
-  assert(rem0 == h0 % 27);
-
-  // TODO: don't use /
-  quo1 = h1 / 27;
+  quo1 = (0x12F7 * h1) >> 17;
   rem1 = h1 - (27 * quo1);
 
   // h = rem0 + 27*quo0 + (rem1 + 27*quo1)*2^64
@@ -765,16 +761,13 @@ void gf27500_decode_reduce(gf27500 *d, const void *src, size_t len) {
     return;
   }
 
-  // TODO!
   if ((len & 63) != 0) {
     // Input size is not a multiple of 64, we decode a partial
     // block, which is already less than 2^512.
     uint8_t tmp[64];
     size_t k;
 
-    // TODO
     k = len & ~(size_t)63;
-    // k = len - (len % 48);
     memcpy(tmp, buf + k, len - k);
     memset(tmp + len - k, 0, (sizeof tmp) - (len - k));
     d->v0 = dec64le(&tmp[0]);

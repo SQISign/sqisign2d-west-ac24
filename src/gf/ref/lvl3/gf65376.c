@@ -71,18 +71,14 @@ static void gf65376_lin(gf65376 *d, const gf65376 *u, const gf65376 *v,
   d5 &= 0x00FFFFFFFFFFFFFF;
 
 
+  // NOTE: 0xFC0FC0FC0FC0FC1 = 65^-1 % 2^64
+  // NOTE: 0xFC1 = 65^-1 % 2^12
   uint64_t z0, z1, quo0, rem0, quo1, rem1;
   inner_gf65376_umul(z0, z1, h0, 0xFC0FC0FC0FC0FC1);
   (void)z0;
   quo0 = z1 >> 2;
   rem0 = h0 - (65 * quo0);
-  assert(quo0 == h0 / 65);
-  assert(rem0 == h0 % 65);
-
-  // TODO: don't use /
-  // quo1 = (h1 * 0xCD) >> 10;
-  // rem1 = h1 - (5 * quo1);
-  quo1 = h1 / 65;
+  quo1 = (h1 * 0xFC1) >> 18; // Only keep bottom two bits
   rem1 = h1 - (65 * quo1);
 
   // h = rem0 + 65*quo0 + (rem1 + 65*quo1)*2^64
@@ -91,11 +87,11 @@ static void gf65376_lin(gf65376 *d, const gf65376 *u, const gf65376 *v,
   // goes into the folded part (multiple of 65).
   uint64_t e, f0, f1;
   unsigned char cc;
-  cc = inner_gf65376_adc(0, rem0 + 0xffffffffffffffbe, rem1, &e);
-  cc = inner_gf65376_adc(cc, quo0, rem1 * 0x3f03f03f03f03f0, &f0);
+  cc = inner_gf65376_adc(0, rem0 + 0xFFFFFFFFFFFFFFBE, rem1, &e);
+  cc = inner_gf65376_adc(cc, quo0, rem1 * 0x3F03F03F03F03F0, &f0);
   cc = inner_gf65376_adc(cc, quo1, 0, &f1);
   assert(cc == 0);
-  e -= 0xffffffffffffffbe;
+  e -= 0xFFFFFFFFFFFFFFBE;
 
   // Now we only have to add e*2^384 + f0:f1 to the low part.
   cc = inner_gf65376_adc(0,  d0, f0, &d0);
@@ -736,17 +732,15 @@ void gf65376_decode_reduce(gf65376 *d, const void *src, size_t len) {
     return;
   }
 
-  // TODO!
-  // if ((len & 31) != 0) {
-  if ((len % 48) != 0) {
+  size_t rem = len % 48;
+  if (rem != 0) {
     // Input size is not a multiple of 48, we decode a partial
     // block, which is already less than 2^383.
     uint8_t tmp[48];
     size_t k;
 
-    // TODO
-    // k = len & ~(size_t)31;
-    k = len - (len % 48);
+    k = len - rem;
+    
     memcpy(tmp, buf + k, len - k);
     memset(tmp + len - k, 0, (sizeof tmp) - (len - k));
     d->v0 = dec64le(&tmp[0]);
