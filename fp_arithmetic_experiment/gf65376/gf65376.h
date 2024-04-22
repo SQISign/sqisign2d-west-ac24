@@ -375,12 +375,7 @@ inner_gf65376_partial_reduce(gf65376 *d,
 
 	// 65*2^376 = 1 mod q; hence, we add floor(h/65) + (h mod 65)*2^376
 	// to the low part.
-	// Note:
-	// h is only 8 bits long, and h / 65 can be at most 2 bits.
-	// 0xC1 = 65^-1 % 2^8
-	// h * 0xC1 has 16 bits but we only want the bottom 2
-	// so we shift again by 14
-	quo = (h * 0xC1) >> 14;
+	quo = (h * 0xFC1) >> 18;
 	rem = h - (65 * quo);
 	cc =  inner_gf65376_adc(0,  a0, quo, &d0);
 	cc =  inner_gf65376_adc(cc, a1, 0, &d1);

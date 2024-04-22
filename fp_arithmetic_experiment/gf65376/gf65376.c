@@ -71,13 +71,13 @@ static void gf65376_lin(gf65376 *d, const gf65376 *u, const gf65376 *v,
   d5 &= 0x00FFFFFFFFFFFFFF;
 
   // NOTE: 0xFC0FC0FC0FC0FC1 = 65^-1 % 2^64
-  // NOTE: 0xC1 = 65^-1 % 2^8
+  // NOTE: 0xFC1 = 65^-1 % 2^12
   uint64_t z0, z1, quo0, rem0, quo1, rem1;
   inner_gf65376_umul(z0, z1, h0, 0xFC0FC0FC0FC0FC1);
   (void)z0;
   quo0 = z1 >> 2;
   rem0 = h0 - (65 * quo0);
-  quo1 = (h1 * 0xC1) >> 14; // Only keep bottom two bits
+  quo1 = (h1 * 0xFC1) >> 18; // Only keep bottom two bits
   rem1 = h1 - (65 * quo1);
 
   // h = rem0 + 65*quo0 + (rem1 + 65*quo1)*2^64
