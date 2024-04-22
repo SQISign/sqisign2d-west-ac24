@@ -700,17 +700,15 @@ void gf65376_decode_reduce(gf65376 *d, const void *src, size_t len) {
     return;
   }
 
-  // TODO!
-  // if ((len & 31) != 0) {
-  if ((len % 48) != 0) {
+  size_t rem = len % 48;
+  if (rem != 0) {
     // Input size is not a multiple of 48, we decode a partial
     // block, which is already less than 2^383.
     uint8_t tmp[48];
     size_t k;
 
-    // TODO
-    // k = len & ~(size_t)31;
-    k = len - (len % 48);
+    // k is the remaining bytes after partial block decoding
+    k = len - rem;
     memcpy(tmp, buf + k, len - k);
     memset(tmp + len - k, 0, (sizeof tmp) - (len - k));
     d->v0 = dec64le(&tmp[0]);
