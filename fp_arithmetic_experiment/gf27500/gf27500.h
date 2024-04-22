@@ -405,23 +405,9 @@ inner_gf27500_partial_reduce(gf27500 *d,
 
 	// 27*2^500 = 1 mod q; hence, we add floor(h/27) + (h mod 27)*2^500
 	// to the low part.
-
-	// TODO, how can i do this with mul and shifts?
-	quo = h / 27;
+	quo = (0x12F7 * h) >> 17;
 	rem = h - (27 * quo);
 	
-	// The idea here is h < 2^12, 0xA13 = 27^-1 % 2^12)
-	// h * 0xA13 will have at most 24 bits and h / 27 has
-	// at most 8 bits.
-	// So, if we compute (h * 0xA13) >> 16, we'll have the
-	// 8 bits which we need, but it's not working, so I am
-	// misunderstanding something here.
-	// uint64_t quo_var = (h * 0xA13) >> 16; // Keep only bottom 8 bits, but not working...
-
-	// printf("h      : %llu\n", h);
-	// printf("quo    : %llu\n", quo);
-	// printf("quo var: %llu\n\n", quo_var);
-
 	cc =  inner_gf27500_adc(0,  a0, quo, &d0);
 	cc =  inner_gf27500_adc(cc, a1, 0, &d1);
 	cc =  inner_gf27500_adc(cc, a2, 0, &d2);
@@ -522,16 +508,10 @@ gf27500_mul_small(gf27500 *d, const gf27500 *a, uint32_t x)
 	d7 &= 0x000FFFFFFFFFFFFF;
 
 	// Fold h by adding floor(h/65) + (h mod 65)*2^376 to the low part.
-	// NOTE: 0x84BDA12F684BDA13 = 27^(-1) % 2^64
-	// inner_gf27500_umul(lo, hi, h, 0x84BDA12F684BDA13);
-	//
-	// TODO: understand this better!!
-	// I got this from playing with godbolt...
 	inner_gf27500_umul(lo, hi, h, 0x97B425ED097B425F);
 	quo = hi >> 4;
 	rem = h - (27 * quo);
-	assert(quo == h / 27);
-	assert(rem == h % 27);
+
 	cc =  inner_gf27500_adc(cc, d0, quo, &d0);
 	cc =  inner_gf27500_adc(cc, d1, 0, &d1);
 	cc =  inner_gf27500_adc(cc, d2, 0, &d2);
@@ -568,19 +548,11 @@ gf27500_set_small(gf27500 *d, uint32_t x)
 	// by using the fact that 27*2^500 = 1 mod q.
 	uint64_t h, lo, hi, quo, rem;
 
-	// NOTE: 0x84BDA12F684BDA13 = 27^(-1) % 2^64
 	h = (uint64_t)x << 12;
-	// TODO: how to do this div with mul and shifts...
-	// inner_gf27500_umul(lo, hi, h, 0x84BDA12F684BDA13);
-	//
-	// TODO: understand this better!!
-	// I got this from playing with godbolt...
 	inner_gf27500_umul(lo, hi, h, 0x97B425ED097B425F);
 	(void)lo;
 	quo = hi >> 4;
 	rem = h - (27 * quo);
-	assert(quo == h / 27);
-	assert(rem == h % 27);
 
 	d->v0 = quo;
 	d->v1 = 0;

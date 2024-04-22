@@ -82,11 +82,7 @@ static void gf27500_lin(gf27500 *d, const gf27500 *u, const gf27500 *v,
   (void)z0;
   quo0 = z1 >> 4;
   rem0 = h0 - (27 * quo0);
-  assert(quo0 == h0 / 27);
-  assert(rem0 == h0 % 27);
-
-  // TODO: don't use /
-  quo1 = h1 / 27;
+  quo1 = (0x12F7 * h1) >> 17;
   rem1 = h1 - (27 * quo1);
 
   // h = rem0 + 27*quo0 + (rem1 + 27*quo1)*2^64
