@@ -134,4 +134,9 @@ void fp2_batched_inv(fp2_t *x,int len);
 void fp2_pow(fp2_t *out,const fp2_t * x,const uint64_t *exp,const int size);
 void fp2_print(char *name, fp2_t const a);
 
+
+// TODO
+extern const uint64_t NQR_TABLE[20][2][NWORDS_FIELD];
+extern const uint64_t Z_NQR_TABLE[20][2][NWORDS_FIELD];
+
 #endif

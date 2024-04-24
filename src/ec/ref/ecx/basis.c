@@ -1,4 +1,6 @@
 #include "isog.h"
+#include "fp2.h"
+
 
 static void xTPL(ec_point_t* Q, const ec_point_t* P, const ec_point_t* A3)
 {
@@ -701,10 +703,11 @@ void ec_curve_to_basis_6(ec_basis_t* PQ6, const ec_curve_t* curve){
 static int
 ec_curve_to_point_2f_above_montgomery(ec_point_t *P, const ec_curve_t *curve){
     fp_t one;
-    fp2_t t0, x, four;
+    fp_set_one(&one);
 
     // Compute a root of x^2 + Ax + 1
-    fp2_t a, d, alpha, z1, z2;
+    fp2_t t0, x, four;
+    fp2_t a, d, alpha;
 
     // TODO: do I need to compute A/C here?
     // a = A / C
@@ -722,27 +725,41 @@ ec_curve_to_point_2f_above_montgomery(ec_point_t *P, const ec_curve_t *curve){
     fp2_sub(&alpha, &d, &a);
     fp2_half(&alpha, &alpha);
 
-    // TODO: z should be taken straight from table    
-    // z1 = z2 - 1
-    // z2 = i + 1
-    int hint = 1;
-    fp_set_one(&one);
-    fp_set_one(&z2.re);
-    fp_set_one(&z2.im);
-
+    int hint = 0;
+    fp2_t z1, z2;
     for(;;) {
-        // TODO these z values should be precomputed, but this gets the point across
-        // Note: i is always a square, so we start with z1 = 1 + i and z2 = 2 + i
-        for(;;) {
-            hint += 1;
-            fp2_copy(&z1, &z2);
-            fp_add(&z2.re, &z2.re, &one);
+        // collect z2-value from table, we have 20 chances
+        // and expect to be correct 50% of the time.
+        if (hint < 20){
+            z2 = *(fp2_t*)Z_NQR_TABLE[hint];
+        }
+        // Fallback method for when we're unlucky
+        else {
+            if (hint == 20) {
+                fp_set_one(&z1.im);
+            }
             
-            if (fp2_is_square(&z2) && !fp2_is_square(&z1)) {
-                break;
+            // Look for z2 = i + hint with z2 a square and
+            // z2 - 1 not a square.
+            // TODO: this could be improved by adding rather
+            // than using set small, but it's good enough for
+            // now...
+            for(;;){
+                // Set z2 = i + hint and z1 = z2 - 1
+                fp_set_small(&z1.re, hint - 1);
+                fp2_copy(&z2, &z1);
+                fp_add(&z2.re, &z2.re, &one);
+
+                // Now check whether z2 is a square and z1 is not
+                if (fp2_is_square(&z2) && !fp2_is_square(&z1)){
+                    break;
+                }
+                else{
+                    hint += 1;
+                }
             }
         }
-
+        
         // Compute x-coordinate
         fp2_mul(&x, &z2, &alpha);
 
@@ -757,6 +774,9 @@ ec_curve_to_point_2f_above_montgomery(ec_point_t *P, const ec_curve_t *curve){
             fp2_set_one(&P->z);
             break;
         }
+        else{
+            hint += 1;
+        }
     }
 
     return hint;
@@ -768,7 +788,7 @@ ec_curve_to_point_2f_above_montgomery(ec_point_t *P, const ec_curve_t *curve){
 static void
 ec_curve_to_point_2f_above_montgomery_from_hint(ec_point_t *P, const ec_curve_t *curve, int hint){
     fp2_t x, four;
-    fp2_t a, d, alpha, z1, z2;
+    fp2_t a, d, alpha;
 
     // TODO: do I need to compute A/C here?
     // a = A / C
@@ -787,8 +807,19 @@ ec_curve_to_point_2f_above_montgomery_from_hint(ec_point_t *P, const ec_curve_t 
     fp2_half(&alpha, &alpha);
 
     // Compute the x coordinate from the hint and alpha
-    fp_set_small(&z2.re, hint);
-    fp_set_one(&z2.im);
+    // With 1/2^20 chance we can use the table look up
+    fp2_t z1, z2;
+    if (hint < 20) {
+        z2 = *(fp2_t*)Z_NQR_TABLE[hint];
+    }
+     // Otherwise we create this using the form i + hint
+    else{
+        fp_set_small(&z2.re, hint);
+        fp_set_one(&z2.im);
+    }
+    
+    // fp_set_small(&z2.re, hint);
+    // fp_set_one(&z2.im);
     fp2_mul(&x, &z2, &alpha);
 
     // Set the point
@@ -803,27 +834,42 @@ ec_curve_to_point_2f_above_montgomery_from_hint(ec_point_t *P, const ec_curve_t 
 static int
 ec_curve_to_point_2f_not_above_montgomery(ec_point_t *P, const ec_curve_t *curve){
     int hint = 0;
-    fp2_t t0, t1, x;
-    fp_t one;
-
-    // TODO: x should be taken straight from table
-    // We look for x in the form i + n
-    fp_set_one(&one);
-    fp_set_zero(&x.re);
-    fp_set_one(&x.im);
+    fp2_t x, t, t0, t1;
 
     for(;;) {
-        // TODO these NQR should be precomputed
-        for(;;) {
-            hint += 1;
-            fp_add(&x.re, &x.re, &one);
-    
-            if (!fp2_is_square(&x)) {
-                break;
+        // For each guess of an x, we expect it to be a point 1/2
+        // the time, so our table look up will work with failure 2^20
+        if (hint < 20){
+            x = *(fp2_t*)NQR_TABLE[hint];
+        }
+
+        // Fallback method in case we do not find a value!
+        // For the cases where we are unlucky, we try points of the form
+        // x = hint + i
+        else{
+            // When we first hit this loop, set the imaginary part to 1
+            if (hint == 20) {
+                fp_set_one(&x.im);
+            }
+
+            // Now we find a t which is a NQR of the form i + hint
+            for(;;){
+                // Increase the real part by one until a NQR is found
+                // TODO: could be made faster by adding one rather
+                // than setting each time, but this is OK for now.
+                fp_set_small(&x.re, hint);
+                if (!fp2_is_square(&x)){
+                    break;
+                }
+                else{
+                    hint += 1;
+                }
             }
         }
 
-        // Saves two multiplications compared to old method
+        // Now we have x which is a NQR -- is it on the curve?
+        // Note: the below method saves two multiplications compared
+        // to old method
         fp2_mul(&t0, &x,  &curve->C);    // t0 = x*C
         fp2_add(&t1, &t0, &curve->A);    // C*x + A
         fp2_mul(&t1, &t1, &x);           // C*x^2 + A*x
@@ -834,6 +880,9 @@ ec_curve_to_point_2f_not_above_montgomery(ec_point_t *P, const ec_curve_t *curve
             fp2_copy(&P->x, &x);
             fp2_set_one(&P->z);
             break;
+        }
+        else{
+            hint += 1;
         }
     }
 
@@ -847,8 +896,17 @@ static void
 ec_curve_to_point_2f_not_above_montgomery_from_hint(ec_point_t *P, const ec_curve_t *curve, int hint){
     fp2_t x;
 
-    fp_set_small(&x.re, hint);
-    fp_set_one(&x.im);
+    // If we got lucky (1/2^20) then we just grab an x-value 
+    // from the table
+    if (hint < 20){
+        x = *(fp2_t*)NQR_TABLE[hint];
+    }
+    // Otherwise, we find points of the form
+    // i + hint
+    else {
+        fp_set_small(&x.re, hint);
+        fp_set_one(&x.im);
+    }
 
     fp2_copy(&P->x, &x);
     fp2_set_one(&P->z);
