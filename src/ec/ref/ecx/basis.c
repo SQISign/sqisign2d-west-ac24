@@ -725,7 +725,7 @@ ec_curve_to_point_2f_above_montgomery(ec_point_t *P, const ec_curve_t *curve){
     fp2_sub(&alpha, &d, &a);
     fp2_half(&alpha, &alpha);
 
-    int hint = 0;
+    int hint = 20;
     fp2_t z1, z2;
     for(;;) {
         // collect z2-value from table, we have 20 chances
@@ -737,17 +737,18 @@ ec_curve_to_point_2f_above_montgomery(ec_point_t *P, const ec_curve_t *curve){
         else {
             if (hint == 20) {
                 fp_set_one(&z1.im);
+                fp_set_one(&z2.im);
+                fp_set_small(&z1.re, hint - 2);
+                fp_set_small(&z2.re, hint - 1);
             }
             
             // Look for z2 = i + hint with z2 a square and
             // z2 - 1 not a square.
-            // TODO: this could be improved by adding rather
-            // than using set small, but it's good enough for
-            // now...
             for(;;){
-                // Set z2 = i + hint and z1 = z2 - 1
-                fp_set_small(&z1.re, hint - 1);
-                fp2_copy(&z2, &z1);
+                // Set z2 = i + hint and z1 = z2 - 1      
+                // TODO: we could swap z1 and z2 on failure
+                // and save one addition      
+                fp_add(&z1.re, &z1.re, &one);
                 fp_add(&z2.re, &z2.re, &one);
 
                 // Now check whether z2 is a square and z1 is not
@@ -834,6 +835,7 @@ ec_curve_to_point_2f_above_montgomery_from_hint(ec_point_t *P, const ec_curve_t 
 static int
 ec_curve_to_point_2f_not_above_montgomery(ec_point_t *P, const ec_curve_t *curve){
     int hint = 0;
+    fp_t one;
     fp2_t x, t, t0, t1;
 
     for(;;) {
@@ -847,9 +849,13 @@ ec_curve_to_point_2f_not_above_montgomery(ec_point_t *P, const ec_curve_t *curve
         // For the cases where we are unlucky, we try points of the form
         // x = hint + i
         else{
-            // When we first hit this loop, set the imaginary part to 1
+            // When we first hit this loop, set x to be i + (hint - 1)
+            // NOTE: we do hint -1 as we add one before checking a square
+            //       in the below loop
             if (hint == 20) {
+                fp_set_one(&one);
                 fp_set_one(&x.im);
+                fp_set_small(&x.re, hint - 1);
             }
 
             // Now we find a t which is a NQR of the form i + hint
@@ -857,7 +863,7 @@ ec_curve_to_point_2f_not_above_montgomery(ec_point_t *P, const ec_curve_t *curve
                 // Increase the real part by one until a NQR is found
                 // TODO: could be made faster by adding one rather
                 // than setting each time, but this is OK for now.
-                fp_set_small(&x.re, hint);
+                fp_add(&x.re, &x.re, &one);
                 if (!fp2_is_square(&x)){
                     break;
                 }

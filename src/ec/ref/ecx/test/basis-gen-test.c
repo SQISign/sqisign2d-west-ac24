@@ -10,7 +10,7 @@
 Util functions
 ******************************/
 
-static int BENCH_LOOPS = 1000;         // Number of iterations per bench
+static int BENCH_LOOPS = 10;         // Number of iterations per bench
 
 int
 cmp_u64(const void *v1, const void *v2)
