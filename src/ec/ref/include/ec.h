@@ -311,11 +311,18 @@ void ec_biscalar_mul_bounded(ec_point_t* res, const ec_curve_t* curve, const dig
  * @param PQ2 computed basis of the 2^f-torsion
  * @param curve the computed curve
  */
-void ec_curve_to_basis_2(ec_basis_t *PQ2, ec_curve_t *curve,int f);
+void ec_curve_to_basis_2(ec_basis_t *PQ2, ec_curve_t *curve, int f);
 
-void ec_curve_to_basis_2_to_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int *hint);
+void ec_curve_to_basis_2_to_hint(ec_basis_t *PQ2, ec_curve_t *curve, int f, int *hint);
 
-void ec_curve_to_basis_2_from_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int *hint);
+void ec_curve_to_basis_2_from_hint(ec_basis_t *PQ2, ec_curve_t *curve, int f, int *hint);
+
+void ec_curve_to_basis_2f(ec_basis_t *PQ2, ec_curve_t *curve, int f);
+void ec_curve_to_basis_2f_to_hint(ec_basis_t *PQ2, ec_curve_t *curve, int f, int *hint);
+void ec_curve_to_basis_2f_from_hint(ec_basis_t *PQ2, ec_curve_t *curve, int f, int *hint);
+void ec_complete_basis_2f(ec_basis_t* PQ2, ec_curve_t* curve, const ec_point_t* R, int f);
+
+
 
 /**
  * @brief Complete a basis of the 2^f-torsion

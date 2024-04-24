@@ -18,7 +18,6 @@ void fp2_set_zero(fp2_t* x)
 
 void fp2_set_one(fp2_t* x)
 {
-
     fp_set_one(&(x->re));
     fp_set_zero(&(x->im));
 }

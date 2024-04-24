@@ -53,6 +53,13 @@ fp2_is_one(const fp2_t* a)
     return fp_is_equal(&(a->re), &ONE) & fp_is_zero(&(a->im));
 }
 
+static inline void
+fp2_half(fp2_t* x, const fp2_t* y)
+{
+    fp_half(&(x->re), &(y->re));
+    fp_half(&(x->im), &(y->im));
+}
+
 static inline void 
 fp2_add(fp2_t* x, const fp2_t* y, const fp2_t* z)
 {
