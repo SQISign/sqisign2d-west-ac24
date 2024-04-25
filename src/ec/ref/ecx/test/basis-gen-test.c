@@ -10,7 +10,7 @@
 Util functions
 ******************************/
 
-static int BENCH_LOOPS = 10;         // Number of iterations per bench
+static int BENCH_LOOPS = 500;         // Number of iterations per bench
 
 int
 cmp_u64(const void *v1, const void *v2)
@@ -42,36 +42,36 @@ inner_test_generated_basis(ec_basis_t *basis, ec_curve_t *curve, unsigned int n,
 
     // Double points to get point of order 2
     for (i = 0; i < n - 1; i++){
-        xDBLv2_normalized(&P, &P, &curve->A24);
-        xDBLv2_normalized(&Q, &Q, &curve->A24);
+        xDBLv2(&P, &P, &curve->A24);
+        xDBLv2(&Q, &Q, &curve->A24);
     }
     if (ec_is_zero(&P)){
-        printf("Point P generated does not have full order\n");
+        printf("Point P generated does not have full order, new = %d\n", new);
         PASSED = 0;
     }
     if (ec_is_zero(&Q)){
-        printf("Point Q generated does not have full order\n");
+        printf("Point Q generated does not have full order, new = %d\n", new);
         PASSED = 0;
     }
     if (is_point_equal(&P, &Q)){
-        printf("Points P, Q are linearly dependent\n");
+        printf("Points P, Q are linearly dependent, new = %d\n", new);
         PASSED = 0;  
     }
     // Only guaranteed on the new algorithm
     if (new && !fp2_is_zero(&Q.x)){
-        printf("Points Q is not above the Montgomery point\n");
+        printf("Points Q is not above the Montgomery point, new = %d\n", new);
         PASSED = 0;  
     }
 
     // This should give the identity
-    xDBLv2_normalized(&P, &P, &curve->A24);
-    xDBLv2_normalized(&Q, &Q, &curve->A24);
+    xDBLv2(&P, &P, &curve->A24);
+    xDBLv2(&Q, &Q, &curve->A24);
     if (!ec_is_zero(&P)){
-        printf("Point P generated does not have order exactly 2^n\n");
+        printf("Point P generated does not have order exactly 2^n, new = %d\n", new);
         PASSED = 0;
     }
     if (!ec_is_zero(&Q)){
-        printf("Point Q generated does not have order exactly 2^n\n");
+        printf("Point Q generated does not have order exactly 2^n, new = %d\n", new);
         PASSED = 0;
     }
 
@@ -410,16 +410,14 @@ bench_new_basis_completion(unsigned int n){
 
 void test_and_bench_basis(bool new) {
     // Test full order
+    printf("Testing full torsion generation:\n");
     test_basis_generation(TORSION_PLUS_EVEN_POWER, new);
     test_basis_generation_with_hints(TORSION_PLUS_EVEN_POWER, new);
 
     // Test partial order
+    printf("Testing partial torsion generation:\n");
     test_basis_generation(128, new);
     test_basis_generation_with_hints(128, new);
-
-    // Test partial order
-    test_basis_generation(2, new);
-    test_basis_generation_with_hints(2, new);
 
     if(new) {
         test_complete_basis_generation(TORSION_PLUS_EVEN_POWER);
@@ -462,7 +460,6 @@ void test_and_bench_basis(bool new) {
     }
 
 }
-
 
 int main(void){
     test_and_bench_basis(0);

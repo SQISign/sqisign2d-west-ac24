@@ -725,7 +725,7 @@ ec_curve_to_point_2f_above_montgomery(ec_point_t *P, const ec_curve_t *curve){
     fp2_sub(&alpha, &d, &a);
     fp2_half(&alpha, &alpha);
 
-    int hint = 20;
+    int hint = 0;
     fp2_t z1, z2;
     for(;;) {
         // collect z2-value from table, we have 20 chances
