@@ -217,7 +217,18 @@ void fp2_print(char *name, fp2_t const a){
 }
 
 
-// TODO
+/*
+CAUTION: HAZARDOUS MATERIALS
+
+The following tables are constants used for torsion basis generation. All values have already been converted into Montgomery
+form, and so if the internal API for the field changes, these values may also need to change
+
+NQR_TABLE:
+    is a table of 20 values all of which are not squares in GF(p^2) with modulus x^2 + 1 and prime p = 27*2**500 - 1
+Z_NQR_TABLE:
+    is a table of 20 values for which the value is a square and (value - 1) is not a square in the field GF(p^2) 
+    with modulus x^2 + 1 and prime p = 27*2**500 - 1 
+*/
 
 const uint64_t NQR_TABLE[20][2][NWORDS_FIELD] = {
     {{0x9B9C9D16BC8714CD, 0xA8CCD3D5AA9B25BE, 0x5CB0B229AFFB031A, 0x1034E0FAD3879BFD, 0xADF66A044A5CB6D4, 0xCEFE95E3E38E0F77, 0xCCEAE5A848DF543D, 0x0027C7DE38F22242},
