@@ -706,8 +706,8 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     copy_point(&B_aux2.P,&Tev1.P1);
     copy_point(&B_aux2.Q,&Tev2.P1);
     copy_point(&B_aux2.PmQ,&Tev1m2.P1);
-    ec_curve_to_basis_2_to_hint(&B_can_chall,&Echall,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp,sig->hint_chall);
-    ec_curve_to_basis_2_to_hint(&B_aux2_can,&E_aux2,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp,sig->hint_aux);
+    ec_curve_to_basis_2f_to_hint(&B_can_chall,&Echall,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp,sig->hint_chall);
+    ec_curve_to_basis_2f_to_hint(&B_aux2_can,&E_aux2,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp,sig->hint_aux);
 
     assert(test_point_order_twof(&B_aux2.P,&E_aux2,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp)); 
     assert(test_point_order_twof(&B_aux2.Q,&E_aux2,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp)); 
@@ -794,7 +794,7 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     ec_curve_t Epk;
     copy_curve(&Epk,&pk->curve);
     // ec_curve_normalize_A24(&Epk);
-    ec_curve_to_basis_2_from_hint(&bas_EA, &Epk,TORSION_PLUS_EVEN_POWER,pk->hint_pk); // canonical 
+    ec_curve_to_basis_2f_from_hint(&bas_EA, &Epk,TORSION_PLUS_EVEN_POWER,pk->hint_pk); // canonical 
     phi_chall.curve = Epk;
     phi_chall.length = TORSION_PLUS_EVEN_POWER-sig->backtracking;
 
@@ -831,8 +831,8 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     copy_curve(&E_aux,&sig->E_aux);
 
     // recovering the canonical basis 
-    ec_curve_to_basis_2_from_hint(&B_chall_can,&Echall,pow_dim2_deg_resp+2 + sig->two_resp_length,sig->hint_chall);
-    ec_curve_to_basis_2_from_hint(&B_aux_can,&E_aux,pow_dim2_deg_resp+2 + sig->two_resp_length,sig->hint_aux);
+    ec_curve_to_basis_2f_from_hint(&B_chall_can,&Echall,pow_dim2_deg_resp+2 + sig->two_resp_length,sig->hint_chall);
+    ec_curve_to_basis_2f_from_hint(&B_aux_can,&E_aux,pow_dim2_deg_resp+2 + sig->two_resp_length,sig->hint_aux);
 
     // TOC_clock(t,"challenge and canonical basis");
 

@@ -432,7 +432,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     
     // canonical basis
     ec_basis_t B_aux_can;
-    ec_curve_to_basis_2_to_hint(&B_aux_can,&E_aux,TORSION_PLUS_EVEN_POWER,sig->hint_aux);
+    ec_curve_to_basis_2f_to_hint(&B_aux_can,&E_aux,TORSION_PLUS_EVEN_POWER,sig->hint_aux);
 
     // compute the matrix to go from B_aux0 to B_aux_can
     change_of_basis_matrix_two(&mat_Baux0_to_Baux_can,&B_aux_can,&Baux0,&E_aux,TORSION_PLUS_EVEN_POWER); 
@@ -716,7 +716,7 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
 
     // computation of the challenge 
     // canonical basis 
-    ec_curve_to_basis_2_from_hint(&bas_EA, &Epk,TORSION_PLUS_EVEN_POWER,pk->hint_pk); // canonical     
+    ec_curve_to_basis_2f_from_hint(&bas_EA, &Epk,TORSION_PLUS_EVEN_POWER,pk->hint_pk); // canonical     
 
     assert(test_point_order_twof(&bas_EA.P,&Epk,TORSION_PLUS_EVEN_POWER));
     assert(test_point_order_twof(&bas_EA.Q,&Epk,TORSION_PLUS_EVEN_POWER));
@@ -775,7 +775,7 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     ec_basis_t B_aux_can;
 
     // recovering the canonical basis 
-    ec_curve_to_basis_2_from_hint(&B_aux_can,&sig->E_aux,TORSION_PLUS_EVEN_POWER,sig->hint_aux);
+    ec_curve_to_basis_2f_from_hint(&B_aux_can,&sig->E_aux,TORSION_PLUS_EVEN_POWER,sig->hint_aux);
 
     // setting to the right order 
     ec_dbl_iter(&B_aux_can.P,TORSION_PLUS_EVEN_POWER - pow_dim2_deg_resp,&sig->E_aux,&B_aux_can.P);

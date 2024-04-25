@@ -531,7 +531,7 @@ int id2iso_ideal_to_isogeny_two_long_power_of_2(id2iso_compressed_long_two_isog_
 
             // completing the 2^f basis 
             assert(test_point_order_twof(&temp_kernel_dual,&temp_domain,TORSION_PLUS_EVEN_POWER));
-            ec_complete_basis_2(&temp_two_basis,&temp_domain,&temp_kernel_dual);
+            ec_complete_basis_2f(&temp_two_basis,&temp_domain,&temp_kernel_dual,TORSION_PLUS_EVEN_POWER);
             assert(ec_is_equal(&temp_kernel_dual,&temp_two_basis.P));
             assert(test_point_order_twof(&temp_two_basis.P,&temp_domain,TORSION_PLUS_EVEN_POWER));
             assert(test_point_order_twof(&temp_two_basis.Q,&temp_domain,TORSION_PLUS_EVEN_POWER));
@@ -583,7 +583,7 @@ int id2iso_ideal_to_isogeny_two_long_power_of_2(id2iso_compressed_long_two_isog_
             // the first step is different for the compression
             if (ind == 0) {
                 // first we compute a new deterministic basis of the curve 
-                ec_curve_to_basis_2(&temp_two_basis,&temp_domain,TORSION_PLUS_EVEN_POWER);
+                ec_curve_to_basis_2f(&temp_two_basis,&temp_domain,TORSION_PLUS_EVEN_POWER);
 
                 // then we perform a dlp to express isog.kernel in this basis
                 ec_dlog_2(digit_a,digit_b,&temp_two_basis,&isog.kernel,&temp_domain);

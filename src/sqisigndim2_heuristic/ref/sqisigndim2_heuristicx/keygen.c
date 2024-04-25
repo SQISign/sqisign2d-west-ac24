@@ -50,7 +50,7 @@ void protocols_keygen(public_key_t *pk, secret_key_t *sk) {
 
     assert(test_point_order_twof(&(B_0_two.P), &(sk->curve),TORSION_PLUS_EVEN_POWER));
 
-    ec_curve_to_basis_2_to_hint(&B_can_two, &(sk->curve),TORSION_PLUS_EVEN_POWER,pk->hint_pk); // canonical 
+    ec_curve_to_basis_2f_to_hint(&B_can_two, &(sk->curve),TORSION_PLUS_EVEN_POWER,pk->hint_pk); // canonical 
     assert(test_point_order_twof(&(B_can_two.P), &(sk->curve),TORSION_PLUS_EVEN_POWER));
     
     copy_point(&sk->canonical_basis.P,&B_can_two.P);
