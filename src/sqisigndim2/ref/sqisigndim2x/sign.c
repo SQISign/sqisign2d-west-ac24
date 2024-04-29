@@ -186,119 +186,118 @@ void norm_from_2_times_gram(ibz_t *norm, ibz_mat_4x4_t *gram, ibz_vec_4_t *vec) 
     ibz_div_2exp(norm, norm, 1);
 }
 
+
 // TODO(security): currently just samples smallest vector, instead of random in a ball
 void sample_response(quat_alg_elem_t *x, const quat_lattice_t *lattice, ibz_t const *lattice_content, int verbose) {
     ibz_mat_4x4_t lll;
-    // ibz_t denom_gram, norm;
+    ibz_t denom_gram, norm;
+    ibz_t bound;
+    ibz_vec_4_t vec;
 
     ibz_mat_4x4_init(&lll);
-    // ibz_init(&denom_gram);
-    // ibz_init(&norm);
-
-    // printf("[");
-    // for (int col = 0; col < 4; ++col) {
-    //     printf("[");
-    //     for (int row = 0; row < 4; ++row) {
-    //         ibz_printf("%Zd ", &(lattice->basis[row][col]));
-    //     }
-    //     printf("]");
-    // }
-    // printf("]");
+    ibz_init(&denom_gram);
+    ibz_init(&norm);
+    ibz_init(&bound);
+    ibz_vec_4_init(&vec);
 
     // TODO make this a proper constant
     int err = quat_lattice_lll(&lll, lattice, &(QUATALG_PINFTY.p), 500 * (ibz_bitsize(&QUATALG_PINFTY.p)/120) );
     assert(!err);
 
-    ibz_copy(&(x->denom), &(lattice->denom));
-    for (int i=0;i<4;i++) {
-        ibz_copy(&x->coord[i], &lll[i][0]);
-    }
-    assert(quat_lattice_contains(NULL, lattice, x, &QUATALG_PINFTY));
+    
 
     // The shortest vector found by lll is our response
 
-    // ibz_mat_4x4_t prod, gram;
-    // ibz_mat_4x4_init(&prod);
-    // ibz_mat_4x4_init(&gram);
+    ibz_mat_4x4_t prod, gram;
+    ibz_mat_4x4_init(&prod);
+    ibz_mat_4x4_init(&gram);
+// 
+    ibz_mat_4x4_transpose(&prod,&lll);
+    ibz_mat_4x4_mul(&prod,&prod,&(QUATALG_PINFTY.gram));
+    ibz_mat_4x4_mul(&gram,&prod,&lll);
 
-    // ibz_mat_4x4_transpose(&prod,&lll);
-    // ibz_mat_4x4_mul(&prod,&prod,&(QUATALG_PINFTY.gram));
-    // ibz_mat_4x4_mul(&gram,&prod,&lll);
+    ibz_copy(&denom_gram, &(lattice->denom));
+    ibz_mul(&denom_gram, &denom_gram, &(lattice->denom));
+    ibz_mul(&denom_gram, &denom_gram, lattice_content);
+    assert(ibz_is_even(&denom_gram));
+    ibz_div_2exp(&denom_gram, &denom_gram, 1);
 
-    // ibz_copy(&denom_gram, &(lattice->denom));
-    // ibz_mul(&denom_gram, &denom_gram, &(lattice->denom));
-    // ibz_mul(&denom_gram, &denom_gram, lattice_content);
-    // assert(ibz_is_even(&denom_gram));
-    // ibz_div_2exp(&denom_gram, &denom_gram, 1);
+    int divides = ibz_mat_4x4_scalar_div(&gram, &denom_gram, &gram);
+    assert(divides);
 
-    // int divides = ibz_mat_4x4_scalar_div(&gram, &denom_gram, &gram);
-    // assert(divides);
+    ibz_copy(&(x->denom), &(lattice->denom));
 
+
+    int found =0;
+    int count =0;
+
+    ibz_vec_4_t b_bound;
+    ibz_vec_4_init(&b_bound);
+
+    ibz_pow(&bound,&ibz_const_two,SQIsign2D_response_length);
+
+
+    // computing the upperbounds for the coefficients of the scalar decomposition
+    int first_zero_index = -1;
+    for (int j=0;j<4;j++) {
+        ibz_copy(&b_bound[j],&gram[j][j]);
+        ibz_div_2exp(&b_bound[j],&b_bound[j], 1);
+        ibz_div(&b_bound[j],&norm,&bound,&b_bound[j]);
+        ibz_sqrt_floor(&b_bound[j],&b_bound[j]);
+        if (first_zero_index==-1 && ibz_cmp(&b_bound[j],&ibz_const_zero)==0) {
+            first_zero_index=j;
+        }
+    }
+    if (first_zero_index==-1) {
+        first_zero_index=4;
+    }
+    
+    // TODO make this a proper constant of the scheme 
+    // loop to find a correct answer
+    while (!found && count < 50) {
+
+        for (int i=0;i<first_zero_index;i++) {
+            ibz_rand_interval_minm_m(&vec[i],ibz_get(&b_bound[i]));
+        }
+        for (int i=first_zero_index;i<4;i++) {
+            ibz_set(&vec[i],0);
+        }
+
+        norm_from_2_times_gram(&norm, &gram, &vec);
+
+        // checking that we got something small enough
+        found = ibz_cmp(&norm,&bound)<0 && (ibz_cmp(&vec[0],&ibz_const_zero)!=0 || ibz_cmp(&vec[1],&ibz_const_zero)!=0 || ibz_cmp(&vec[2],&ibz_const_zero)!=0 || ibz_cmp(&vec[3],&ibz_const_zero)!=0 );
+        if (found) {
+            // computing the absolute coordinates of the result
+            ibz_mat_4x4_eval(&(x->coord), &lll, &vec);
+            assert(quat_lattice_contains(NULL, lattice, x, &QUATALG_PINFTY));
+
+        }
+        
+        count++;
+
+    } 
+
+    // if not found then we just use the smallest vector of the lattice
+    if (!found) {
+        for (int i=0;i<4;i++) {
+            ibz_copy(&x->coord[i], &lll[i][0]);
+        }
+        assert(quat_lattice_contains(NULL, lattice, x, &QUATALG_PINFTY));
+        found = 1;
+        
+    }
     
 
+    ibz_vec_4_finalize(&b_bound);
 
-    
-
-    // int k = 0;
-    // for (int i1 = 0; i1 < 10; i1++){
-    //     for (int i2 = 0; i2 < 10; i2++){
-    //         for (int i3 = 0; i3 < 10; i3++){
-    //             for (int i4 = 0; i4 < 10; i4++){
-    //                 k++;
-    //                 ibz_vec_4_set(&vec, i1,i2,i3,i4);
-    //                 norm_from_2_times_gram(&norm, &gram, &vec);
-    //                 if (is_good_norm(&norm)) {
-
-    //                     ibz_mat_4x4_eval(&(x->coord), &lll, &vec);
-
-    //                     assert(quat_lattice_contains(NULL, lattice, x, &QUATALG_PINFTY));
-    //                     assert(is_good(x, lattice_content));
-
-    //                     #ifndef NDEBUG
-    //                         ibq_t N_q;
-    //                         ibz_t N, tmp, q;
-    //                         ibq_init(&N_q);
-    //                         ibz_init(&N);
-    //                         ibz_init(&tmp);
-    //                         quat_alg_norm(&N_q, x, &QUATALG_PINFTY);
-    //                         ibq_to_ibz(&N, &N_q);
-    //                         assert(ibz_divides(&N, lattice_content));
-    //                         ibz_div(&N, &tmp, &N, lattice_content);
-
-    //                         assert(ibz_cmp(&N, &norm) == 0);
-
-    //                         ibz_finalize(&N);
-    //                         ibq_finalize(&N_q);
-    //                         ibz_finalize(&tmp);
-    //                     #endif
-
-
-    //                     #ifndef NDEBUG
-    //                         printf("good sample found after %d attempts\n", k);
-    //                     #endif
-
-    //                     if (verbose) printf("e = %lu, ", RESPONSE_LENGTH);
-    //                     if (verbose) ibz_printf("q = %Zd, ", &norm);
-    //                     // ibz_printf("2^e - q = sum of two squares = prime 1 mod 4\n");
-    //                     i1 = i2 = i3 = i4 = 10;
-
-    //                 }
-
-
-
-    //             }
-    //         }
-    //     }
-    // }
-    
-
-
-    // ibz_finalize(&denom_gram);
-    // ibz_finalize(&norm);
-    // ibz_mat_4x4_finalize(&prod);
-    // ibz_mat_4x4_finalize(&gram);
-    // ibz_mat_4x4_finalize(&lll);
-    // ibz_vec_4_finalize(&vec);
+    ibz_finalize(&denom_gram);
+    ibz_finalize(&norm);
+    ibz_mat_4x4_finalize(&prod);
+    ibz_mat_4x4_finalize(&gram);
+    ibz_mat_4x4_finalize(&lll);
+    ibz_vec_4_finalize(&vec);
+    ibz_finalize(&bound);
     return;
 }
 
@@ -318,14 +317,13 @@ void hash_to_challenge(ibz_vec_2_t *scalars, const ec_curve_t *com_curve, const 
         memcpy(buf + FP2_ENCODED_BYTES + FP2_ENCODED_BYTES, message, length); // TODO use defined constant
     }
 
-    //TODO(security) omit some vectors, notably (a,1) with gcd(a,6)!=1 but also things like (2,3)?
     {
         digit_t digits[NWORDS_FIELD];
 
         //FIXME should use SHAKE128 for smaller parameter sets?
         SHAKE256((void *) digits, sizeof(digits), buf, FP2_ENCODED_BYTES + FP2_ENCODED_BYTES + length);
 
-        ibz_set(&(*scalars)[1], 1); //FIXME
+        ibz_set(&(*scalars)[1], 1);
         ibz_copy_digit_array(&(*scalars)[1], digits);
     }
 
@@ -444,8 +442,8 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     ibz_div(&degree_odd_resp,&remain,&degree_full_resp,&tmp);
     assert(ibz_cmp(&remain,&ibz_const_zero)==0);
     #ifndef NDEBUG 
-        ibz_mul(&tmp,&degree_odd_resp,&degree_odd_resp);
-        assert( ibz_cmp(&QUATALG_PINFTY.p,&tmp)>0);
+        ibz_pow(&tmp,&ibz_const_two,SQIsign2D_response_length);
+        assert( ibz_cmp(&tmp,&degree_odd_resp)>0);
     #endif 
 
     // creating the ideal
