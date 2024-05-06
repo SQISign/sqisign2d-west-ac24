@@ -220,7 +220,7 @@ int test_LLL() {
     quat_left_ideal_init(&ideal);
 
     generate_random_prime(&n,1,ibz_bitsize(&QUATALG_PINFTY.p)/2);
-    sampling_random_ideal_O0(&ideal,&n);
+    sampling_random_ideal_O0(&ideal,&n,1);
 
     quat_lideal_reduce_basis(&reduced,&gram,&ideal,&QUATALG_PINFTY);
 
@@ -228,14 +228,14 @@ int test_LLL() {
 
 
     generate_random_prime(&n,1,ibz_bitsize(&QUATALG_PINFTY.p));
-    sampling_random_ideal_O0(&ideal,&n);
+    sampling_random_ideal_O0(&ideal,&n,1);
 
     quat_lideal_reduce_basis(&reduced,&gram,&ideal,&QUATALG_PINFTY);
 
     printf("for a %d-bit norm input, the bitsize of the reduced basis is %d %d %d %d \n",ibz_bitsize(&n),ibz_bitsize(&gram[0][0])-ibz_bitsize(&n),ibz_bitsize(&gram[1][1])-ibz_bitsize(&n),ibz_bitsize(&gram[2][2])-ibz_bitsize(&n),ibz_bitsize(&gram[3][3])-ibz_bitsize(&n));
 
     generate_random_prime(&n,1,2*ibz_bitsize(&QUATALG_PINFTY.p));
-    sampling_random_ideal_O0(&ideal,&n);
+    sampling_random_ideal_O0(&ideal,&n,1);
 
     quat_lideal_reduce_basis(&reduced,&gram,&ideal,&QUATALG_PINFTY);
 

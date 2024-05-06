@@ -342,7 +342,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     
     // sampling the ideal at random 
     // TODO replace these two steps with a clean function that samples random ideals from a right order
-    sampling_random_ideal_O0(&lideal_aux,&tmp);
+    sampling_random_ideal_O0(&lideal_aux,&tmp,0);
     // pushing forward 
     quat_lideal_inter(&lideal_aux_com,&lideal_commit,&lideal_aux,&QUATALG_PINFTY);
 

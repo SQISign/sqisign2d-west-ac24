@@ -72,7 +72,7 @@ void commit(ec_curve_t *E_com, ec_basis_t *basis_even_com, quat_left_ideal_t *li
 
     // generate a random ideal of random norm for the secret ideal
     generate_random_prime(&n,1,ibz_bitsize(&QUATALG_PINFTY.p)/2);
-    sampling_random_ideal_O0(lideal_com,&n);
+    sampling_random_ideal_O0(lideal_com,&n,1);
 
     // ideal to isogeny clapotis
     found = dim2id2iso_arbitrary_isogeny_evaluation(basis_even_com,E_com,lideal_com);
@@ -461,7 +461,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     
     // sampling the ideal at random 
     // TODO replace these two steps with a clean function that samples random ideals from a right order
-    sampling_random_ideal_O0(&lideal_aux,&tmp);
+    sampling_random_ideal_O0(&lideal_aux,&tmp,0);
     // pushing forward 
     quat_lideal_inter(&lideal_aux_resp_com,&lideal_com_resp,&lideal_aux,&QUATALG_PINFTY);
 
