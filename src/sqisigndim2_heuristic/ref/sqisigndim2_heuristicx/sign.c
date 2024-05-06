@@ -98,7 +98,6 @@ void norm_from_2_times_gram(ibz_t *norm, ibz_mat_4x4_t *gram, ibz_vec_4_t *vec) 
 }
 
 
-// TODO(security): check how we want to sample of random in a hyperball
 int sample_response(quat_alg_elem_t *x, const quat_lattice_t *lattice, ibz_t const *lattice_content, int verbose) {
     ibz_mat_4x4_t lll;
     ibz_t denom_gram, norm,norm_bound;
@@ -110,15 +109,6 @@ int sample_response(quat_alg_elem_t *x, const quat_lattice_t *lattice, ibz_t con
 
     ibz_pow(&norm_bound,&ibz_const_two,SQIsign2D_response_heuristic_bound);
 
-    // printf("[");
-    // for (int col = 0; col < 4; ++col) {
-    //     printf("[");
-    //     for (int row = 0; row < 4; ++row) {
-    //         ibz_printf("%Zd ", &(lattice->basis[row][col]));
-    //     }
-    //     printf("]");
-    // }
-    // printf("]");
 
     int err = quat_lattice_lll(&lll, lattice, &(QUATALG_PINFTY.p), 1000);
     assert(!err);
@@ -150,37 +140,28 @@ int sample_response(quat_alg_elem_t *x, const quat_lattice_t *lattice, ibz_t con
     ibz_vec_4_t vec;
     ibz_vec_4_init(&vec);
 
-    int k = 0;
-    for (int i1 = 0; i1 < 10; i1++){
-        for (int i2 = 0; i2 < 10; i2++){
-            for (int i3 = 0; i3 < 10; i3++){
-                for (int i4 = 0; i4 < 10; i4++){
-                    k++;
-                    ibz_vec_4_set(&vec, i1,i2,i3,i4);
-                    norm_from_2_times_gram(&norm, &gram, &vec);
-
-
-                    // now we test if the norm is good 
-                    // there are two constraints : the norm must be smaller than some bound 
-                    // and the element must be primitive in O0 (this ensures that there is no backtracking)
-                    if ( (i1!=0 || i2!=0 || i3!=0 || i4!=0) && ibz_cmp(&norm,&norm_bound)<0) {
-
-                        ibz_mat_4x4_eval(&(x->coord), &lll, &vec);
-
-                        assert(quat_lattice_contains(NULL, lattice, x, &QUATALG_PINFTY));
-                        if (quat_alg_is_primitive(x,&MAXORD_O0,&QUATALG_PINFTY))
-                            {i1 = i2 = i3 = i4 = 10;found=1;}
-
-                    }
-
-
-
-                }
-            }
+    found = 0;
+    int cnt = 0;
+    
+    // TODO make these clean constants
+    int m =10;
+    while (!found && cnt < 2*(2*m+1)*(2*m+1)*(2*m+1)*(2*m+1)) {
+        cnt++;
+        for (int i=0;i<4;i++) {
+            ibz_rand_interval_minm_m(&vec[i],m);
+        }
+        norm_from_2_times_gram(&norm, &gram, &vec);
+        // now we test if the norm is good 
+        // there are two constraints : the norm must be smaller than some bound 
+        // and the element must be primitive in O0 (this ensures that there is no backtracking)
+        found = ibz_cmp(&norm,&norm_bound)<0 && (ibz_cmp(&vec[0],&ibz_const_zero)!=0 || ibz_cmp(&vec[1],&ibz_const_zero)!=0 || ibz_cmp(&vec[2],&ibz_const_zero)!=0 || ibz_cmp(&vec[3],&ibz_const_zero)!=0 );
+        if (found) {
+            ibz_mat_4x4_eval(&(x->coord), &lll, &vec);
+            assert(quat_lattice_contains(NULL, lattice, x, &QUATALG_PINFTY));
+            if (!quat_alg_is_primitive(x,&MAXORD_O0,&QUATALG_PINFTY))
+                {found=0;}
         }
     }
-
-
     assert(quat_lattice_contains(NULL, lattice, x, &QUATALG_PINFTY));
 
 
@@ -319,14 +300,15 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     // TODO try with the frobenius conjugate
     ibz_mul(&lattice_content, &(lideal_chall_secret.norm), &(lideal_commit.norm));
     found = sample_response(&resp_quat, &lattice_hom_chall_to_com, &lattice_content, verbose);
-    assert(quat_lattice_contains(NULL,&MAXORD_O0,&resp_quat,&QUATALG_PINFTY));
-    assert(quat_alg_is_primitive(&resp_quat,&MAXORD_O0,&QUATALG_PINFTY));
 
-    // when it fails, we don't finalize all the ibz
+
+    // TODO when it fails, we don't finalize all the ibz
     if (!found) {
-        printf("it failed ");
         return 0;
     }
+    
+    assert(quat_lattice_contains(NULL,&MAXORD_O0,&resp_quat,&QUATALG_PINFTY));
+    assert(quat_alg_is_primitive(&resp_quat,&MAXORD_O0,&QUATALG_PINFTY));
     
     // creating lideal_com * lideal_resp 
     // we first compute the norm of lideal_resp 

@@ -186,8 +186,8 @@ void norm_from_2_times_gram(ibz_t *norm, ibz_mat_4x4_t *gram, ibz_vec_4_t *vec) 
     ibz_div_2exp(norm, norm, 1);
 }
 
-
-// TODO(security): currently just samples smallest vector, instead of random in a ball
+// TODECIDE : is the current sampling method satisfactory ?
+// it seems uniformish but not sure the distribution is exactly as we might want it 
 void sample_response(quat_alg_elem_t *x, const quat_lattice_t *lattice, ibz_t const *lattice_content, int verbose) {
     ibz_mat_4x4_t lll;
     ibz_t denom_gram, norm;
@@ -204,10 +204,7 @@ void sample_response(quat_alg_elem_t *x, const quat_lattice_t *lattice, ibz_t co
     int err = quat_lattice_lll(&lll, lattice, &(QUATALG_PINFTY.p), 500 * (ibz_bitsize(&QUATALG_PINFTY.p)/120) );
     assert(!err);
 
-    
-
     // The shortest vector found by lll is our response
-
     ibz_mat_4x4_t prod, gram;
     ibz_mat_4x4_init(&prod);
     ibz_mat_4x4_init(&gram);
