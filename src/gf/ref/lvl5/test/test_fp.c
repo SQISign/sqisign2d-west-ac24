@@ -271,7 +271,7 @@ bool fp_run(void)
     }
     fp_encode(tmp, &b);
     qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
-    printf("  GF(p) addition runs in .......................................... %llu cycles, (%u ignore me)\n", cycle_runs[4] / (6 * BENCH_LOOPS), tmp[0]);
+    printf("  GF(p) addition runs in .......................................... %lu cycles, (%u ignore me)\n", cycle_runs[4] / (6 * BENCH_LOOPS), tmp[0]);
 
 
     // GF(p) subtraction
@@ -291,7 +291,7 @@ bool fp_run(void)
     }
     fp_encode(tmp, &b);
     qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
-    printf("  GF(p) subtraction runs in ....................................... %llu cycles, (%u ignore me)\n", cycle_runs[4] /  (6 * BENCH_LOOPS), tmp[0]);
+    printf("  GF(p) subtraction runs in ....................................... %lu cycles, (%u ignore me)\n", cycle_runs[4] /  (6 * BENCH_LOOPS), tmp[0]);
 
     // GF(p) multiplication
     for (i=0; i<20; i++){
@@ -310,7 +310,7 @@ bool fp_run(void)
     }
     fp_encode(tmp, &b);
     qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
-    printf("  GF(p) multiplication runs in .................................... %llu cycles, (%u ignore me)\n", cycle_runs[4] /  (6 * BENCH_LOOPS), tmp[0]);
+    printf("  GF(p) multiplication runs in .................................... %lu cycles, (%u ignore me)\n", cycle_runs[4] /  (6 * BENCH_LOOPS), tmp[0]);
 
     // GF(p) squaring
     for (i=0; i<20; i++){
@@ -324,7 +324,7 @@ bool fp_run(void)
     }
     fp_encode(tmp, &a);
     qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
-    printf("  GF(p) squaring runs in .......................................... %llu cycles, (%u ignore me)\n", cycle_runs[4] /  (BENCH_LOOPS), tmp[0]);
+    printf("  GF(p) squaring runs in .......................................... %lu cycles, (%u ignore me)\n", cycle_runs[4] /  (BENCH_LOOPS), tmp[0]);
 
     // GF(p) inversion
     for (i=0; i<20; i++){
@@ -339,7 +339,7 @@ bool fp_run(void)
     }
     fp_encode(tmp, &a);
     qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
-    printf("  GF(p) inversion runs in ......................................... %llu cycles, (%u ignore me)\n", cycle_runs[4] /  BENCH_LOOPS, tmp[0]);
+    printf("  GF(p) inversion runs in ......................................... %lu cycles, (%u ignore me)\n", cycle_runs[4] /  BENCH_LOOPS, tmp[0]);
 
 
     // GF(p) sqrt
@@ -355,7 +355,7 @@ bool fp_run(void)
     }
     fp_encode(tmp, &a);
     qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
-    printf("  GF(p) sqrt runs in .............................................. %llu cycles, (%u ignore me)\n", cycle_runs[4] / BENCH_LOOPS, tmp[0]);
+    printf("  GF(p) sqrt runs in .............................................. %lu cycles, (%u ignore me)\n", cycle_runs[4] / BENCH_LOOPS, tmp[0]);
 
     // GF(p) is_square    
     for (i=0; i<20; i++){
@@ -370,7 +370,7 @@ bool fp_run(void)
     }
     fp_encode(tmp, &a);
     qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
-    printf("  Square checking runs in ......................................... %llu cycles, (%u ignore me)\n", cycle_runs[4] / BENCH_LOOPS, tmp[0]);
+    printf("  Square checking runs in ......................................... %lu cycles, (%u ignore me)\n", cycle_runs[4] / BENCH_LOOPS, tmp[0]);
 
     return OK;
 }

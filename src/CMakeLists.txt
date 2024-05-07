@@ -39,10 +39,12 @@ add_subdirectory(ec)
 
 add_subdirectory(id2iso)
 add_subdirectory(hd)
-add_subdirectory(sqisignhd)
+
 add_subdirectory(dim2id2iso)
 add_subdirectory(sqisigndim2)
 add_subdirectory(sqisigndim2_heuristic)
+add_subdirectory(sqisignhd)
+
 
 FOREACH(SVARIANT ${SVARIANT_S})
     string(TOLOWER ${SVARIANT} SVARIANT_LOWER)
