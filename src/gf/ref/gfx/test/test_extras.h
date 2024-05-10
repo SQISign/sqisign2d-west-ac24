@@ -4,8 +4,8 @@
 
 #include <time.h>
 #include <stdlib.h>
-#include "../include/fp.h"
-#include "../include/fp2.h"
+#include <fp.h>
+#include <fp2.h>
 
 #define PASSED    0
 #define FAILED    1

@@ -2153,6 +2153,10 @@ void fiat_p5248_divstep(uint64_t* out1, uint64_t out2[5], uint64_t out3[5], uint
 /*      Expose above functions using our API                        */
 /********************************************************************/
 
+#include <fp.h>
+
+const uint64_t p[NWORDS_FIELD] = { 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x4ffffffffffffff };
+
 void fp_add(uint64_t* out, const uint64_t* a, const uint64_t* b) {
     fiat_p5248_add(out, a, b);
 }

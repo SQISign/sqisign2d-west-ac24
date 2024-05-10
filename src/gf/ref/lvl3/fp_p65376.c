@@ -3801,6 +3801,10 @@ void fiat_p65376_divstep(uint64_t* out1, uint64_t out2[7], uint64_t out3[7], uin
 /*      Expose above functions using our API                        */
 /********************************************************************/
 
+#include <fp.h>
+
+const uint64_t p[NWORDS_FIELD] = { 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x40ffffffffffffff };
+
 void fp_add(uint64_t* out, const uint64_t* a, const uint64_t* b) {
     fiat_p65376_add(out, a, b);
 }
