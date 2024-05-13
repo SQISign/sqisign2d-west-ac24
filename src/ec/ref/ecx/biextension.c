@@ -429,16 +429,16 @@ void to_cubical_basis_i(
     fp2_batched_inv(t,8);
     fp2_mul(ixP, &P->z, &t[0]);
     fp2_mul(&P->x, &P->x, &t[1]);
-    fp2_setone(&P->z);
+    fp2_set_one(&P->z);
     fp2_mul(ixQ, &Q->z, &t[2]);
     fp2_mul(&Q->x, &Q->x, &t[3]);
-    fp2_setone(&Q->z);
+    fp2_set_one(&Q->z);
     fp2_mul(ixP1, &P1->z, &t[4]);
     fp2_mul(&P1->x, &P1->x, &t[5]);
-    fp2_setone(&P1->z);
+    fp2_set_one(&P1->z);
     fp2_mul(ixP2, &P2->z, &t[6]);
     fp2_mul(&P2->x, &P2->x, &t[7]);
-    fp2_setone(&P2->z);
+    fp2_set_one(&P2->z);
 }
 
 // Inline all the Weil pairing computations done in ec_dlog_2_weil
