@@ -1,6 +1,9 @@
 
 set(SOURCE_FILES_GF_${SVARIANT_UPPER}_BROADWELL
-    gf27500.c fp.c fp2.c
+    gf27500.c
+    fp.c
+    ${GFX_DIR}/fp2.c
+    ${GFX_DIR}/mp.c
 )
 
 add_library(${LIB_GF_${SVARIANT_UPPER}} ${SOURCE_FILES_GF_${SVARIANT_UPPER}_BROADWELL})
