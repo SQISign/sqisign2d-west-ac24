@@ -736,6 +736,9 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     copy_point(&points[2],&bas_EA.PmQ);
     ec_dbl_iter(&phi_chall.kernel,TORSION_PLUS_EVEN_POWER - (phi_chall.length),&Echall,&phi_chall.kernel);
 
+
+    
+
     assert(test_point_order_twof(&phi_chall.kernel,&Echall,phi_chall.length));
     ec_eval_even(&Echall,&phi_chall,points,3);
     

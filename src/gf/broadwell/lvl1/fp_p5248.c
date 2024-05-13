@@ -5,6 +5,7 @@ void fpsub5248_asm(uint64_t*, const uint64_t*, const uint64_t*);
 void mul5248_asm(uint64_t*, const uint64_t*, const uint64_t*);
 void rdc5248_asm(uint64_t*, const uint64_t*);
 
+const uint64_t p[4] = { 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x4ffffffffffffff };
 const uint64_t R[4] = { 0x0000000000000033, 0, 0, 0x0100000000000000 };
 const uint64_t R2[4] = { 0x3333333333333d70, 0x3333333333333333, 0x3333333333333333, 0x0333333333333333 };
 
