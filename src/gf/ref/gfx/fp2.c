@@ -281,7 +281,7 @@ void fp2_pow(fp2_t *out,const fp2_t * x,const digit_t *exp,const int size) {
 void digit_print(char *name,digit_t *a) {
     printf("%s0x = ", name);
     for(int i = NWORDS_FIELD - 1; i >=0; i--)
-        printf("%016lx", a[i]);
+        printf("%016llx", a[i]);
     printf("\n");
 }
 
@@ -291,9 +291,9 @@ void fp2_print(char *name, fp2_t const a){
     fp2_mul(&b, &b, &a);
     printf("%s0x", name);
     for(int i = NWORDS_FIELD - 1; i >=0; i--)
-        printf("%016lx", b.re[i]);
+        printf("%016llx", b.re[i]);
     printf(" + i*0x");
     for(int i = NWORDS_FIELD - 1; i >=0; i--)
-        printf("%016lx", b.im[i]);
+        printf("%016llx", b.im[i]);
     printf("\n");
 }

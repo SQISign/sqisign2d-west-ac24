@@ -196,17 +196,17 @@ void fp2_print(char *name, fp2_t const a){
     fp2_mul(&b, &b, &a);
     printf("%s0x", name);
 
-    printf("%016lx", b.re.v0);
-    printf("%016lx", b.re.v1);
-    printf("%016lx", b.re.v2);
-    printf("%016lx", b.re.v3);
+    printf("%016llx", b.re.v0);
+    printf("%016llx", b.re.v1);
+    printf("%016llx", b.re.v2);
+    printf("%016llx", b.re.v3);
 
     printf(" + i*0x");
     
-    printf("%016lx", b.im.v0);
-    printf("%016lx", b.im.v1);
-    printf("%016lx", b.im.v2);
-    printf("%016lx", b.im.v3);
+    printf("%016llx", b.im.v0);
+    printf("%016llx", b.im.v1);
+    printf("%016llx", b.im.v2);
+    printf("%016llx", b.im.v3);
     printf("\n");
 }
 

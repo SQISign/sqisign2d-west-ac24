@@ -191,7 +191,7 @@ bool fp2_run(void)
     }
     fp_encode(tmp, &(b.re));
     qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
-    printf("  GF(p^2) addition runs in .......................................... %lu cycles, (%u ignore me)\n", cycle_runs[4] / (6 * BENCH_LOOPS), tmp[0]);
+    printf("  GF(p^2) addition runs in .......................................... %llu cycles, (%u ignore me)\n", cycle_runs[4] / (6 * BENCH_LOOPS), tmp[0]);
 
 
     // GF(p^2) subtraction
@@ -211,7 +211,7 @@ bool fp2_run(void)
     }
     fp_encode(tmp, &b.re);
     qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
-    printf("  GF(p^2) subtraction runs in ....................................... %lu cycles, (%u ignore me)\n", cycle_runs[4] /  (6 * BENCH_LOOPS), tmp[0]);
+    printf("  GF(p^2) subtraction runs in ....................................... %llu cycles, (%u ignore me)\n", cycle_runs[4] /  (6 * BENCH_LOOPS), tmp[0]);
 
     // GF(p^2) multiplication
     for (i=0; i<20; i++){
@@ -230,7 +230,7 @@ bool fp2_run(void)
     }
     fp_encode(tmp, &b.re);
     qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
-    printf("  GF(p^2) multiplication runs in .................................... %lu cycles, (%u ignore me)\n", cycle_runs[4] /  (6 * BENCH_LOOPS), tmp[0]);
+    printf("  GF(p^2) multiplication runs in .................................... %llu cycles, (%u ignore me)\n", cycle_runs[4] /  (6 * BENCH_LOOPS), tmp[0]);
 
     // GF(p^2) squaring
     for (i=0; i<20; i++){
@@ -244,7 +244,7 @@ bool fp2_run(void)
     }
     fp_encode(tmp, &(a.re));
     qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
-    printf("  GF(p^2) squaring runs in .......................................... %lu cycles, (%u ignore me)\n", cycle_runs[4] /  (BENCH_LOOPS), tmp[0]);
+    printf("  GF(p^2) squaring runs in .......................................... %llu cycles, (%u ignore me)\n", cycle_runs[4] /  (BENCH_LOOPS), tmp[0]);
 
     // GF(p^2) inversion
     for (i=0; i<20; i++){
@@ -259,7 +259,7 @@ bool fp2_run(void)
     }
     fp_encode(tmp, &(a.re));
     qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
-    printf("  GF(p^2) inversion runs in ......................................... %lu cycles, (%u ignore me)\n", cycle_runs[4] /  BENCH_LOOPS, tmp[0]);
+    printf("  GF(p^2) inversion runs in ......................................... %llu cycles, (%u ignore me)\n", cycle_runs[4] /  BENCH_LOOPS, tmp[0]);
 
 
     // GF(p^2) sqrt
@@ -275,7 +275,7 @@ bool fp2_run(void)
     }
     fp_encode(tmp, &(a.re));
     qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
-    printf("  GF(p^2) sqrt runs in .............................................. %lu cycles, (%u ignore me)\n", cycle_runs[4] / BENCH_LOOPS, tmp[0]);
+    printf("  GF(p^2) sqrt runs in .............................................. %llu cycles, (%u ignore me)\n", cycle_runs[4] / BENCH_LOOPS, tmp[0]);
 
     // GF(p^2) is_square    
     for (i=0; i<20; i++){
@@ -290,7 +290,7 @@ bool fp2_run(void)
     }
     fp_encode(tmp, &(a.re));
     qsort(cycle_runs + 10, 10, sizeof cycle_runs[0], cmp_u64);
-    printf("  Square checking runs in ........................................... %lu cycles, (%u ignore me)\n", cycle_runs[4] / BENCH_LOOPS, tmp[0]);
+    printf("  Square checking runs in ........................................... %llu cycles, (%u ignore me)\n", cycle_runs[4] / BENCH_LOOPS, tmp[0]);
 
     return OK;
 }
