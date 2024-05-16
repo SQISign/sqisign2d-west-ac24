@@ -25,9 +25,9 @@ int main()
 		fp2_random(a);
 		fp2_random(b);
 		fp2_copy(c, a);
-		c.re[0] += 1;
+		fp_add(&c.re, &c.re, &ONE);
 		fp2_copy(d, b);
-		d.re[0] -= 1;
+		fp_add(&d.re, &d.re, &ONE);
 
 		assert(fp2_is_equal(a,b) == 0);		// different values check --> (a != b)
 		assert(fp2_is_equal(c,c) == 1);		// equal values check --> 1 (c == c)

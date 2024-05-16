@@ -9,8 +9,11 @@ void fp2_random(fp2_t *a){
 	fp_set_small(&a->im, rand());
 	fp2_neg(a, a);
 
-    // Update seed
-    srand((unsigned) a->re[0]);
+  // Update seed
+	uint8_t tmp[8*NWORDS_FIELD];
+	fp_encode(&tmp, &(a->re));
+	unsigned seed = (unsigned) tmp[0] | (unsigned)tmp[1] << 8 | (unsigned)tmp[2] << 16 | (unsigned)tmp[3] << 24;
+  srand((unsigned) seed);
 }
 
 void slow_mul(poly h, poly f, int lenf, poly g, int leng){
