@@ -10,7 +10,7 @@ void fp2_random(fp2_t *a){
 	fp2_neg(a, a);
 
     // Update seed
-    srand((unsigned) a->re.v0);
+    srand((unsigned) a->re[0]);
 }
 
 void slow_mul(poly h, poly f, int lenf, poly g, int leng){

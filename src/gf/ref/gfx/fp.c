@@ -14,7 +14,7 @@ fp_cswap(fp_t *a, fp_t *b, uint32_t ctl)
 	uint64_t t;
 
     for (unsigned int i = 0; i < NWORDS_FIELD; i++) {
-        t = cw & (a[i] ^ b[i]); a[i] ^= t; b[i] ^= t;
+        t = cw & (*a[i] ^ *b[i]); *a[i] ^= t; *b[i] ^= t;
     }
 
 }
@@ -23,7 +23,7 @@ void
 fp_set_zero(fp_t* a)
 {
     for (unsigned int i = 0; i < NWORDS_FIELD; i++) {
-        a[i] = 0;
+        *a[i] = 0;
     }
 }
 
@@ -37,9 +37,9 @@ void
 fp_set_small(fp_t* x, const digit_t val)
 { // Set field element x = val, where val has wordsize
   // automatically converted to Montgomery form
-  x[0] = val;
+  *x[0] = val;
   for (unsigned int i = 1; i < NWORDS_FIELD; i++) {
-    x[i] = 0;
+    *x[i] = 0;
   }
   fp_tomont(x, x);
 }
@@ -50,7 +50,7 @@ bool fp_is_equal(const fp_t* a, const fp_t* b)
     digit_t r = 0;
 
     for (unsigned int i = 0; i < NWORDS_FIELD; i++)
-        r |= a[i] ^ b[i];
+        r |= *a[i] ^ *b[i];
 
     return (bool)is_digit_zero_ct(r);
 }
@@ -61,14 +61,14 @@ bool fp_is_zero(const fp_t* a)
     digit_t r = 0;
 
     for (unsigned int i = 0; i < NWORDS_FIELD; i++)
-        r |= a[i] ^ 0;
+        r |= *a[i] ^ 0;
 
     return (bool)is_digit_zero_ct(r);
 }
 
 void fp_copy(fp_t* out, const fp_t* a)
 {
-    *out = *a;
+    memcpy(*out, *a, NWORDS_FIELD*RADIX/8);
 }
 
 void fp_neg(fp_t* out, const fp_t* a)
@@ -78,9 +78,9 @@ void fp_neg(fp_t* out, const fp_t* a)
     unsigned int i, borrow = 0;
 
     for (i = 0; i < NWORDS_FIELD; i++) {
-        SUBC(out[i], borrow, p[i], a[i], borrow);
+        SUBC(*out[i], borrow, p[i], *a[i], borrow);
     }
-    fp_sub(out, out, (fp_t*)p);
+    fp_sub(out, out, (fp_t*)&p);
 }
 
 void fp_half(fp_t* out, const fp_t* a){
@@ -140,7 +140,7 @@ fp_decode_reduce(fp_t *d, const void *src, size_t len)
 	const uint8_t *buf = src;
 
     for (int i = 0; i < NWORDS_FIELD; i++) {
-        d[i] = dec64le(buf + i * 8);
+        *d[i] = dec64le(buf + i * 8);
     }
 
     fp_tomont(d, d);
@@ -152,7 +152,7 @@ fp_decode(fp_t *d, const void *src)
 	const uint8_t *buf = src;
 
     for (int i = 0; i < NWORDS_FIELD; i++) {
-        d[i] = dec64le(buf + i * 8);
+        *d[i] = dec64le(buf + i * 8);
     }
 
     fp_tomont(d, d);
@@ -167,8 +167,8 @@ static void fp_exp3div4(fp_t* out, const fp_t* a)
     fp_t p_t, acc;
     digit_t bit;
 
-    memcpy((fp_t*)p_t, (fp_t*)p, NWORDS_FIELD*RADIX/8);
-    memcpy((fp_t*)acc, (fp_t*)a, NWORDS_FIELD*RADIX/8);
+    memcpy((digit_t*)p_t, (digit_t*)p, NWORDS_FIELD*RADIX/8);
+    memcpy((digit_t*)acc, (digit_t*)*a, NWORDS_FIELD*RADIX/8);
     mp_shiftr(p_t, 1, NWORDS_FIELD);
     mp_shiftr(p_t, 1, NWORDS_FIELD);
     fp_set_one(out);

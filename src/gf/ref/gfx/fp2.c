@@ -149,29 +149,31 @@ void fp2_inv(fp2_t* x)
 }
 
 void fp2_batched_inv(fp2_t *x, int len) {
+
     fp2_t t1[len],t2[len];
     fp2_t inverse;
 
     // x = x0,...,xn
     // t1 = x0, x0*x1, ... ,x0 * x1 * ... * xn
-    t1[0] = x[0];
+    fp2_copy(&t1[0],&x[0]);
     for (int i=1;i<len;i++) {
-        fp2_mul(&t1[i], &t1[i-1], &x[i]);
+        fp2_mul(&t1[i],&t1[i-1],&x[i]);
     }
 
     // inverse = 1/ (x0 * x1 * ... * xn)
-    inverse = t1[len-1];
+    fp2_copy(&inverse,&t1[len-1]);
     fp2_inv(&inverse);
-    t2[0] = inverse;
 
+    fp2_copy(&t2[0],&inverse);
     // t2 = 1/ (x0 * x1 * ... * xn), 1/ (x0 * x1 * ... * x(n-1)) , ... , 1/xO
     for (int i=1;i<len;i++) {
-        fp2_mul(&t2[i], &t2[i-1], &x[len-i]);
+        fp2_mul(&t2[i],&t2[i-1],&x[len-i]);
     }
 
-    x[0] = t2[len-1];
+    fp2_copy(&x[0],&t2[len-1]);
+    
     for (int i=1;i<len;i++){
-        fp2_mul(&x[i], &t1[i-1], &t2[len-i-1]);
+        fp2_mul(&x[i],&t1[i-1],&t2[len-i-1]);
     }
 
 }
@@ -191,6 +193,18 @@ void fp2_frob(fp2_t* x, const fp2_t* y)
 {
     fp_copy(&(x->re), &(y->re));
     fp_neg(&(x->im), &(y->im));
+}
+
+void fp2_tomont(fp2_t* x, const fp2_t* y)
+{ 
+    fp_tomont(x->re, y->re);
+    fp_tomont(x->im, y->im);
+}
+
+void fp2_frommont(fp2_t* x, const fp2_t* y)
+{
+    fp_frommont(x->re, y->re);
+    fp_frommont(x->im, y->im);
 }
 
 // NOTE: old, non-constant-time implementation. Could be optimized

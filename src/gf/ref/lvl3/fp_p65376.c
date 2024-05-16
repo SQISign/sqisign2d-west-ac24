@@ -3809,36 +3809,33 @@ const uint64_t ONE[NWORDS_FIELD]  = {0x0000000000000003, 0x0000000000000000,
                                      0x0000000000000000, 0x0000000000000000, 
                                      0x0000000000000000, 0x3D00000000000000};
 
-void fp_add(uint64_t* out, const uint64_t* a, const uint64_t* b) {
-    fiat_p65376_add(out, a, b);
+void fp_add(fp_t* out, const fp_t* a, const fp_t* b) {
+    fiat_p65376_add(*out, *a, *b);
 }
 
-void fp_sub(uint64_t* out, const uint64_t* a, const uint64_t* b) {
-    fiat_p65376_sub(out, a, b);
+void fp_sub(fp_t* out, const fp_t* a, const fp_t* b) {
+    fiat_p65376_sub(*out, *a, *b);
 }
 
-void fp_sqr(uint64_t* out, const uint64_t* a) {
-    fiat_p65376_square(out, a);
+void fp_sqr(fp_t* out, const fp_t* a) {
+    fiat_p65376_square(*out, *a);
 }
 
-void fp_mul(uint64_t* out, const uint64_t* a, const uint64_t* b) {
-    fiat_p65376_mul(out, a, b);
+void fp_mul(fp_t* out, const fp_t* a, const fp_t* b) {
+    fiat_p65376_mul(*out, *a, *b);
 }
 
-void fp_tomont(uint64_t* out, const uint64_t* a) {
-    fiat_p65376_to_montgomery(out, a);
+void fp_tomont(fp_t* out, const fp_t* a) {
+    fiat_p65376_to_montgomery(*out, *a);
 }
 
-void fp_frommont(uint64_t* out, const uint64_t* a) {
-    fiat_p65376_from_montgomery(out, a);
+void fp_frommont(fp_t* out, const fp_t* a) {
+    fiat_p65376_from_montgomery(*out, *a);
 }
 
-void fp_mont_setone(uint64_t* out) {
-    fiat_p65376_set_one(out);
+void fp_mont_setone(fp_t* out) {
+    fiat_p65376_set_one(*out);
 }
-
-
-
 
 /*
 CAUTION: HAZARDOUS MATERIALS

@@ -15,7 +15,7 @@ void fp2_random(fp2_t *a){
 	fp2_neg(a, a);
 
     // Update seed
-    srand((unsigned) a->re.v0);
+    srand((unsigned) a->re[0]);
 }
 
 int main(int argc, char* argv[])
@@ -44,9 +44,9 @@ int main(int argc, char* argv[])
 		fp2_random(&a);
 		fp2_random(&b);
 		fp2_copy(&c, &a);
-		c.re.v0 += 1;
+		c.re[0] += 1;
 		fp2_copy(&d, &b);
-		d.re.v0 -= 1;
+		d.re[0] -= 1;
 
 		assert(fp2_is_equal(&a,&b) == 0);		// different values check --> (a != b)
 		assert(fp2_is_equal(&c,&c) == 1);		// equal values check --> 1 (c == c)
