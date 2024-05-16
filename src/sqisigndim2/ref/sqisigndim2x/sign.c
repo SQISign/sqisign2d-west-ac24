@@ -71,8 +71,8 @@ void commit(ec_curve_t *E_com, ec_basis_t *basis_even_com, quat_left_ideal_t *li
     ibz_init(&n);
 
     // generate a random ideal of random norm for the secret ideal
-    generate_random_prime(&n,1,128);
-    sampling_random_ideal_O0(lideal_com,&n);
+    generate_random_prime(&n,1,ibz_bitsize(&QUATALG_PINFTY.p)/2);
+    sampling_random_ideal_O0(lideal_com,&n,1);
 
     // ideal to isogeny clapotis
     found = dim2id2iso_arbitrary_isogeny_evaluation(basis_even_com,E_com,lideal_com);
@@ -186,118 +186,115 @@ void norm_from_2_times_gram(ibz_t *norm, ibz_mat_4x4_t *gram, ibz_vec_4_t *vec) 
     ibz_div_2exp(norm, norm, 1);
 }
 
-// TODO(security): currently just samples smallest vector, instead of random in a ball
+// TODECIDE : is the current sampling method satisfactory ?
+// it seems uniformish but not sure the distribution is exactly as we might want it 
 void sample_response(quat_alg_elem_t *x, const quat_lattice_t *lattice, ibz_t const *lattice_content, int verbose) {
     ibz_mat_4x4_t lll;
-    // ibz_t denom_gram, norm;
+    ibz_t denom_gram, norm;
+    ibz_t bound;
+    ibz_vec_4_t vec;
 
     ibz_mat_4x4_init(&lll);
-    // ibz_init(&denom_gram);
-    // ibz_init(&norm);
+    ibz_init(&denom_gram);
+    ibz_init(&norm);
+    ibz_init(&bound);
+    ibz_vec_4_init(&vec);
 
-    // printf("[");
-    // for (int col = 0; col < 4; ++col) {
-    //     printf("[");
-    //     for (int row = 0; row < 4; ++row) {
-    //         ibz_printf("%Zd ", &(lattice->basis[row][col]));
-    //     }
-    //     printf("]");
-    // }
-    // printf("]");
-
-    int err = quat_lattice_lll(&lll, lattice, &(QUATALG_PINFTY.p), 1000);
+    // TODO make this a proper constant
+    int err = quat_lattice_lll(&lll, lattice, &(QUATALG_PINFTY.p), 500 * (ibz_bitsize(&QUATALG_PINFTY.p)/120) );
     assert(!err);
 
-    ibz_copy(&(x->denom), &(lattice->denom));
-    for (int i=0;i<4;i++) {
-        ibz_copy(&x->coord[i], &lll[i][0]);
-    }
-    assert(quat_lattice_contains(NULL, lattice, x, &QUATALG_PINFTY));
-
     // The shortest vector found by lll is our response
+    ibz_mat_4x4_t prod, gram;
+    ibz_mat_4x4_init(&prod);
+    ibz_mat_4x4_init(&gram);
+// 
+    ibz_mat_4x4_transpose(&prod,&lll);
+    ibz_mat_4x4_mul(&prod,&prod,&(QUATALG_PINFTY.gram));
+    ibz_mat_4x4_mul(&gram,&prod,&lll);
 
-    // ibz_mat_4x4_t prod, gram;
-    // ibz_mat_4x4_init(&prod);
-    // ibz_mat_4x4_init(&gram);
+    ibz_copy(&denom_gram, &(lattice->denom));
+    ibz_mul(&denom_gram, &denom_gram, &(lattice->denom));
+    ibz_mul(&denom_gram, &denom_gram, lattice_content);
+    assert(ibz_is_even(&denom_gram));
+    ibz_div_2exp(&denom_gram, &denom_gram, 1);
 
-    // ibz_mat_4x4_transpose(&prod,&lll);
-    // ibz_mat_4x4_mul(&prod,&prod,&(QUATALG_PINFTY.gram));
-    // ibz_mat_4x4_mul(&gram,&prod,&lll);
+    int divides = ibz_mat_4x4_scalar_div(&gram, &denom_gram, &gram);
+    assert(divides);
 
-    // ibz_copy(&denom_gram, &(lattice->denom));
-    // ibz_mul(&denom_gram, &denom_gram, &(lattice->denom));
-    // ibz_mul(&denom_gram, &denom_gram, lattice_content);
-    // assert(ibz_is_even(&denom_gram));
-    // ibz_div_2exp(&denom_gram, &denom_gram, 1);
+    ibz_copy(&(x->denom), &(lattice->denom));
 
-    // int divides = ibz_mat_4x4_scalar_div(&gram, &denom_gram, &gram);
-    // assert(divides);
 
+    int found =0;
+    int count =0;
+
+    ibz_vec_4_t b_bound;
+    ibz_vec_4_init(&b_bound);
+
+    ibz_pow(&bound,&ibz_const_two,SQIsign2D_response_length);
+
+
+    // computing the upperbounds for the coefficients of the scalar decomposition
+    int first_zero_index = -1;
+    for (int j=0;j<4;j++) {
+        ibz_copy(&b_bound[j],&gram[j][j]);
+        ibz_div_2exp(&b_bound[j],&b_bound[j], 1);
+        ibz_div(&b_bound[j],&norm,&bound,&b_bound[j]);
+        ibz_sqrt_floor(&b_bound[j],&b_bound[j]);
+        if (first_zero_index==-1 && ibz_cmp(&b_bound[j],&ibz_const_zero)==0) {
+            first_zero_index=j;
+        }
+    }
+    if (first_zero_index==-1) {
+        first_zero_index=4;
+    }
+    
+    // TODO make this a proper constant of the scheme 
+    // loop to find a correct answer
+    while (!found && count < 50) {
+
+        for (int i=0;i<first_zero_index;i++) {
+            ibz_rand_interval_minm_m(&vec[i],ibz_get(&b_bound[i]));
+        }
+        for (int i=first_zero_index;i<4;i++) {
+            ibz_set(&vec[i],0);
+        }
+
+        norm_from_2_times_gram(&norm, &gram, &vec);
+
+        // checking that we got something small enough
+        found = ibz_cmp(&norm,&bound)<0 && (ibz_cmp(&vec[0],&ibz_const_zero)!=0 || ibz_cmp(&vec[1],&ibz_const_zero)!=0 || ibz_cmp(&vec[2],&ibz_const_zero)!=0 || ibz_cmp(&vec[3],&ibz_const_zero)!=0 );
+        if (found) {
+            // computing the absolute coordinates of the result
+            ibz_mat_4x4_eval(&(x->coord), &lll, &vec);
+            assert(quat_lattice_contains(NULL, lattice, x, &QUATALG_PINFTY));
+
+        }
+        
+        count++;
+
+    } 
+
+    // if not found then we just use the smallest vector of the lattice
+    if (!found) {
+        for (int i=0;i<4;i++) {
+            ibz_copy(&x->coord[i], &lll[i][0]);
+        }
+        assert(quat_lattice_contains(NULL, lattice, x, &QUATALG_PINFTY));
+        found = 1;
+        
+    }
     
 
+    ibz_vec_4_finalize(&b_bound);
 
-    
-
-    // int k = 0;
-    // for (int i1 = 0; i1 < 10; i1++){
-    //     for (int i2 = 0; i2 < 10; i2++){
-    //         for (int i3 = 0; i3 < 10; i3++){
-    //             for (int i4 = 0; i4 < 10; i4++){
-    //                 k++;
-    //                 ibz_vec_4_set(&vec, i1,i2,i3,i4);
-    //                 norm_from_2_times_gram(&norm, &gram, &vec);
-    //                 if (is_good_norm(&norm)) {
-
-    //                     ibz_mat_4x4_eval(&(x->coord), &lll, &vec);
-
-    //                     assert(quat_lattice_contains(NULL, lattice, x, &QUATALG_PINFTY));
-    //                     assert(is_good(x, lattice_content));
-
-    //                     #ifndef NDEBUG
-    //                         ibq_t N_q;
-    //                         ibz_t N, tmp, q;
-    //                         ibq_init(&N_q);
-    //                         ibz_init(&N);
-    //                         ibz_init(&tmp);
-    //                         quat_alg_norm(&N_q, x, &QUATALG_PINFTY);
-    //                         ibq_to_ibz(&N, &N_q);
-    //                         assert(ibz_divides(&N, lattice_content));
-    //                         ibz_div(&N, &tmp, &N, lattice_content);
-
-    //                         assert(ibz_cmp(&N, &norm) == 0);
-
-    //                         ibz_finalize(&N);
-    //                         ibq_finalize(&N_q);
-    //                         ibz_finalize(&tmp);
-    //                     #endif
-
-
-    //                     #ifndef NDEBUG
-    //                         printf("good sample found after %d attempts\n", k);
-    //                     #endif
-
-    //                     if (verbose) printf("e = %lu, ", RESPONSE_LENGTH);
-    //                     if (verbose) ibz_printf("q = %Zd, ", &norm);
-    //                     // ibz_printf("2^e - q = sum of two squares = prime 1 mod 4\n");
-    //                     i1 = i2 = i3 = i4 = 10;
-
-    //                 }
-
-
-
-    //             }
-    //         }
-    //     }
-    // }
-    
-
-
-    // ibz_finalize(&denom_gram);
-    // ibz_finalize(&norm);
-    // ibz_mat_4x4_finalize(&prod);
-    // ibz_mat_4x4_finalize(&gram);
-    // ibz_mat_4x4_finalize(&lll);
-    // ibz_vec_4_finalize(&vec);
+    ibz_finalize(&denom_gram);
+    ibz_finalize(&norm);
+    ibz_mat_4x4_finalize(&prod);
+    ibz_mat_4x4_finalize(&gram);
+    ibz_mat_4x4_finalize(&lll);
+    ibz_vec_4_finalize(&vec);
+    ibz_finalize(&bound);
     return;
 }
 
@@ -307,24 +304,23 @@ void sample_response(quat_alg_elem_t *x, const quat_lattice_t *lattice, ibz_t co
 // compute the challenge as the hash of the message and the commitment curve and public key
 void hash_to_challenge(ibz_vec_2_t *scalars, const ec_curve_t *com_curve, const unsigned char *message, const public_key_t *pk, size_t length)
 {
-    unsigned char *buf = malloc(sizeof(fp2_t) + sizeof(fp2_t) + length);
+    unsigned char *buf = malloc(FP2_ENCODED_BYTES + FP2_ENCODED_BYTES + length);
     {
         fp2_t j1, j2;
         ec_j_inv(&j1, com_curve);
         ec_j_inv(&j2, &pk->curve);
-        memcpy(buf, &j1, sizeof(j1));
-        memcpy(buf + sizeof(j1), &j2, sizeof(j2));
-        memcpy(buf + sizeof(j1) + sizeof(j2), message, length);
+        fp2_encode(buf, &j1);
+        fp2_encode(buf + FP2_ENCODED_BYTES, &j2); // TODO use defined constant
+        memcpy(buf + FP2_ENCODED_BYTES + FP2_ENCODED_BYTES, message, length); // TODO use defined constant
     }
 
-    //TODO(security) omit some vectors, notably (a,1) with gcd(a,6)!=1 but also things like (2,3)?
     {
         digit_t digits[NWORDS_FIELD];
 
         //FIXME should use SHAKE128 for smaller parameter sets?
-        SHAKE256((void *) digits, sizeof(digits), buf, sizeof(fp2_t) + sizeof(fp2_t) + length);
+        SHAKE256((void *) digits, sizeof(digits), buf, FP2_ENCODED_BYTES + FP2_ENCODED_BYTES + length);
 
-        ibz_set(&(*scalars)[1], 1); //FIXME
+        ibz_set(&(*scalars)[1], 1);
         ibz_copy_digit_array(&(*scalars)[1], digits);
     }
 
@@ -442,7 +438,10 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     ibz_pow(&tmp,&ibz_const_two,exp_diadic_val_full_resp);
     ibz_div(&degree_odd_resp,&remain,&degree_full_resp,&tmp);
     assert(ibz_cmp(&remain,&ibz_const_zero)==0);
-    assert( (2*ibz_bitsize(&degree_odd_resp)) < ibz_bitsize(&QUATALG_PINFTY.p));
+    #ifndef NDEBUG 
+        ibz_pow(&tmp,&ibz_const_two,SQIsign2D_response_length);
+        assert( ibz_cmp(&tmp,&degree_odd_resp)>0);
+    #endif 
 
     // creating the ideal
     quat_alg_conj(&resp_quat,&resp_quat);
@@ -452,7 +451,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
 
     // now we compute the ideal_aux
     // computing the norm
-    pow_dim2_deg_resp = SQIsign2D_response_length;
+    pow_dim2_deg_resp = SQIsign2D_response_length - exp_diadic_val_full_resp;
     ibz_pow(&remain,&ibz_const_two,pow_dim2_deg_resp);
     ibz_sub(&tmp,&remain,&degree_odd_resp);
 
@@ -462,7 +461,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     
     // sampling the ideal at random 
     // TODO replace these two steps with a clean function that samples random ideals from a right order
-    sampling_random_ideal_O0(&lideal_aux,&tmp);
+    sampling_random_ideal_O0(&lideal_aux,&tmp,0);
     // pushing forward 
     quat_lideal_inter(&lideal_aux_resp_com,&lideal_com_resp,&lideal_aux,&QUATALG_PINFTY);
 
@@ -492,6 +491,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     ec_dbl_iter(&Bcom0.P,TORSION_PLUS_EVEN_POWER-pow_dim2_deg_resp-exp_diadic_val_full_resp-2,&E_com,&Bcom0.P);
     ec_dbl_iter(&Bcom0.Q,TORSION_PLUS_EVEN_POWER-pow_dim2_deg_resp-exp_diadic_val_full_resp-2,&E_com,&Bcom0.Q);
     ec_dbl_iter(&Bcom0.PmQ,TORSION_PLUS_EVEN_POWER-pow_dim2_deg_resp-exp_diadic_val_full_resp-2,&E_com,&Bcom0.PmQ);
+
 
     // now, we compute the isogeny Phi : Ecom x Eaux -> Echl' x Eaux' 
     // where Echl' is 2^exp_diadic_val_full_resp isogenous to Echal 
@@ -538,15 +538,15 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     lift_basis(&Teval1.P1,&Teval2.P1,&Bcom0,&E_com);
     jac_neg(&temp_jac,&Teval2.P1);
     ADD(&Teval3.P1,&Teval1.P1,&temp_jac,&E_com);
-    fp2_set(&Teval1.P2.x,0);
-    fp2_set(&Teval1.P2.y,1);
-    fp2_set(&Teval1.P2.z,0);
-    fp2_set(&Teval2.P2.x,0);
-    fp2_set(&Teval2.P2.y,1);
-    fp2_set(&Teval2.P2.z,0);
-    fp2_set(&Teval3.P2.x,0);
-    fp2_set(&Teval3.P2.y,1);
-    fp2_set(&Teval3.P2.z,0);
+    fp2_set_zero(&Teval1.P2.x);
+    fp2_set_one(&Teval1.P2.y);
+    fp2_set_zero(&Teval1.P2.z);
+    fp2_set_zero(&Teval2.P2.x);
+    fp2_set_one(&Teval2.P2.y);
+    fp2_set_zero(&Teval2.P2.z);
+    fp2_set_zero(&Teval3.P2.x);
+    fp2_set_one(&Teval3.P2.y);
+    fp2_set_zero(&Teval3.P2.z);
     theta_chain_eval_no_help(&Tev1,&isog,&Teval1,&EcomXEaux);
     theta_chain_eval_no_help(&Tev2,&isog,&Teval2,&EcomXEaux);
     theta_chain_eval_no_help(&Tev1m2,&isog,&Teval3,&EcomXEaux);
@@ -652,11 +652,17 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     copy_point(&bas_sk.PmQ,&sk->canonical_basis.PmQ);
     phi_chall.curve = sk->curve;
     phi_chall.length = TORSION_PLUS_EVEN_POWER-backtracking;
+    assert(test_point_order_twof(&bas_sk.P,&sk->curve,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&bas_sk.Q,&sk->curve,TORSION_PLUS_EVEN_POWER));
+    assert(test_point_order_twof(&bas_sk.PmQ,&sk->curve,TORSION_PLUS_EVEN_POWER));
     ec_biscalar_mul_ibz(&phi_chall.kernel,&sk->curve,&vec_chall[0],&vec_chall[1],&bas_sk,TORSION_PLUS_EVEN_POWER);
+    assert(test_point_order_twof(&phi_chall.kernel,&sk->curve,TORSION_PLUS_EVEN_POWER));
     for (int i=0;i<backtracking;i++) {
                 ec_dbl(&phi_chall.kernel,&sk->curve,&phi_chall.kernel);
     }
+    
     ec_curve_t Echall=sk->curve;
+    assert(test_point_order_twof(&phi_chall.kernel,&Echall,phi_chall.length));
     ec_eval_even(&Echall,&phi_chall,&bas_sk.P,1);
 
     #ifndef NDEBUG 
@@ -695,8 +701,8 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     copy_point(&B_aux2.P,&Tev1.P1);
     copy_point(&B_aux2.Q,&Tev2.P1);
     copy_point(&B_aux2.PmQ,&Tev1m2.P1);
-    ec_curve_to_basis_2_to_hint(&B_can_chall,&Echall,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp,sig->hint_chall);
-    ec_curve_to_basis_2_to_hint(&B_aux2_can,&E_aux2,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp,sig->hint_aux);
+    ec_curve_to_basis_2f_to_hint(&B_can_chall,&Echall,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp,sig->hint_chall);
+    ec_curve_to_basis_2f_to_hint(&B_aux2_can,&E_aux2,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp,sig->hint_aux);
 
     assert(test_point_order_twof(&B_aux2.P,&E_aux2,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp)); 
     assert(test_point_order_twof(&B_aux2.Q,&E_aux2,pow_dim2_deg_resp+2 + exp_diadic_val_full_resp)); 
@@ -783,7 +789,7 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     ec_curve_t Epk;
     copy_curve(&Epk,&pk->curve);
     // ec_curve_normalize_A24(&Epk);
-    ec_curve_to_basis_2_from_hint(&bas_EA, &Epk,TORSION_PLUS_EVEN_POWER,pk->hint_pk); // canonical 
+    ec_curve_to_basis_2f_from_hint(&bas_EA, &Epk,TORSION_PLUS_EVEN_POWER,pk->hint_pk); // canonical 
     phi_chall.curve = Epk;
     phi_chall.length = TORSION_PLUS_EVEN_POWER-sig->backtracking;
 
@@ -813,15 +819,15 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     // printf("challenge computation length : %d ",phi_chall.length);
     // TOC_clock(t,"");
 
-    int pow_dim2_deg_resp = SQIsign2D_response_length;
+    int pow_dim2_deg_resp = SQIsign2D_response_length - sig->two_resp_length;
 
     ec_basis_t B_chall_can,B_aux_can;
     ec_curve_t E_aux;
     copy_curve(&E_aux,&sig->E_aux);
 
     // recovering the canonical basis 
-    ec_curve_to_basis_2_from_hint(&B_chall_can,&Echall,pow_dim2_deg_resp+2 + sig->two_resp_length,sig->hint_chall);
-    ec_curve_to_basis_2_from_hint(&B_aux_can,&E_aux,pow_dim2_deg_resp+2 + sig->two_resp_length,sig->hint_aux);
+    ec_curve_to_basis_2f_from_hint(&B_chall_can,&Echall,pow_dim2_deg_resp+2 + sig->two_resp_length,sig->hint_chall);
+    ec_curve_to_basis_2f_from_hint(&B_aux_can,&E_aux,pow_dim2_deg_resp+2 + sig->two_resp_length,sig->hint_aux);
 
     // TOC_clock(t,"challenge and canonical basis");
 
@@ -849,7 +855,6 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     copy_curve(&mem,&Echall);
 
     if (sig->two_resp_length>0) {
-
         // computing the small two chain
         ec_curve_t E_chall_2;
         copy_curve(&E_chall_2,&Echall);

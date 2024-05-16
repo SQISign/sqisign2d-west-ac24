@@ -45,7 +45,7 @@ bool curve_is_canonical(ec_curve_t const *E)
     return fp2_is_equal(&lhs, &rhs);
 }
 
-int bench_fp2_operations(int repeat) {
+void bench_fp2_operations(int repeat) {
 
     uint64_t t0, t1;
 
@@ -207,6 +207,49 @@ int test_sqisign(int repeat, uint64_t bench)
     return res;
 }
 
+void test_LLL() {
+
+    // generatting a random ideal
+    ibz_t n;
+    quat_left_ideal_t ideal;
+    ibz_mat_4x4_t gram,reduced;
+
+    ibz_init(&n);
+    ibz_mat_4x4_init(&gram);
+    ibz_mat_4x4_init(&reduced);
+    quat_left_ideal_init(&ideal);
+
+    generate_random_prime(&n,1,ibz_bitsize(&QUATALG_PINFTY.p)/2);
+    sampling_random_ideal_O0(&ideal,&n,1);
+
+    quat_lideal_reduce_basis(&reduced,&gram,&ideal,&QUATALG_PINFTY);
+
+    printf("for a %d-bit norm input, the bitsize of the reduced basis is %d %d %d %d \n",ibz_bitsize(&n),ibz_bitsize(&gram[0][0])-ibz_bitsize(&n),ibz_bitsize(&gram[1][1])-ibz_bitsize(&n),ibz_bitsize(&gram[2][2])-ibz_bitsize(&n),ibz_bitsize(&gram[3][3])-ibz_bitsize(&n));
+
+
+    generate_random_prime(&n,1,ibz_bitsize(&QUATALG_PINFTY.p));
+    sampling_random_ideal_O0(&ideal,&n,1);
+
+    quat_lideal_reduce_basis(&reduced,&gram,&ideal,&QUATALG_PINFTY);
+
+    printf("for a %d-bit norm input, the bitsize of the reduced basis is %d %d %d %d \n",ibz_bitsize(&n),ibz_bitsize(&gram[0][0])-ibz_bitsize(&n),ibz_bitsize(&gram[1][1])-ibz_bitsize(&n),ibz_bitsize(&gram[2][2])-ibz_bitsize(&n),ibz_bitsize(&gram[3][3])-ibz_bitsize(&n));
+
+    generate_random_prime(&n,1,2*ibz_bitsize(&QUATALG_PINFTY.p));
+    sampling_random_ideal_O0(&ideal,&n,1);
+
+    quat_lideal_reduce_basis(&reduced,&gram,&ideal,&QUATALG_PINFTY);
+
+    printf("for a %d-bit norm input, the bitsize of the reduced basis is %d %d %d %d \n",ibz_bitsize(&n),ibz_bitsize(&gram[0][0])-ibz_bitsize(&n),ibz_bitsize(&gram[1][1])-ibz_bitsize(&n),ibz_bitsize(&gram[2][2])-ibz_bitsize(&n),ibz_bitsize(&gram[3][3])-ibz_bitsize(&n));
+
+
+    ibz_finalize(&n);
+    quat_left_ideal_finalize(&ideal);
+    ibz_mat_4x4_finalize(&gram);
+    ibz_mat_4x4_finalize(&reduced);
+
+}
+
+
 // run all tests in module
 int main(){
     int res = 1;
@@ -215,6 +258,9 @@ int main(){
 
     // printf("\nRunning encoding tests\n");
     // res &= test_encode();
+    printf("\nRunning reduction test\n \n");
+    test_LLL();
+
 
     printf("\nRunning sqisigndim2 tests\n \n");
 

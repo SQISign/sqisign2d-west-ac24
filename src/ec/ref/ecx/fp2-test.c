@@ -25,19 +25,19 @@ int main()
 		fp2_random(a);
 		fp2_random(b);
 		fp2_copy(c, a);
-		c.re[0] += 1;
+		fp_add(&c.re, &c.re, &ONE);
 		fp2_copy(d, b);
-		d.re[0] -= 1;
+		fp_add(&d.re, &d.re, &ONE);
 
-		assert(fp2_isequal(a,b) == 0);		// different values check --> (a != b)
-		assert(fp2_isequal(c,c) == 1);		// equal values check --> 1 (c == c)
+		assert(fp2_is_equal(a,b) == 0);		// different values check --> (a != b)
+		assert(fp2_is_equal(c,c) == 1);		// equal values check --> 1 (c == c)
 
 		// Testing neg
 		fp2_set0(b);
 		fp2_copy(c, a);
 		fp2_neg(a, a);
 		fp2_sub(c, b, c);
-		assert(fp2_isequal(a,c) == 1);
+		assert(fp2_is_equal(a,c) == 1);
 
 		fp2_set1(a);	// Now a == 1
 		fp2_set0(b);	// Now b == 0
@@ -56,11 +56,11 @@ int main()
 		// tetsing c * 1 ... recall, in Montgomery domain R mod p plays the role of the 1
 		fp2_set1(a);
 		fp2_mul(d, c, a);
-		assert(fp2_isequal(d, c) == 1);
+		assert(fp2_is_equal(d, c) == 1);
 
 		// fp_set(e, 1);	// Now e == 1
 		// fp2_pow(d, e, c);
-		// assert(fp2_isequal(d, c) == 1);
+		// assert(fp2_is_equal(d, c) == 1);
 		
 		// fp_set(e, 0);	// Now e == 0
 		// fp2_pow(d, e, c);

@@ -61,7 +61,7 @@ void commit(ec_curve_t *E_com, quat_left_ideal_t *lideal_com) {
     ibz_init(&adj);
     // generate a random ideal of random norm for the secret ideal
     // TODO make a clean constant for this
-    generate_random_prime(&n,1,128);
+    generate_random_prime(&n,1,ibz_bitsize(&QUATALG_PINFTY.p)/2);
 
     theta_chain_t F;
     found = fixed_degree_isogeny(&F,lideal_com,&n,&adj,1);
@@ -98,7 +98,6 @@ void norm_from_2_times_gram(ibz_t *norm, ibz_mat_4x4_t *gram, ibz_vec_4_t *vec) 
 }
 
 
-// TODO(security): check how we want to sample of random in a hyperball
 int sample_response(quat_alg_elem_t *x, const quat_lattice_t *lattice, ibz_t const *lattice_content, int verbose) {
     ibz_mat_4x4_t lll;
     ibz_t denom_gram, norm,norm_bound;
@@ -110,15 +109,6 @@ int sample_response(quat_alg_elem_t *x, const quat_lattice_t *lattice, ibz_t con
 
     ibz_pow(&norm_bound,&ibz_const_two,SQIsign2D_response_heuristic_bound);
 
-    // printf("[");
-    // for (int col = 0; col < 4; ++col) {
-    //     printf("[");
-    //     for (int row = 0; row < 4; ++row) {
-    //         ibz_printf("%Zd ", &(lattice->basis[row][col]));
-    //     }
-    //     printf("]");
-    // }
-    // printf("]");
 
     int err = quat_lattice_lll(&lll, lattice, &(QUATALG_PINFTY.p), 1000);
     assert(!err);
@@ -150,37 +140,28 @@ int sample_response(quat_alg_elem_t *x, const quat_lattice_t *lattice, ibz_t con
     ibz_vec_4_t vec;
     ibz_vec_4_init(&vec);
 
-    int k = 0;
-    for (int i1 = 0; i1 < 10; i1++){
-        for (int i2 = 0; i2 < 10; i2++){
-            for (int i3 = 0; i3 < 10; i3++){
-                for (int i4 = 0; i4 < 10; i4++){
-                    k++;
-                    ibz_vec_4_set(&vec, i1,i2,i3,i4);
-                    norm_from_2_times_gram(&norm, &gram, &vec);
-
-
-                    // now we test if the norm is good 
-                    // there are two constraints : the norm must be smaller than some bound 
-                    // and the element must be primitive in O0 (this ensures that there is no backtracking)
-                    if ( (i1!=0 || i2!=0 || i3!=0 || i4!=0) && ibz_cmp(&norm,&norm_bound)<0) {
-
-                        ibz_mat_4x4_eval(&(x->coord), &lll, &vec);
-
-                        assert(quat_lattice_contains(NULL, lattice, x, &QUATALG_PINFTY));
-                        if (quat_alg_is_primitive(x,&MAXORD_O0,&QUATALG_PINFTY))
-                            {i1 = i2 = i3 = i4 = 10;found=1;}
-
-                    }
-
-
-
-                }
-            }
+    found = 0;
+    int cnt = 0;
+    
+    // TODO make these clean constants
+    int m =10;
+    while (!found && cnt < 2*(2*m+1)*(2*m+1)*(2*m+1)*(2*m+1)) {
+        cnt++;
+        for (int i=0;i<4;i++) {
+            ibz_rand_interval_minm_m(&vec[i],m);
+        }
+        norm_from_2_times_gram(&norm, &gram, &vec);
+        // now we test if the norm is good 
+        // there are two constraints : the norm must be smaller than some bound 
+        // and the element must be primitive in O0 (this ensures that there is no backtracking)
+        found = ibz_cmp(&norm,&norm_bound)<0 && (ibz_cmp(&vec[0],&ibz_const_zero)!=0 || ibz_cmp(&vec[1],&ibz_const_zero)!=0 || ibz_cmp(&vec[2],&ibz_const_zero)!=0 || ibz_cmp(&vec[3],&ibz_const_zero)!=0 );
+        if (found) {
+            ibz_mat_4x4_eval(&(x->coord), &lll, &vec);
+            assert(quat_lattice_contains(NULL, lattice, x, &QUATALG_PINFTY));
+            if (!quat_alg_is_primitive(x,&MAXORD_O0,&QUATALG_PINFTY))
+                {found=0;}
         }
     }
-
-
     assert(quat_lattice_contains(NULL, lattice, x, &QUATALG_PINFTY));
 
 
@@ -197,14 +178,14 @@ int sample_response(quat_alg_elem_t *x, const quat_lattice_t *lattice, ibz_t con
 // compute the challenge as the hash of the message and the commitment curve and public key
 void hash_to_challenge(ibz_vec_2_t *scalars, const ec_curve_t *com_curve, const unsigned char *message, const public_key_t *pk, size_t length)
 {
-    unsigned char *buf = malloc(sizeof(fp2_t) + sizeof(fp2_t) + length);
+    unsigned char *buf = malloc(FP2_ENCODED_BYTES + FP2_ENCODED_BYTES + length);
     {
         fp2_t j1, j2;
         ec_j_inv(&j1, com_curve);
         ec_j_inv(&j2, &pk->curve);
-        memcpy(buf, &j1, sizeof(j1));
-        memcpy(buf + sizeof(j1), &j2, sizeof(j2));
-        memcpy(buf + sizeof(j1) + sizeof(j2), message, length);
+        fp2_encode(buf, &j1);
+        fp2_encode(buf + FP2_ENCODED_BYTES, &j2); // TODO use defined constant
+        memcpy(buf + FP2_ENCODED_BYTES + FP2_ENCODED_BYTES, message, length); // TODO use defined constant
     }
 
     //TODO(security) omit some vectors, notably (a,1) with gcd(a,6)!=1 but also things like (2,3)?
@@ -213,7 +194,7 @@ void hash_to_challenge(ibz_vec_2_t *scalars, const ec_curve_t *com_curve, const 
 
         //FIXME should use SHAKE128 for smaller parameter sets?
         // TODO we want to use a bit differently (first we hash first half and then derive the second half)
-        SHAKE256((void *) digits, sizeof(digits), buf, sizeof(fp2_t) + sizeof(fp2_t) + length);
+        SHAKE256((void *) digits, sizeof(digits), buf, FP2_ENCODED_BYTES + FP2_ENCODED_BYTES + length);
         for (int i=0;i<SQIsign2D_heuristic_challenge_hash_iteration;i++) {
             SHAKE256((void *) digits, sizeof(digits), (void *) digits, sizeof(digits));
         }
@@ -319,14 +300,15 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     // TODO try with the frobenius conjugate
     ibz_mul(&lattice_content, &(lideal_chall_secret.norm), &(lideal_commit.norm));
     found = sample_response(&resp_quat, &lattice_hom_chall_to_com, &lattice_content, verbose);
-    assert(quat_lattice_contains(NULL,&MAXORD_O0,&resp_quat,&QUATALG_PINFTY));
-    assert(quat_alg_is_primitive(&resp_quat,&MAXORD_O0,&QUATALG_PINFTY));
 
-    // when it fails, we don't finalize all the ibz
+
+    // TODO when it fails, we don't finalize all the ibz
     if (!found) {
-        printf("it failed ");
         return 0;
     }
+    
+    assert(quat_lattice_contains(NULL,&MAXORD_O0,&resp_quat,&QUATALG_PINFTY));
+    assert(quat_alg_is_primitive(&resp_quat,&MAXORD_O0,&QUATALG_PINFTY));
     
     // creating lideal_com * lideal_resp 
     // we first compute the norm of lideal_resp 
@@ -360,7 +342,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     
     // sampling the ideal at random 
     // TODO replace these two steps with a clean function that samples random ideals from a right order
-    sampling_random_ideal_O0(&lideal_aux,&tmp);
+    sampling_random_ideal_O0(&lideal_aux,&tmp,0);
     // pushing forward 
     quat_lideal_inter(&lideal_aux_com,&lideal_commit,&lideal_aux,&QUATALG_PINFTY);
 
@@ -432,7 +414,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     
     // canonical basis
     ec_basis_t B_aux_can;
-    ec_curve_to_basis_2_to_hint(&B_aux_can,&E_aux,TORSION_PLUS_EVEN_POWER,sig->hint_aux);
+    ec_curve_to_basis_2f_to_hint(&B_aux_can,&E_aux,TORSION_PLUS_EVEN_POWER,sig->hint_aux);
 
     // compute the matrix to go from B_aux0 to B_aux_can
     change_of_basis_matrix_two(&mat_Baux0_to_Baux_can,&B_aux_can,&Baux0,&E_aux,TORSION_PLUS_EVEN_POWER); 
@@ -716,7 +698,7 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
 
     // computation of the challenge 
     // canonical basis 
-    ec_curve_to_basis_2_from_hint(&bas_EA, &Epk,TORSION_PLUS_EVEN_POWER,pk->hint_pk); // canonical     
+    ec_curve_to_basis_2f_from_hint(&bas_EA, &Epk,TORSION_PLUS_EVEN_POWER,pk->hint_pk); // canonical     
 
     assert(test_point_order_twof(&bas_EA.P,&Epk,TORSION_PLUS_EVEN_POWER));
     assert(test_point_order_twof(&bas_EA.Q,&Epk,TORSION_PLUS_EVEN_POWER));
@@ -778,7 +760,7 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     ec_basis_t B_aux_can;
 
     // recovering the canonical basis 
-    ec_curve_to_basis_2_from_hint(&B_aux_can,&sig->E_aux,TORSION_PLUS_EVEN_POWER,sig->hint_aux);
+    ec_curve_to_basis_2f_from_hint(&B_aux_can,&sig->E_aux,TORSION_PLUS_EVEN_POWER,sig->hint_aux);
 
     // setting to the right order 
     ec_dbl_iter(&B_aux_can.P,TORSION_PLUS_EVEN_POWER - pow_dim2_deg_resp,&sig->E_aux,&B_aux_can.P);

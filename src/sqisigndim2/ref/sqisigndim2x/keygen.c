@@ -41,8 +41,8 @@ void protocols_keygen(public_key_t *pk, secret_key_t *sk) {
 
     // generate a random ideal of random norm for the secret ideal
     // TODO make a clean function for all of that and  
-    generate_random_prime(&n,1,128);
-    sampling_random_ideal_O0(&sk->secret_ideal,&n);
+    generate_random_prime(&n,1,ibz_bitsize(&QUATALG_PINFTY.p)/2);
+    sampling_random_ideal_O0(&sk->secret_ideal,&n,1);
 
     // ideal to isogeny clapotis
     found = dim2id2iso_arbitrary_isogeny_evaluation(&B_0_two,&sk->curve,&sk->secret_ideal);
@@ -52,7 +52,7 @@ void protocols_keygen(public_key_t *pk, secret_key_t *sk) {
     assert(test_point_order_twof(&(B_0_two.Q), &(sk->curve),TORSION_PLUS_EVEN_POWER));
     assert(test_point_order_twof(&(B_0_two.PmQ), &(sk->curve),TORSION_PLUS_EVEN_POWER));
 
-    ec_curve_to_basis_2_to_hint(&B_can_two, &(sk->curve),TORSION_PLUS_EVEN_POWER,pk->hint_pk); // canonical 
+    ec_curve_to_basis_2f_to_hint(&B_can_two, &(sk->curve),TORSION_PLUS_EVEN_POWER,pk->hint_pk); // canonical 
     assert(test_point_order_twof(&(B_can_two.P), &(sk->curve),TORSION_PLUS_EVEN_POWER));
     assert(test_point_order_twof(&(B_can_two.Q), &(sk->curve),TORSION_PLUS_EVEN_POWER));
     assert(test_point_order_twof(&(B_can_two.PmQ), &(sk->curve),TORSION_PLUS_EVEN_POWER));

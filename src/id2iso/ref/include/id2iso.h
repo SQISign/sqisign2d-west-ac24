@@ -175,6 +175,8 @@ void change_of_basis_matrix_two(ibz_mat_2x2_t *mat, ec_basis_t *B1, ec_basis_t *
 void change_of_basis_matrix_three(ibz_mat_2x2_t *mat, const ec_basis_t *B1, const ec_basis_t *B2, const ec_curve_t *E);
 
 // function to sample a random left O0-ideal of given norm 
-void sampling_random_ideal_O0(quat_left_ideal_t *lideal,ibz_t *norm);
+// the boolean is_prime indicates if the intput norm is known to be prime
+// if it is the case, then the algorithm is significantly faster
+void sampling_random_ideal_O0(quat_left_ideal_t *lideal,ibz_t *norm, int is_prime);
 
 #endif

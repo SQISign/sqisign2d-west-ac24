@@ -2,22 +2,18 @@
 #include <assert.h>
 #include <stdio.h>
 
-bool fp2_isequal(fp2_t a, fp2_t b){
-    return fp_is_equal(a.re, b.re) && fp_is_equal(a.im, b.im);
-}
-
 // VERY NOT SECURE (testing only)
 void fp2_random(fp2_t *a){
-    for(int i = 0; i < NWORDS_FIELD; i++){
-        a->re[i] = rand();
-        a->im[i] = rand();
-    }
-    // Normalize
-    fp2_t one;
-    fp_mont_setone(one.re);fp_set(one.im,0);
-    fp2_mul(&*a, &*a, &one);
-    // Update seed
-    srand((unsigned) a->re[0]);
+
+	fp_set_small(&a->re, rand());
+	fp_set_small(&a->im, rand());
+	fp2_neg(a, a);
+
+  // Update seed
+	uint8_t tmp[8*NWORDS_FIELD];
+	fp_encode(&tmp, &(a->re));
+	unsigned seed = (unsigned) tmp[0] | (unsigned)tmp[1] << 8 | (unsigned)tmp[2] << 16 | (unsigned)tmp[3] << 24;
+  srand((unsigned) seed);
 }
 
 void slow_mul(poly h, poly f, int lenf, poly g, int leng){
@@ -48,7 +44,7 @@ void slow_mul(poly h, poly f, int lenf, poly g, int leng){
     }
 
     ng = e - nf;
-    fp2_set(&a, 0);
+    fp2_set_zero(&a);
     while( (ng < leng) & (nf >= 0) ){
       fp2_mul(&b, &f[nf], &g[ng]);
       fp2_add(&a, &a, &b);
@@ -69,8 +65,8 @@ int main(){
   fp2_t fp2_0, fp2_1;
   #define nmax 16
   int nf, ng, n, e;
-        fp2_set(&fp2_0, 0);
-        fp_mont_setone(fp2_1.re);fp_set(fp2_1.im,0); 
+        fp2_set_zero(&fp2_0);
+        fp2_set_one(&fp2_1); 
   
   //TEST MULTIPLICATION BY 0
   
@@ -124,7 +120,7 @@ int main(){
       slow_mul(fg, f, nf, g, ng);
       
       for(e = 0; e < nf + ng - 1; e++){   // Verify answer term by term
-	assert(fp2_isequal(h[e], fg[e])==1);
+	assert(fp2_is_equal(&h[e], &fg[e])==1);
       }
     }
   }
@@ -161,7 +157,7 @@ int main(){
 
 
       for(e = 0; e < nf + ng - 1; e++){   // Verify answer term by term
-	assert(fp2_isequal(h[e], fg[e])==1);
+	assert(fp2_is_equal(&h[e], &fg[e])==1);
       }
     }
   }
@@ -230,7 +226,7 @@ int main(){
 	  //Compare with expected
 	  e = 0;
 	  while(e < nf+ng-1 && e < n){
-	    assert(fp2_isequal(h[e], fg[e]) == 1);
+	    assert(fp2_is_equal(&h[e], &fg[e]) == 1);
 	    e++;
 	  }
 	  while(e < n){
@@ -269,7 +265,7 @@ int main(){
 	poly_mul_middle(g, g, ng, f, nf);
       
 	for(e = 0; e < ng; e++){
-	  assert(fp2_isequal(h[e+nf-ng], g[e])==1);
+	  assert(fp2_is_equal(&h[e+nf-ng], &g[e])==1);
 	}
       }
     }
@@ -310,7 +306,7 @@ int main(){
 
 	// Compare
 	for(e = 0; e < nf+ng-1; e++){
-	  assert(fp2_isequal(fg[e], h[e])==1);
+	  assert(fp2_is_equal(&fg[e], &h[e])==1);
 	}
       }
     }		 
@@ -363,7 +359,7 @@ int main(){
 	// Compare to root
 	assert (len == DEG[0]+1);
 	for(e = 0; e < len; e++){
-	  assert(fp2_isequal(H[0][e], h[e])==1);
+	  assert(fp2_is_equal(&H[0][e], &h[e])==1);
 	}
       clear_tree(H, 0, tree_size);
       for(i = 0; i < tree_size; i++){
@@ -424,7 +420,7 @@ int main(){
 	// Compare to root
 	assert (len == DEG[0]+1);
 	for(e = 0; e < len; e++){
-	  assert(fp2_isequal(H[0][e], h[e])==1);
+	  assert(fp2_is_equal(&H[0][e], &h[e])==1);
 	}
       clear_tree(H, 0, tree_size);
       for(i = 0; i < tree_size; i++){

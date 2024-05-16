@@ -53,10 +53,8 @@ int hd_chain_test() {
         // fp2_test 
         fp2_t xx,yy,z;
     
-        fp_set(xx.im,0);
-        fp_set(yy.im,0);
-        fp_mont_setone(xx.re);
-        fp_mont_setone(yy.re);
+        fp2_set_one(&xx);
+        fp2_set_one(&yy);
         fp2_sub(&xx,&xx,&yy);
         assert(fp2_is_zero(&xx));
         fp2_neg(&xx,&yy);
@@ -67,10 +65,10 @@ int hd_chain_test() {
 
 
         fp2_t test_i,min;
-        fp_mont_setone(test_i.im);
-        fp_set(test_i.re,0);
-        fp_set(min.im,0);
-        fp_mont_setone(min.re);
+        fp_set_one(&test_i.im);
+        fp_set_zero(&test_i.re);
+        fp_set_zero(&min.im);
+        fp_set_one(&min.re);
         fp2_mul(&test_i,&test_i,&test_i);
         fp2_add(&test_i,&test_i,&min);
         assert(fp2_is_zero(&test_i));
@@ -100,6 +98,7 @@ int hd_chain_test() {
     // point_print("P2",B0_two.Q);
     // point_print("P1m2",B0_two.PmQ);
 
+    printf("%lld \n",TORSION_PLUS_EVEN_POWER);
 
     #ifndef NDEBUG
         assert(test_point_order_twof(&B0_two.P,&E0,TORSION_PLUS_EVEN_POWER));
@@ -290,9 +289,9 @@ int hd_chain_test() {
     assert(test_point_order_twof(&test,&E0,length+2));
     assert(test_jac_order_twof(&input_no_help.P1,&E0,length+2));
     assert(ec_is_equal(&test,&T1m2.P1));
-    fp2_set(&input_no_help.P2.x,0);
-    fp2_set(&input_no_help.P2.y,1);
-    fp2_set(&input_no_help.P2.z,0);
+    fp2_set_zero(&input_no_help.P2.x);
+    fp2_set_one(&input_no_help.P2.y);
+    fp2_set_zero(&input_no_help.P2.z);
 
     jac_to_xz(&test,&input_no_help.P2);
     assert(ec_is_zero(&test));
@@ -351,7 +350,13 @@ int main() {
 
     printf("Running hd module unit tests\n");
 
-    res = res & hd_chain_test();
+    if (TORSION_PLUS_EVEN_POWER<250) {
+        res = res & hd_chain_test();
+    }
+    else {
+        printf("the hd test was only coded for level 1, try dim2id2iso test \n");
+    }
+    
 
     if(!res){
         printf("\nSome tests failed!\n");

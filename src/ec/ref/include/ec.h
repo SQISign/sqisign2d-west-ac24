@@ -279,7 +279,7 @@ void xMULv2(ec_point_t* Q, ec_point_t const* P, digit_t const* k, const int kbit
  * @param Q a point
  * @param PQ the difference P-Q
  */
-void ec_ladder3pt(ec_point_t *R, fp_t const m, ec_point_t const *P, ec_point_t const *Q, ec_point_t const *PQ, ec_curve_t const *A);
+void ec_ladder3pt(ec_point_t *R, digit_t* const m, ec_point_t const *P, ec_point_t const *Q, ec_point_t const *PQ, ec_curve_t const *A);
 
 /**
  * @brief Linear combination of points of a basis
@@ -311,11 +311,18 @@ void ec_biscalar_mul_bounded(ec_point_t* res, const ec_curve_t* curve, const dig
  * @param PQ2 computed basis of the 2^f-torsion
  * @param curve the computed curve
  */
-void ec_curve_to_basis_2(ec_basis_t *PQ2, ec_curve_t *curve,int f);
+void ec_curve_to_basis_2(ec_basis_t *PQ2, ec_curve_t *curve, int f);
 
-void ec_curve_to_basis_2_to_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int *hint);
+void ec_curve_to_basis_2_to_hint(ec_basis_t *PQ2, ec_curve_t *curve, int f, int *hint);
 
-void ec_curve_to_basis_2_from_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int *hint);
+void ec_curve_to_basis_2_from_hint(ec_basis_t *PQ2, ec_curve_t *curve, int f, int *hint);
+
+void ec_curve_to_basis_2f(ec_basis_t *PQ2, ec_curve_t *curve, int f);
+void ec_curve_to_basis_2f_to_hint(ec_basis_t *PQ2, ec_curve_t *curve, int f, int *hint);
+void ec_curve_to_basis_2f_from_hint(ec_basis_t *PQ2, ec_curve_t *curve, int f, int *hint);
+void ec_complete_basis_2f(ec_basis_t* PQ2, ec_curve_t* curve, const ec_point_t* R, int f);
+
+
 
 /**
  * @brief Complete a basis of the 2^f-torsion

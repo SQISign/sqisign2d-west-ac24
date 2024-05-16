@@ -18,7 +18,6 @@ void fp2_set_zero(fp2_t* x)
 
 void fp2_set_one(fp2_t* x)
 {
-
     fp_set_one(&(x->re));
     fp_set_zero(&(x->im));
 }
@@ -34,7 +33,7 @@ bool fp2_is_equal(const fp2_t* a, const fp2_t* b)
 { // Compare two GF(p^2) elements in constant time
   // Returns 1 (true) if a=b, 0 (false) otherwise
 
-    return fp_is_equal(&(a->re), &(b->re)) & fp_is_equal(&(a->im), &(b->im));
+    return fp_is_equal(&(a->re), &(b->re)) && fp_is_equal(&(a->im), &(b->im));
 }
 
 bool fp2_is_one(const fp2_t* a)

@@ -20,17 +20,15 @@ bool ec_is_zero(ec_point_t const* P)
 
 void ec_init(ec_point_t* P)
 { // Initialize point as identity element (1:0)
-    fp_t one = {0};
-    
-    memset((digit_t*)P, 0, NWORDS_FIELD*RADIX*4/8);
-    one[0] = 1;
-    fp_tomont(P->x.re, one);
+    fp2_set_one(&(P->x));
+    fp2_set_zero(&(P->z));
+
 }
 
 void ec_set_zero(ec_point_t *P)
 {
-    fp2_set(&(P->x), 1);
-    fp2_set(&(P->z), 0);
+    fp2_set_one(&(P->x));
+    fp2_set_zero(&(P->z));
     return;
 }
 
@@ -191,22 +189,9 @@ bool is_point_equal(const ec_point_t* P, const ec_point_t* Q)
 void swap_points(ec_point_t* P, ec_point_t* Q, const digit_t option)
 { // Swap points
   // If option = 0 then P <- P and Q <- Q, else if option = 0xFF...FF then P <- Q and Q <- P
-    digit_t temp;
-
-    for (int i = 0; i < NWORDS_FIELD; i++) {
-        temp = option & (P->x.re[i] ^ Q->x.re[i]);
-        P->x.re[i] = temp ^ P->x.re[i];
-        Q->x.re[i] = temp ^ Q->x.re[i];
-        temp = option & (P->x.im[i] ^ Q->x.im[i]);
-        P->x.im[i] = temp ^ P->x.im[i];
-        Q->x.im[i] = temp ^ Q->x.im[i];
-        temp = option & (P->z.re[i] ^ Q->z.re[i]);
-        P->z.re[i] = temp ^ P->z.re[i];
-        Q->z.re[i] = temp ^ Q->z.re[i];
-        temp = option & (P->z.im[i] ^ Q->z.im[i]);
-        P->z.im[i] = temp ^ P->z.im[i];
-        Q->z.im[i] = temp ^ Q->z.im[i];
-    }
+    // digit_t temp;
+    fp2_cswap(&(P->x), &(Q->x), option);
+    fp2_cswap(&(P->z), &(Q->z), option);
 }
 
 void copy_point(ec_point_t* P, ec_point_t const* Q)
@@ -218,8 +203,7 @@ void copy_point(ec_point_t* P, ec_point_t const* Q)
 void ec_normalize(ec_point_t* P){
     fp2_inv(&P->z);
     fp2_mul(&P->x, &P->x, &P->z);
-    fp_mont_setone(P->z.re);
-    fp_set(P->z.im, 0);
+    fp2_set_one(&(P->z));
 }
 
 void ec_neg(ec_point_t* res, const ec_point_t* P){
@@ -518,6 +502,7 @@ void xDBLMUL_bounded(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_po
     // fp2_add(&A24.x, &curve->C, &curve->C);    // Precomputation of A24=(A+2C:4C)
     // fp2_add(&A24.z, &A24.x, &A24.x);
     // fp2_add(&A24.x, &A24.x, &curve->A);
+
     // normalizing
     ec_curve_t E;
     copy_curve(&E,curve);
@@ -534,7 +519,7 @@ void xDBLMUL_bounded(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_po
 
         // TODO : clean this
         // this is an ugly fix to avoid unnecessary operations
-        bool apply =(i<=f+10);
+        bool apply =(i<=f + 2 + (BITS-TORSION_PLUS_EVEN_POWER) );
 
         h = r[2*i] + r[2*i+1];    // in {0, 1, 2}
         maskk = 0 - (h & 1);
@@ -596,7 +581,7 @@ void xDBLMUL_bounded(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_po
 }
 
 
-void ec_ladder3pt(ec_point_t *R, fp_t const m, ec_point_t const *P, ec_point_t const *Q, ec_point_t const *PQ, ec_curve_t const *A)
+void ec_ladder3pt(ec_point_t *R, digit_t * const m, ec_point_t const *P, ec_point_t const *Q, ec_point_t const *PQ, ec_curve_t const *A)
 {
 
     // Curve constant in the form A24=(A+2C:4C)
@@ -650,11 +635,9 @@ void ec_j_inv(fp2_t* j_inv, const ec_curve_t* curve){
 
 static void jac_init(jac_point_t* P)
 { // Initialize Montgomery in Jacobian coordinates as identity element (0:1:0)
-    fp_t one = {0};
-
-    memset((digit_t*)P, 0, NWORDS_FIELD*RADIX*6/8);
-    one[0] = 1;
-    fp_tomont(P->y.re, one);
+    fp2_set_zero(&(P->x));
+    fp2_set_one(&(P->y));
+    fp2_set_zero(&(P->z));
 }
 
 bool is_jac_equal(const jac_point_t* P, const jac_point_t* Q)
@@ -1117,8 +1100,7 @@ void ec_dlog_2(digit_t* scalarP, digit_t* scalarQ, const ec_basis_t* PQ2, const 
     fp2_mul(&D, &D, &R->z);
     fp2_mul(&D, &D, &curve->C);
     fp2_inv(&D);
-    fp_mont_setone(Rnorm.z.re);
-    fp_set(Rnorm.z.im, 0);
+    fp2_set_one(&Rnorm.z);
     fp2_copy(&PQ2norm.P.z, &Rnorm.z);
     fp2_copy(&PQ2norm.Q.z, &Rnorm.z);
     fp2_copy(&PQ2norm.PmQ.z, &Rnorm.z);
@@ -1261,7 +1243,8 @@ void ec_dlog_2(digit_t* scalarP, digit_t* scalarQ, const ec_basis_t* PQ2, const 
     }
     mp_add(scalarP, &xx[0], &ww[0], NWORDS_ORDER);
     mp_add(scalarQ, &yy[0], &zz[0], NWORDS_ORDER);
-    fp_copy(fp2, TWOpFm1);   // 2^(f-1)
+    // fp_copy(fp2, TWOpFm1);   // 2^(f-1)
+    memcpy((digit_t*)fp2, (digit_t*)TWOpFm1, NWORDS_FIELD*RADIX/8);
 
     // If scalarP > 2^(f-1) or (scalarQ > 2^(f-1) and (scalarP = 0 or scalarP = 2^(f-1))) then output -scalarP mod 2^f, -scalarQ mod 2^f
     if (mp_compare(scalarP, fp2, NWORDS_ORDER) == 1 ||
@@ -1624,8 +1607,7 @@ void ec_dlog_3(digit_t* scalarP, digit_t* scalarQ, const ec_basis_t* PQ3, const 
     fp2_mul(&D, &D, &R->z);
     fp2_mul(&D, &D, &curve->C);
     fp2_inv(&D);
-    fp_mont_setone(Rnorm.z.re);
-    fp_set(Rnorm.z.im, 0);
+    fp2_set_one(&Rnorm.z);
     fp2_copy(&PQ3norm.P.z, &Rnorm.z);
     fp2_copy(&PQ3norm.Q.z, &Rnorm.z);
     fp2_copy(&PQ3norm.PmQ.z, &Rnorm.z);
@@ -1720,23 +1702,23 @@ void ec_dlog_3(digit_t* scalarP, digit_t* scalarQ, const ec_basis_t* PQ3, const 
 void lift_point(jac_point_t *P, ec_point_t *Q, ec_curve_t *E) {
     fp2_t inverses[2];
     if (fp2_is_zero(&Q->z)) {
-        fp2_setone(&P->x);
-        fp2_setone(&P->y);
-        fp2_set(&P->z,0);
+        fp2_set_one(&P->x);
+        fp2_set_one(&P->y);
+        fp2_set_zero(&P->z);
     }
     else {
         fp2_copy(&inverses[0],&Q->z);
         fp2_copy(&inverses[1],&E->C);
         fp2_batched_inv(inverses,2);
 
-        fp2_setone(&Q->z);
-        fp2_setone(&E->C);
+        fp2_set_one(&Q->z);
+        fp2_set_one(&E->C);
 
         fp2_mul(&Q->x,&Q->x,&inverses[0]);
         fp2_mul(&E->A,&E->A,&inverses[1]);
 
         fp2_copy(&P->x,&Q->x);
-        fp2_setone(&P->z);
+        fp2_set_one(&P->z);
         recover_y(&P->y,&P->x,E);   
     }
 
@@ -1751,8 +1733,8 @@ void lift_basis(jac_point_t *P, jac_point_t *Q, ec_basis_t *B, ec_curve_t *E) {
     fp2_copy(&inverses[1],&E->C);
 
     fp2_batched_inv(inverses,2);
-    fp2_setone(&B->P.z);
-    fp2_setone(&E->C);
+    fp2_set_one(&B->P.z);
+    fp2_set_one(&E->C);
 
     fp2_mul(&B->P.x,&B->P.x,&inverses[0]);
     fp2_mul(&E->A,&E->A,&inverses[1]);
@@ -1760,7 +1742,7 @@ void lift_basis(jac_point_t *P, jac_point_t *Q, ec_basis_t *B, ec_curve_t *E) {
     fp2_copy(&P->x,&B->P.x);
     fp2_copy(&Q->x,&B->Q.x);
     fp2_copy(&Q->z,&B->Q.z);
-    fp2_setone(&P->z);
+    fp2_set_one(&P->z);
     recover_y(&P->y,&P->x,E);
 
     // Algorithm of Okeya-Sakurai to recover y.Q in the montgomery model

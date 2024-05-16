@@ -48,28 +48,28 @@ void sub_test(digit_t* out, digit_t* a, digit_t* b, unsigned int nwords)
 }
 
 
-void fprandom_test(digit_t* a)
-{ // Generating a pseudo-random field element in [0, p-1] 
-  // SECURITY NOTE: distribution is not fully uniform. TO BE USED FOR TESTING ONLY.
-    unsigned int i, diff = 256-254, nwords = NWORDS_FIELD;
-    unsigned char* string = NULL;
+// Make n random-ish field elements (for tests only!).
+void
+fp_random_test(fp_t *a)
+{
+	shake_context sc;
+	uint8_t tmp[32];
+	uint64_t z;
 
-    string = (unsigned char*)a;
-    for (i = 0; i < sizeof(digit_t)*nwords; i++) {
-        *(string + i) = (unsigned char)rand();              // Obtain 256-bit number
-    }
-    a[nwords-1] &= (((digit_t)(-1) << diff) >> diff);
-
-    while (compare_words((digit_t*)p, a, nwords) < 1) {  // Force it to [0, modulus-1]
-        sub_test(a, a, (digit_t*)p, nwords);
-    }
+	z = cpucycles();
+	shake_init(&sc, 256);
+	for (int i = 0; i < 8; i ++) {
+		tmp[i] = (uint8_t)(z >> (8 * i));
+	}
+	shake_inject(&sc, tmp, 8);
+	shake_flip(&sc);
+	shake_extract(&sc, tmp, 32);
+	fp_decode_reduce(a, tmp, 32);
 }
 
-
-void fp2random_test(fp2_t* a)
-{ // Generating a pseudo-random element in GF(p^2) 
-  // SECURITY NOTE: distribution is not fully uniform. TO BE USED FOR TESTING ONLY.
-
-    fprandom_test(a->re);
-    fprandom_test(a->im);
+void
+fp2_random_test(fp2_t *a)
+{
+	fp_random_test(&(a->re));
+	fp_random_test(&(a->im));
 }

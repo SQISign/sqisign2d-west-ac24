@@ -392,7 +392,8 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
     // we start by enumerating a set of small vectors 
     // global parameters for the enumerate
     // TODO may be overshot and we may improve this by sampling inside an hyperball instead 
-    int m =1+2+2*number_sum_square;
+    // TODO make this a proper constant
+    int m =1+ ( ibz_bitsize(&QUATALG_PINFTY.p)/120 )  +2*number_sum_square;
     int m4 = (2*m+1)*(2*m+1)*(2*m+1)*(2*m+1)-1;
     int m3 = (2*m+1)*(2*m+1)*(2*m+1);
     int m2 = (2*m+1)*(2*m+1);
@@ -447,17 +448,15 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
     // printf("number of elements = %d / %d (value of m=%d) \n",index,m4,m);
     // TOC(t,"\nenum");
     
-    
     // sorting the list
     quicksort(small_norms,small_vecs,0,index);
     // TOC(t,"sorting + enum");
-
    
     int found=0;
     int count=0;
     // starting to try solutions
 
-    // TODO try to go through d1,d2 by increasing size of the products d1*d2
+    // TODO try to go through couples (d1,d2) by increasing size of the products d1*d2
 
     // this was a failed attempt to speed-up this algorithm.
     // since we set it to one, we could simply remove it
@@ -682,9 +681,11 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     // such that u*d1 + v*d2 = 2^TORSION_PLUS_EVEN_POWER and there are ideals of norm d1,d2 equivalent to ideal
     // beta1 and beta2 are elements of norm nd1, nd2 where n=n(lideal)
     int found = find_uv(u,v,coeffs,beta1,beta2,d1,d2,&TORSION_PLUS_2POWER,number_sum_square,lideal,Bpoo);
+    
     // TOC(t,"\n \ntotal time to find u,v");
 
     if (!found) {
+        printf("didn't find uv \n");
         return 0;
     }
    
@@ -797,15 +798,15 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         // TODO we can do better, the addition has been computed inside lift_basis
         jac_neg(&temp,&xyQ.P1);
         ADD(&xyPmQ.P1,&xyP.P1,&temp,&E0);
-        fp2_set(&xyP.P2.x,0);
-        fp2_set(&xyP.P2.y,1);
-        fp2_set(&xyP.P2.z,0);
-        fp2_set(&xyQ.P2.x,0);
-        fp2_set(&xyQ.P2.y,1);
-        fp2_set(&xyQ.P2.z,0);
-        fp2_set(&xyPmQ.P2.x,0);
-        fp2_set(&xyPmQ.P2.y,1);
-        fp2_set(&xyPmQ.P2.z,0);
+        fp2_set_zero(&xyP.P2.x);
+        fp2_set_one(&xyP.P2.y);
+        fp2_set_zero(&xyP.P2.z);
+        fp2_set_zero(&xyQ.P2.x);
+        fp2_set_one(&xyQ.P2.y);
+        fp2_set_zero(&xyQ.P2.z);
+        fp2_set_zero(&xyPmQ.P2.x);
+        fp2_set_one(&xyPmQ.P2.y);
+        fp2_set_zero(&xyPmQ.P2.z);
         theta_chain_eval_no_help(&V1,&Fu,&xyP,&E00);
         theta_chain_eval_no_help(&V2,&Fu,&xyQ,&E00);
         theta_chain_eval_no_help(&V1m2,&Fu,&xyPmQ,&E00);
@@ -865,15 +866,15 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         assert(bv);
         // TOC(t,"2nd fixed deg");
 
-        fp2_set(&xyP.P2.x,0);
-        fp2_set(&xyP.P2.y,1);
-        fp2_set(&xyP.P2.z,0);
-        fp2_set(&xyQ.P2.x,0);
-        fp2_set(&xyQ.P2.y,1);
-        fp2_set(&xyQ.P2.z,0);
-        fp2_set(&xyPmQ.P2.x,0);
-        fp2_set(&xyPmQ.P2.y,1);
-        fp2_set(&xyPmQ.P2.z,0);
+        fp2_set_zero(&xyP.P2.x);
+        fp2_set_one(&xyP.P2.y);
+        fp2_set_zero(&xyP.P2.z);
+        fp2_set_zero(&xyQ.P2.x);
+        fp2_set_one(&xyQ.P2.y);
+        fp2_set_zero(&xyQ.P2.z);
+        fp2_set_zero(&xyPmQ.P2.x);
+        fp2_set_one(&xyPmQ.P2.y);
+        fp2_set_zero(&xyPmQ.P2.z);
 
         // pushing the torsion points through Fv
         theta_chain_eval_no_help(&V1,&Fv,&xyP,&E00);
@@ -961,15 +962,15 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         // TODO we can do better, the addition has been computed inside lift_basis
         jac_neg(&temp,&xyQ.P1);
         ADD(&xyPmQ.P1,&xyP.P1,&temp,&E0);
-        fp2_set(&xyP.P2.x,0);
-        fp2_set(&xyP.P2.y,1);
-        fp2_set(&xyP.P2.z,0);
-        fp2_set(&xyQ.P2.x,0);
-        fp2_set(&xyQ.P2.y,1);
-        fp2_set(&xyQ.P2.z,0);
-        fp2_set(&xyPmQ.P2.x,0);
-        fp2_set(&xyPmQ.P2.y,1);
-        fp2_set(&xyPmQ.P2.z,0);
+        fp2_set_zero(&xyP.P2.x);
+        fp2_set_one(&xyP.P2.y);
+        fp2_set_zero(&xyP.P2.z);
+        fp2_set_zero(&xyQ.P2.x);
+        fp2_set_one(&xyQ.P2.y);
+        fp2_set_zero(&xyQ.P2.z);
+        fp2_set_zero(&xyPmQ.P2.x);
+        fp2_set_one(&xyPmQ.P2.y);
+        fp2_set_zero(&xyPmQ.P2.z);
         theta_chain_eval_no_help(&V1,&Fu,&xyP,&E00);
         theta_chain_eval_no_help(&V2,&Fu,&xyQ,&E00);
         theta_chain_eval_no_help(&V1m2,&Fu,&xyPmQ,&E00);
@@ -1169,15 +1170,15 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     // TODO we can do better, the addition has been computed inside lift_basis
     jac_neg(&temp,&xyQ.P1);
     ADD(&xyPmQ.P1,&xyP.P1,&temp,&E01.E1);
-    fp2_set(&xyP.P2.x,0);
-    fp2_set(&xyP.P2.y,1);
-    fp2_set(&xyP.P2.z,0);
-    fp2_set(&xyQ.P2.x,0);
-    fp2_set(&xyQ.P2.y,1);
-    fp2_set(&xyQ.P2.z,0);
-    fp2_set(&xyPmQ.P2.x,0);
-    fp2_set(&xyPmQ.P2.y,1);
-    fp2_set(&xyPmQ.P2.z,0);
+    fp2_set_zero(&xyP.P2.x);
+    fp2_set_one(&xyP.P2.y);
+    fp2_set_zero(&xyP.P2.z);
+    fp2_set_zero(&xyQ.P2.x);
+    fp2_set_one(&xyQ.P2.y);
+    fp2_set_zero(&xyQ.P2.z);
+    fp2_set_zero(&xyPmQ.P2.x);
+    fp2_set_one(&xyPmQ.P2.y);
+    fp2_set_zero(&xyPmQ.P2.z);
     theta_chain_eval_no_help(&T1,isog,&xyP,&E01);
     theta_chain_eval_no_help(&T2,isog,&xyQ,&E01);
     theta_chain_eval_no_help(&T1m2,isog,&xyPmQ,&E01);

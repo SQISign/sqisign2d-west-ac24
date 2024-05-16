@@ -35,15 +35,15 @@ int dim2id2iso_test_fixed_degree_isogeny() {
     lift_basis(&Teval1.P1,&Teval2.P1,&bas,&E0);
     jac_neg(&temp,&Teval2.P1);
     ADD(&Teval3.P1,&Teval1.P1,&temp,&E0);
-    fp2_set(&Teval1.P2.x,0);
-    fp2_set(&Teval1.P2.y,1);
-    fp2_set(&Teval1.P2.z,0);
-    fp2_set(&Teval2.P2.x,0);
-    fp2_set(&Teval2.P2.y,1);
-    fp2_set(&Teval2.P2.z,0);
-    fp2_set(&Teval3.P2.x,0);
-    fp2_set(&Teval3.P2.y,1);
-    fp2_set(&Teval3.P2.z,0);
+    fp2_set_zero(&Teval1.P2.x);
+    fp2_set_one(&Teval1.P2.y);
+    fp2_set_zero(&Teval1.P2.z);
+    fp2_set_zero(&Teval2.P2.x);
+    fp2_set_one(&Teval2.P2.y);
+    fp2_set_zero(&Teval2.P2.z);
+    fp2_set_zero(&Teval3.P2.x);
+    fp2_set_one(&Teval3.P2.y);
+    fp2_set_zero(&Teval3.P2.z);
     theta_chain_eval_no_help(&Tev1,&F,&Teval1,&E00);
     theta_chain_eval_no_help(&Tev2,&F,&Teval2,&E00);
     theta_chain_eval_no_help(&Tev3,&F,&Teval3,&E00);
@@ -142,8 +142,8 @@ int dim2id2iso_test_find_uv() {
     ibz_init(&d1);ibz_init(&d2);
 
     // computation of lideal_small
-    generate_random_prime(&n1,1,128);
-    generate_random_prime(&n2,1,256);
+    generate_random_prime(&n1,1,ibz_bitsize(&QUATALG_PINFTY.p)/2);
+    generate_random_prime(&n2,1,ibz_bitsize(&QUATALG_PINFTY.p));
     ibz_mul(&temp,&n1,&n2);
     found = found && represent_integer(&gen,&temp,&QUATALG_PINFTY);
     assert(found);
@@ -237,8 +237,8 @@ int dim2id2iso_test_dimid2iso() {
     ibz_init(&d1);ibz_init(&d2);
 
     // computation of lideal_small
-    generate_random_prime(&n1,1,128);
-    generate_random_prime(&n2,1,256);
+    generate_random_prime(&n1,1,ibz_bitsize(&QUATALG_PINFTY.p)/2);
+    generate_random_prime(&n2,1,ibz_bitsize(&QUATALG_PINFTY.p));
     ibz_mul(&temp,&n1,&n2);
     found = found && represent_integer(&gen,&temp,&QUATALG_PINFTY);
     assert(found);

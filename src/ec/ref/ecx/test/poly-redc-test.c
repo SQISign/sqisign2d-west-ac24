@@ -3,28 +3,24 @@
 #include <stdio.h>
 #define nmax 32
 
-bool fp2_isequal(fp2_t a, fp2_t b){
-    return fp_is_equal(a.re, b.re) && fp_is_equal(a.im, b.im);
-}
-
 // VERY NOT SECURE (testing only)
 void fp2_random(fp2_t *a){
-    for(int i = 0; i < NWORDS_FIELD; i++){
-        a->re[i] = rand();
-        a->im[i] = rand();
-    }
-    // Normalize
-    fp2_t one;
-    fp_mont_setone(one.re);fp_set(one.im,0);
-    fp2_mul(&*a, &*a, &one);
-    // Update seed
-    srand((unsigned) a->re[0]);
+
+	fp_set_small(&a->re, rand());
+	fp_set_small(&a->im, rand());
+	fp2_neg(a, a);
+
+  // Update seed
+	uint8_t tmp[8*NWORDS_FIELD];
+	fp_encode(&tmp, &(a->re));
+	unsigned seed = (unsigned) tmp[0] | (unsigned)tmp[1] << 8 | (unsigned)tmp[2] << 16 | (unsigned)tmp[3] << 24;
+  srand((unsigned) seed);
 }
 
 int main(){
   fp2_t fp2_0, fp2_1;
-  fp2_set(&fp2_0, 0);
-  fp_mont_setone(fp2_1.re);fp_set(fp2_1.im,0);
+  fp2_set_zero(&fp2_0);
+  fp2_set_one(&fp2_1);
 
   int lenf, leng, n, e, iteration, array_size, tree_size, i, root, brother, *DEG, LENF;
   poly f, g, h, f_rev, f_rev_inv, *F, *H, *R, g1, g2, REM1, REM2, G1, G2, G1_rev, G2_rev, R0;
@@ -53,7 +49,7 @@ int main(){
       poly_mul_low(h, n, f, lenf, h, n);
 
       // Compare with expected
-      assert(fp2_isequal(h[0],c));
+      assert(fp2_is_equal(&h[0], &c));
       for(e = 1;  e < n; e++)
 	assert(fp2_is_zero(&h[e]));
       free(h);
@@ -95,7 +91,7 @@ int main(){
 	reciprocal(f_rev_inv, &c, f_rev, lenf, leng-lenf+1);
       }
       else{
-	fp_mont_setone(c.re);fp_set(c.im,0);
+        fp2_set_one(&c);
       }
 	
       // Compute the reduction
@@ -120,7 +116,7 @@ int main(){
 
       // Rescale manual result
       if( leng < lenf){
-	      fp_mont_setone(scale.re);fp_set(scale.im,0);
+        fp2_set_one(&scale);
       }
       else
 	if(lenf == 2 && leng == 3)
@@ -136,7 +132,7 @@ int main(){
 
       // Comapre results
       for(e = leng_red-1; e >= 0; e--)
-	      assert(fp2_isequal(h[e], g[e]));
+	      assert(fp2_is_equal(&h[e], &g[e]));
       for(e = leng_red; e < lenf-1; e++)
 	      assert(fp2_is_zero(&h[e]));
       
@@ -196,10 +192,10 @@ int main(){
       fp2_copy(&f[e], &H[root][DEG[root]-e]);
     }
     for(e = DEG[root]+1; e < lenf; e++){
-      fp2_set(&f[e], 0);
+      fp2_set_zero(&f[e]);
     }
     poly_mul_low(f, lenf, f, lenf, R[root], lenf);
-    assert(fp2_isequal(f[0], A[root]));
+    assert(fp2_is_equal(&f[0], &A[root]));
     for(e = 1; e < lenf; e++){
       assert(fp2_is_zero(&f[e]));
     }
@@ -233,10 +229,10 @@ int main(){
 	    fp2_copy(&f[e], &H[root][DEG[root]-e]);
     }
 	  for(e = DEG[root]+1; e < lenf; e++){
-	    fp2_set(&f[e], 0);
+	    fp2_set_zero(&f[e]);
     }
 	  poly_mul_low(f, lenf, f, lenf, R[root], lenf);
-	  assert(fp2_isequal(f[0], A[root]));
+	  assert(fp2_is_equal(&f[0], &A[root]));
 	  for(e = 1; e < lenf; e++){
 	    assert(fp2_is_zero(&f[e]));
     }
@@ -328,7 +324,7 @@ int main(){
       // Compare results
       fp2_inv(&REM1[i]);
       fp2_mul(&REM1[i], &REM1[i], &REM2[i]);
-      assert(fp2_isequal(REM1[i], ratio));
+      assert(fp2_is_equal(&REM1[i], &ratio));
     }
 		 
     // Clean up
@@ -445,7 +441,7 @@ int main(){
       // Compare results
       fp2_inv(&REM1[i]);
       fp2_mul(&REM1[i], &REM1[i], &REM2[i]);
-      assert(fp2_isequal(REM1[i], ratio));
+      assert(fp2_is_equal(&REM1[i], &ratio));
     }
 		 
     // Clean up

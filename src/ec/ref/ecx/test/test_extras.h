@@ -7,6 +7,7 @@
 #include <fp.h>
 #include <fp2.h>
 #include <curve_extras.h>
+#include "sha3.h"
 
 #define PASSED    0
 #define FAILED    1
@@ -21,9 +22,9 @@ int compare_words(digit_t* a, digit_t* b, unsigned int nwords);
 void sub_test(digit_t* out, digit_t* a, digit_t* b, unsigned int nwords);
 
 // Generating a pseudo-random field element in [0, p-1] 
-void fprandom_test(digit_t* a);
+void fp_random_test(fp_t* a);
 
 // Generating a pseudo-random element in GF(p^2)
-void fp2random_test(fp2_t* a);
+void fp2_random_test(fp2_t* a);
 
 #endif

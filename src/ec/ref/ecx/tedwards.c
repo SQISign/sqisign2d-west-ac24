@@ -6,11 +6,23 @@
 
 void ted_init(ted_point_t* P)
 { // Initialize point as identity element (X:Y:Z:T) <- (0:1:1:0)
-    fp_t one = {0};
 
-    memset((digit_t*)P, 0, NWORDS_FIELD*RADIX*8/8);
-    one[0] = 1;
-    fp_tomont(P->x.re, one);
+    // TODO: comment or code is wrong?
+    // fp_t one = {0};
+
+    // memset((digit_t*)P, 0, NWORDS_FIELD*RADIX*8/8);
+    // one[0] = 1;
+    // fp_tomont(P->x.re, one);
+    // fp2_set_zero(&(P->x));
+    // fp2_set_one(&(P->y));
+    // fp2_set_one(&(P->z));
+    // fp2_set_zero(&(P->t));
+
+    fp2_set_one(&(P->x));
+    fp2_set_zero(&(P->y));
+    fp2_set_zero(&(P->z));
+    fp2_set_zero(&(P->t));
+
 }
 
 void copy_ted_point(ted_point_t* P, ted_point_t const* Q)
@@ -171,8 +183,7 @@ void mont_to_ted(ec_curve_t* ted_curve, ec_curve_t const* curve)
     fp2_copy(&tmp, &curve->C);         
     fp2_inv(&tmp);                    // 1/c
     fp2_mul(&tmp, &tmp, &curve->A);   // a/c
-    fp2_set(&two, 2);
-    fp2_tomont(&two, &two);
+    fp2_set_small(&two, 2);
     fp2_add(&ted_curve->A, &tmp, &two);       // a/c + 2
     fp2_sub(&ted_curve->C, &tmp, &two);       // a/c - 2
     //if (twist) {
@@ -186,12 +197,10 @@ void mont_to_ted(ec_curve_t* ted_curve, ec_curve_t const* curve)
 void mont_to_ted_point(ted_point_t* Q, ec_point_t const* P, ec_curve_t const* curve)
 {
     if (fp2_is_zero(&P->z)) {
-        fp2_set(&Q->x, 0);
-        fp2_set(&Q->y, 1);
-        fp2_set(&Q->z, 1);
-        fp2_set(&Q->t, 0);
-        fp_tomont(Q->y.re, Q->y.re);
-        fp_tomont(Q->z.re, Q->z.re);
+        fp2_set_zero(&Q->x);
+        fp2_set_one(&Q->y);
+        fp2_set_one(&Q->z);
+        fp2_set_zero(&Q->t);
     } else {
         fp2_t tmp, y;
 
