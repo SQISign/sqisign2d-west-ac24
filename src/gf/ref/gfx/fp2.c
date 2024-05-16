@@ -195,16 +195,18 @@ void fp2_frob(fp2_t* x, const fp2_t* y)
     fp_neg(&(x->im), &(y->im));
 }
 
+// These functions are never needed with the new API
 void fp2_tomont(fp2_t* x, const fp2_t* y)
 { 
-    fp_tomont(x->re, y->re);
-    fp_tomont(x->im, y->im);
+    fp_tomont(&(x->re), &(y->re));
+    fp_tomont(&(x->im), &(y->im));
 }
 
+// These functions are never needed with the new API
 void fp2_frommont(fp2_t* x, const fp2_t* y)
 {
-    fp_frommont(x->re, y->re);
-    fp_frommont(x->im, y->im);
+    fp_frommont(&(x->re), &(y->re));
+    fp_frommont(&(x->im), &(y->im));
 }
 
 // NOTE: old, non-constant-time implementation. Could be optimized

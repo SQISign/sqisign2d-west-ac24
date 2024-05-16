@@ -45,7 +45,7 @@ bool curve_is_canonical(ec_curve_t const *E)
     return fp2_is_equal(&lhs, &rhs);
 }
 
-int bench_fp2_operations(int repeat) {
+void bench_fp2_operations(int repeat) {
 
     uint64_t t0, t1;
 
@@ -207,7 +207,7 @@ int test_sqisign(int repeat, uint64_t bench)
     return res;
 }
 
-int test_LLL() {
+void test_LLL() {
 
     // generatting a random ideal
     ibz_t n;

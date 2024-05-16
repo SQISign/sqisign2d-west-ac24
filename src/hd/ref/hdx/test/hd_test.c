@@ -98,7 +98,7 @@ int hd_chain_test() {
     // point_print("P2",B0_two.Q);
     // point_print("P1m2",B0_two.PmQ);
 
-    printf("%ld \n",TORSION_PLUS_EVEN_POWER);
+    printf("%lld \n",TORSION_PLUS_EVEN_POWER);
 
     #ifndef NDEBUG
         assert(test_point_order_twof(&B0_two.P,&E0,TORSION_PLUS_EVEN_POWER));
