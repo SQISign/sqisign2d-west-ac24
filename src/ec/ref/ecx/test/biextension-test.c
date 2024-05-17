@@ -1,12 +1,35 @@
 #include <time.h>
 #include <assert.h>
 #include <stdio.h>
+#include <inttypes.h>
 
 #include "biextension.h"
 #include "curve_extras.h"
 #include <endomorphism_action.h>
 #include <torsion_constants.h>
 #include <tools.h>
+
+static inline int64_t cpucycles(void) {
+#if (defined(TARGET_AMD64) || defined(TARGET_X86))
+    unsigned int hi, lo;
+
+    asm volatile ("rdtsc" : "=a" (lo), "=d"(hi));
+    return ((int64_t) lo) | (((int64_t) hi) << 32);
+#elif (defined(TARGET_S390X))
+    uint64_t tod;
+    asm volatile("stckf %0\n" : "=Q" (tod) : : "cc");
+    return (tod * 1000 / 4096);
+#else
+    struct timespec time;
+    clock_gettime(CLOCK_REALTIME, &time);
+    return (int64_t)(time.tv_sec * 1e9 + time.tv_nsec);
+#endif
+}
+
+static __inline__ uint64_t rdtsc(void)
+{
+    return (uint64_t) cpucycles();
+}
 
 void fp2_exp_2e(fp2_t* r, uint64_t e, fp2_t const* x)
 {
@@ -33,9 +56,11 @@ void cubical_2e(ec_point_t* R, uint64_t e, ec_point_t const* P, ec_point_t const
     }
 }
 */
-int biextension_test() 
+int biextension_test(uint64_t bench) 
 {
     clock_t t;
+    uint64_t t0, t1;
+    float ms;
     ec_curve_t E0 = CURVE_E0;
     uint64_t e = TORSION_PLUS_EVEN_POWER;
     // ibz_t two_pow, tmp;
@@ -101,6 +126,30 @@ int biextension_test()
     fp2_mul(&rrr1, &rr1, &r1);
     assert(fp2_is_equal(&rrr1, &r2));
 
+    printf("\n\nBenchmarking doublings\n");
+    t = tic();
+    t0 = rdtsc();
+    for (int i = 0; i < bench; ++i)
+    {
+      dbl_2e(&tmp, e, &P, &A24);
+    }
+    t1 = rdtsc();
+    ms = (1000. * (float) (clock() - t) / CLOCKS_PER_SEC);
+    printf("Average doubling time [%.2f ms]\n", (float) (ms/bench));
+    printf("\x1b[34mAvg doubling: %'" PRIu64 " cycles\x1b[0m\n", (t1-t0)/bench);
+
+    printf("\n\nBenchmarking (Weil) pairings\n");
+    t = tic();
+    t0 = rdtsc();
+    for (int i = 0; i < bench; ++i)
+    {
+      weil(&r1, e, &P, &Q, &PQ, &A24);
+    }
+    t1 = rdtsc();
+    ms = (1000. * (float) (clock() - t) / CLOCKS_PER_SEC);
+    printf("Average pairing time [%.2f ms]\n", (float) (ms/bench));
+    printf("\x1b[34mAvg pairing: %'" PRIu64 " cycles\x1b[0m\n", (t1-t0)/bench);
+
     return 1;
 }
 
@@ -110,7 +159,7 @@ int main()
 
     printf("Running biextension unit tests\n");
 
-    res = res & biextension_test();
+    res = res & biextension_test(1000);
 
     if(!res){
         printf("\nSome tests failed!\n");
