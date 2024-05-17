@@ -144,7 +144,7 @@ int sample_response(quat_alg_elem_t *x, const quat_lattice_t *lattice, ibz_t con
     int cnt = 0;
     
     // TODO make these clean constants
-    int m =10;
+    int m =3;
     while (!found && cnt < 2*(2*m+1)*(2*m+1)*(2*m+1)*(2*m+1)) {
         cnt++;
         for (int i=0;i<4;i++) {
@@ -301,9 +301,9 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     ibz_mul(&lattice_content, &(lideal_chall_secret.norm), &(lideal_commit.norm));
     found = sample_response(&resp_quat, &lattice_hom_chall_to_com, &lattice_content, verbose);
 
-
     // TODO when it fails, we don't finalize all the ibz
     if (!found) {
+        printf("heuristic response sampling failed \n");
         return 0;
     }
     
@@ -343,6 +343,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     // sampling the ideal at random 
     // TODO replace these two steps with a clean function that samples random ideals from a right order
     sampling_random_ideal_O0(&lideal_aux,&tmp,0);
+
     // pushing forward 
     quat_lideal_inter(&lideal_aux_com,&lideal_commit,&lideal_aux,&QUATALG_PINFTY);
 

@@ -174,7 +174,7 @@ int main(){
 
     printf("\nRunning sqisigndim2_heuristic tests\n \n");
 
-    res &= test_sqisign(3, 100);
+    res &= test_sqisign(10, 100);
 
     if(!res){
         printf("\nSome tests failed!\n");
