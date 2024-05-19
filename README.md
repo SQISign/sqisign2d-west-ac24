@@ -1,4 +1,4 @@
-# SQIsign_dim2
+# SQIsign2d
 
 This library is a C implementation of SQIsign_dim2
 It uses the base code of SQIsign and SQIsignHD (sqisign.org)
@@ -39,6 +39,7 @@ In the latter case, the following further options are available:
 
 Specifies the build type for which SQIsign is built. The currently supported flags are:
 - `ref`, which builds the plain C reference implementation.
+- `broadwell`, which builds an additional implementation with GF optimized code for the Intel Broadwell architecture.
 
 ### CMAKE_BUILD_TYPE
 
@@ -55,7 +56,7 @@ The default build type uses the flags `-O3 -Wstrict-prototypes -Wno-error=strict
 
 ## License
 
-SQIsign is licensed under Apache-2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+SQIsign2d is licensed under Apache-2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
 
 Third party code is used in some test and common code files:
 
