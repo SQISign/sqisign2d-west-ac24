@@ -939,13 +939,11 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
         verif = (ibz_cmp(&vec_chall[1],&check_vec_chall[1])==0);
     }
 
-
-    return verif;
-
     ibz_finalize(&tmp);
     ibz_vec_2_finalize(&vec_chall);
     ibz_vec_2_finalize(&check_vec_chall);
 
+    return verif;
 }
 
 

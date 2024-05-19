@@ -870,8 +870,6 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
         }
     }
 
-
-    return verif;
     ibz_finalize(&remain);
     ibz_finalize(&tmp);
     ibz_finalize(&tmp2);
@@ -879,7 +877,7 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     ibz_vec_2_finalize(&check_vec_chall);
     ibz_mat_2x2_finalize(&mat);
 
-
+    return verif;
 }
 
 
