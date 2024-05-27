@@ -22,5 +22,5 @@ add_test(ec_fp2.test_${SVARIANT_LOWER} fp2.test_${SVARIANT_LOWER} ${SQISIGN_TEST
 add_test(ec_poly-mul.test_${SVARIANT_LOWER} poly-mul.test_${SVARIANT_LOWER} ${SQISIGN_TEST_REPS})
 add_test(ec_poly-redc.test_${SVARIANT_LOWER} poly-redc.test_${SVARIANT_LOWER} ${SQISIGN_TEST_REPS})
 add_test(ec_biextension.test_${SVARIANT_LOWER} biextension.test_${SVARIANT_LOWER} ${SQISIGN_TEST_REPS})
-add_test(ec_basis_gen.test_${SVARIANT_LOWER} basis_gen.test_${SVARIANT_LOWER} ${SQISIGN_TEST_REPS})
+add_test(ec_basis_gen.test_${SVARIANT_LOWER} basis-gen.test_${SVARIANT_LOWER} ${SQISIGN_TEST_REPS})
 

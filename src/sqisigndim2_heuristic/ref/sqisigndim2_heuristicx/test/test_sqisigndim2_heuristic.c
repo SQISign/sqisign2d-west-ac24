@@ -114,47 +114,49 @@ int test_sqisign(int repeat, uint64_t bench)
     // ms = (1000. * (float) (clock() - t_verif) / CLOCKS_PER_SEC);
     // printf("average verif time [%.2f ms]\n", (float) (ms/repeat));
 
-    float ms;
+    if (bench) {
+        float ms;
 
-    printf("\n\nBenchmarking signatures\n");
-    t = tic();
-    t0 = rdtsc();
-    for (int i = 0; i < bench; ++i)
-    {
-        protocols_keygen(&pk, &sk);
-    }
-    t1 = rdtsc();
-    // ms = tac();
-    ms = (1000. * (float) (clock() - t) / CLOCKS_PER_SEC);
-    printf("Average keygen time [%.2f ms]\n", (float) (ms/bench));
-    printf("\x1b[34mAvg keygen: %'" PRIu64 " cycles\x1b[0m\n", (t1-t0)/bench);
+        printf("\n\nBenchmarking signatures\n");
+        t = tic();
+        t0 = rdtsc();
+        for (int i = 0; i < bench; ++i)
+        {
+            protocols_keygen(&pk, &sk);
+        }
+        t1 = rdtsc();
+        // ms = tac();
+        ms = (1000. * (float) (clock() - t) / CLOCKS_PER_SEC);
+        printf("Average keygen time [%.2f ms]\n", (float) (ms/bench));
+        printf("\x1b[34mAvg keygen: %'" PRIu64 " cycles\x1b[0m\n", (t1-t0)/bench);
 
-    t = tic();
-    t0 = rdtsc();
-    for (int i = 0; i < bench; ++i)
-    {
-        int val = protocols_sign(&sig, &pk, &sk, msg, 32, 0);
-    }
-    t1 = rdtsc();
-    // ms = tac();
-    ms = (1000. * (float) (clock() - t) / CLOCKS_PER_SEC);
-    printf("Average signature time [%.2f ms]\n", (float) (ms/bench));
-    printf("\x1b[34mAvg signature: %'" PRIu64 " cycles\x1b[0m\n", (t1-t0)/bench);
+        t = tic();
+        t0 = rdtsc();
+        for (int i = 0; i < bench; ++i)
+        {
+            int val = protocols_sign(&sig, &pk, &sk, msg, 32, 0);
+        }
+        t1 = rdtsc();
+        // ms = tac();
+        ms = (1000. * (float) (clock() - t) / CLOCKS_PER_SEC);
+        printf("Average signature time [%.2f ms]\n", (float) (ms/bench));
+        printf("\x1b[34mAvg signature: %'" PRIu64 " cycles\x1b[0m\n", (t1-t0)/bench);
 
-    t = tic();
-    t0 = rdtsc();
-    for (int i = 0; i < bench; ++i)
-    {
-        int check = protocols_verif(&sig,&pk,msg,32);
-        if (!check) {
-            printf("verif failed ! \n");
-        } 
+        t = tic();
+        t0 = rdtsc();
+        for (int i = 0; i < bench; ++i)
+        {
+            int check = protocols_verif(&sig,&pk,msg,32);
+            if (!check) {
+                printf("verif failed ! \n");
+            } 
+        }
+        t1 = rdtsc();
+        // ms = tac();
+        ms = (1000. * (float) (clock() - t) / CLOCKS_PER_SEC);
+        printf("Average verification time [%.2f ms]\n", (float) (ms/bench));
+        printf("\x1b[34mAvg verification: %'" PRIu64 " cycles\x1b[0m\n", (t1-t0)/bench);
     }
-    t1 = rdtsc();
-    // ms = tac();
-    ms = (1000. * (float) (clock() - t) / CLOCKS_PER_SEC);
-    printf("Average verification time [%.2f ms]\n", (float) (ms/bench));
-    printf("\x1b[34mAvg verification: %'" PRIu64 " cycles\x1b[0m\n", (t1-t0)/bench);
 
     public_key_finalize(&pk);
     secret_key_finalize(&sk);
@@ -164,7 +166,7 @@ int test_sqisign(int repeat, uint64_t bench)
 }
 
 // run all tests in module
-int main(){
+int main(int argc, char **argv){
     int res = 1;
 
     randombytes_init((unsigned char *) "some", (unsigned char *) "string", 128);
@@ -174,7 +176,11 @@ int main(){
 
     printf("\nRunning sqisigndim2_heuristic tests\n \n");
 
-    res &= test_sqisign(3, 100);
+    int runs = 0;
+    if (argc > 1)
+        runs = atoi(argv[1]);
+
+    res &= test_sqisign(3, runs);
 
     if(!res){
         printf("\nSome tests failed!\n");

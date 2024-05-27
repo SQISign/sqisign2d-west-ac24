@@ -408,7 +408,7 @@ bench_new_basis_completion(unsigned int n){
 }
 
 
-void test_and_bench_basis(bool new) {
+void test_basis(bool new) {
     // Test full order
     printf("Testing full torsion generation:\n");
     test_basis_generation(TORSION_PLUS_EVEN_POWER, new);
@@ -424,7 +424,9 @@ void test_and_bench_basis(bool new) {
         test_complete_basis_generation(123);
         test_complete_basis_generation(2);
     }
+}
 
+void bench_basis(bool new) {
     printf("\n--------------------------------------------------------------------------------------------------------\n\n"); 
 
     if(new) {
@@ -461,8 +463,12 @@ void test_and_bench_basis(bool new) {
 
 }
 
-int main(void){
-    test_and_bench_basis(0);
-    test_and_bench_basis(1);
+int main(int argv){
+    test_basis(0);
+    test_basis(1);
+    /*
+        bench_basis(0);
+        bench_basis(1);
+    */
     return 0;
 }
