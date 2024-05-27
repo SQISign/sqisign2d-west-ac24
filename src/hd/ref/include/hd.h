@@ -324,6 +324,20 @@ void theta_chain_eval(theta_couple_point_t *out,theta_chain_t *phi,theta_couple_
    */
 void theta_chain_eval_no_help(theta_couple_point_t *out,theta_chain_t *phi,theta_couple_jac_point_t *P12, const theta_couple_curve_t *E12);
 
+/**
+ * @brief Evaluate a (2,2) isogeny chain in dimension 2 between elliptic products in the theta_model
+ *
+ * @param out Output: the image point
+ * @param phi : the (2,2) isogeny chain of domain E12
+ * @param P12 a couple point on E12 where one of the two point is zero, 
+ *   
+ * phi : E1xE2 -> E3xE4 of kernel 
+ * P12 in E1xE2 with P12 = (P1,0) or (0,P2)
+ * out = phi(P12) in E3xE4 
+ *  
+   */
+void theta_chain_eval_special_case(theta_couple_point_t *out,theta_chain_t *phi,theta_couple_point_t *P12, const theta_couple_curve_t *E12);
+
 void theta_print(char *name, theta_point_t P);
 
 #endif

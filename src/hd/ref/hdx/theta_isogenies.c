@@ -520,7 +520,39 @@ void gluing_eval_point(theta_point_t *image1, const theta_couple_point_t *P, con
     hadamard(image1,image1);
 }
 
+// same as gluing_eval_point but in the very special case where we already know that the point will have a zero coordinate at the place 
+// where the zero coordinate of the dual_theta_nullpoint would have made the computation difficult
+void gluing_eval_point_special_case(theta_point_t *image,const theta_couple_point_t *P,const theta_gluing_t *phi)  {
+    theta_point_t T;
+    fp2_t x,y,z,t,temp;
 
+    // apply the basis change
+    base_change(&T,phi,P);
+
+    // apply the to_squared_theta transform
+    to_squared_theta(&T,&T);
+
+    // compute y,z,t
+    choose_index_theta_point(&y,1^phi->zero_idx,&T);
+    choose_index_theta_point(&temp,1^phi->zero_idx,&phi->precomputation);
+    fp2_mul(&y,&y,&temp);
+    choose_index_theta_point(&z,2^phi->zero_idx,&T);
+    choose_index_theta_point(&temp,2^phi->zero_idx,&phi->precomputation);
+    fp2_mul(&z,&z,&temp);
+    choose_index_theta_point(&t,3^phi->zero_idx,&T);
+
+    // this is always 0 in the special case
+    fp2_set_zero(&x);
+
+    // fill the image coordinates 
+    set_index_theta_point(image,0^phi->zero_idx,&x);
+    set_index_theta_point(image,1^phi->zero_idx,&y);
+    set_index_theta_point(image,2^phi->zero_idx,&z);
+    set_index_theta_point(image,3^phi->zero_idx,&t);
+
+    // hadamard
+    hadamard(image,image);
+}
 
 
 // sub routine of the gluing eval
@@ -1756,6 +1788,7 @@ void theta_chain_comput_strategy(theta_chain_t *out,int n, theta_couple_curve_t 
     for (int i=0;i<len_list;i++) {
         gluing_eval_basis(&Q1[i],&Q2[i],&points1[i],&points2[i],E12,&out->first_step);
     }
+
     // TOC_clock(t,"gluing eval");
     // t = tic();
     // and now we do the remaining steps 
@@ -2114,11 +2147,11 @@ void theta_chain_eval(theta_couple_point_t *out,theta_chain_t *phi,theta_couple_
    */
 void theta_chain_eval_no_help(theta_couple_point_t *out,theta_chain_t *phi,theta_couple_jac_point_t *P12, const theta_couple_curve_t *E12) {
     
+
     theta_point_t temp;
 
     // first, we apply the gluing
     gluing_eval_point_no_help(&temp,P12,E12,&phi->first_step);
-
 
     // then, we apply the successive isogenies
     for (int i=0;i<phi->length-1;i++) {
@@ -2132,4 +2165,41 @@ void theta_chain_eval_no_help(theta_couple_point_t *out,theta_chain_t *phi,theta
     // finaly we send the result to the elliptic product
     theta_point_to_montgomery_point(out,&temp,&phi->last_step.B);
 
+}
+
+/**
+ * @brief Evaluate a (2,2) isogeny chain in dimension 2 between elliptic products in the theta_model
+ *
+ * @param out Output: the image point
+ * @param phi : the (2,2) isogeny chain of domain E12
+ * @param P12 a couple point on E12 where one of the two point is zero, 
+ *   
+ * phi : E1xE2 -> E3xE4 of kernel 
+ * P12 in E1xE2 with P12 = (P1,0) or (0,P2)
+ * out = phi(P12) in E3xE4 
+ *  
+   */
+void theta_chain_eval_special_case(theta_couple_point_t *out,theta_chain_t *phi,theta_couple_point_t *P12, const theta_couple_curve_t *E12) {
+    theta_point_t temp;
+
+    #ifndef NDEBUG 
+        assert(ec_is_zero(&P12->P1) || ec_is_zero(&P12->P2));
+        assert(phi->first_step.zero_idx==3);
+    #endif
+
+    // first, we apply the gluing
+    gluing_eval_point_special_case(&temp,P12,&phi->first_step);
+
+
+    // then, we apply the successive isogenies
+    for (int i=0;i<phi->length-1;i++) {
+        theta_isogeny_eval(&temp,&phi->steps[i],&temp);
+    }
+
+
+    // we send the result to the theta product structure of the codomain
+    apply_isomorphism(&temp,&phi->last_step,&temp);
+
+    // finaly we send the result to the elliptic product
+    theta_point_to_montgomery_point(out,&temp,&phi->last_step.B);
 }

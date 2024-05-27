@@ -532,24 +532,19 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     theta_chain_comput_strategy(&isog,pow_dim2_deg_resp,&EcomXEaux,&T1,&T2,&T1m2,strategies[TORSION_PLUS_EVEN_POWER-pow_dim2_deg_resp],extra_info);
 
     // pushing the points of torsion to recover the kernel of the dual 
-    jac_point_t temp_jac;
-    theta_couple_jac_point_t Teval1,Teval2,Teval3;
+
     theta_couple_point_t Tev1,Tev2,Tev1m2;
-    lift_basis(&Teval1.P1,&Teval2.P1,&Bcom0,&E_com);
-    jac_neg(&temp_jac,&Teval2.P1);
-    ADD(&Teval3.P1,&Teval1.P1,&temp_jac,&E_com);
-    fp2_set_zero(&Teval1.P2.x);
-    fp2_set_one(&Teval1.P2.y);
-    fp2_set_zero(&Teval1.P2.z);
-    fp2_set_zero(&Teval2.P2.x);
-    fp2_set_one(&Teval2.P2.y);
-    fp2_set_zero(&Teval2.P2.z);
-    fp2_set_zero(&Teval3.P2.x);
-    fp2_set_one(&Teval3.P2.y);
-    fp2_set_zero(&Teval3.P2.z);
-    theta_chain_eval_no_help(&Tev1,&isog,&Teval1,&EcomXEaux);
-    theta_chain_eval_no_help(&Tev2,&isog,&Teval2,&EcomXEaux);
-    theta_chain_eval_no_help(&Tev1m2,&isog,&Teval3,&EcomXEaux);
+
+    theta_couple_point_t Teval1,Teval2,Teval3;
+    copy_point(&Teval1.P1,&Bcom0.P);
+    copy_point(&Teval3.P1,&Bcom0.PmQ);
+    copy_point(&Teval2.P1,&Bcom0.Q);
+    ec_set_zero(&Teval1.P2);
+    ec_set_zero(&Teval2.P2);
+    ec_set_zero(&Teval3.P2);
+    theta_chain_eval_special_case(&Tev1,&isog,&Teval1,&EcomXEaux);
+    theta_chain_eval_special_case(&Tev2,&isog,&Teval2,&EcomXEaux);
+    theta_chain_eval_special_case(&Tev1m2,&isog,&Teval3,&EcomXEaux);
 
     assert(test_point_order_twof(&Tev1.P1,&isog.codomain.E1,pow_dim2_deg_resp+exp_diadic_val_full_resp+2));
     assert(test_point_order_twof(&Tev1.P2,&isog.codomain.E2,pow_dim2_deg_resp+exp_diadic_val_full_resp+2));

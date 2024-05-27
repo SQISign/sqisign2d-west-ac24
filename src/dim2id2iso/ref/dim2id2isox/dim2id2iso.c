@@ -792,24 +792,17 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         // TOC(t,"1st fixed deg");
         // pushing the torsion points through Fu
         // first we lift the basis 
-        theta_couple_jac_point_t xyP,xyQ,xyPmQ;
-        jac_point_t temp;
-        lift_basis(&xyP.P1,&xyQ.P1,&bas,&E0);
-        // TODO we can do better, the addition has been computed inside lift_basis
-        jac_neg(&temp,&xyQ.P1);
-        ADD(&xyPmQ.P1,&xyP.P1,&temp,&E0);
-        fp2_set_zero(&xyP.P2.x);
-        fp2_set_one(&xyP.P2.y);
-        fp2_set_zero(&xyP.P2.z);
-        fp2_set_zero(&xyQ.P2.x);
-        fp2_set_one(&xyQ.P2.y);
-        fp2_set_zero(&xyQ.P2.z);
-        fp2_set_zero(&xyPmQ.P2.x);
-        fp2_set_one(&xyPmQ.P2.y);
-        fp2_set_zero(&xyPmQ.P2.z);
-        theta_chain_eval_no_help(&V1,&Fu,&xyP,&E00);
-        theta_chain_eval_no_help(&V2,&Fu,&xyQ,&E00);
-        theta_chain_eval_no_help(&V1m2,&Fu,&xyPmQ,&E00);
+        theta_couple_point_t P,Q,PmQ;
+        
+        copy_point(&P.P1,&bas.P);
+        copy_point(&PmQ.P1,&bas.PmQ);
+        copy_point(&Q.P1,&bas.Q);
+        ec_set_zero(&P.P2);
+        ec_set_zero(&Q.P2);
+        ec_set_zero(&PmQ.P2);
+        theta_chain_eval_special_case(&V1,&Fu,&P,&E00);
+        theta_chain_eval_special_case(&V2,&Fu,&Q,&E00);
+        theta_chain_eval_special_case(&V1m2,&Fu,&PmQ,&E00);
 
         assert(test_point_order_twof(&V1.P1,&Fu.codomain.E1,TORSION_PLUS_EVEN_POWER));
         assert(test_point_order_twof(&V1.P2,&Fu.codomain.E2,TORSION_PLUS_EVEN_POWER));
@@ -866,20 +859,10 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         assert(bv);
         // TOC(t,"2nd fixed deg");
 
-        fp2_set_zero(&xyP.P2.x);
-        fp2_set_one(&xyP.P2.y);
-        fp2_set_zero(&xyP.P2.z);
-        fp2_set_zero(&xyQ.P2.x);
-        fp2_set_one(&xyQ.P2.y);
-        fp2_set_zero(&xyQ.P2.z);
-        fp2_set_zero(&xyPmQ.P2.x);
-        fp2_set_one(&xyPmQ.P2.y);
-        fp2_set_zero(&xyPmQ.P2.z);
-
         // pushing the torsion points through Fv
-        theta_chain_eval_no_help(&V1,&Fv,&xyP,&E00);
-        theta_chain_eval_no_help(&V2,&Fv,&xyQ,&E00);
-        theta_chain_eval_no_help(&V1m2,&Fv,&xyPmQ,&E00);
+        theta_chain_eval_special_case(&V1,&Fv,&P,&E00);
+        theta_chain_eval_special_case(&V2,&Fv,&Q,&E00);
+        theta_chain_eval_special_case(&V1m2,&Fv,&PmQ,&E00);
 
         assert(test_point_order_twof(&V1.P1,&Fv.codomain.E1,TORSION_PLUS_EVEN_POWER));
         assert(test_point_order_twof(&V1.P2,&Fv.codomain.E2,TORSION_PLUS_EVEN_POWER));
@@ -955,25 +938,17 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         ibz_set(&adjust_v,1);
 
         // pushing the torsion points through Fu
-        // first we lift the basis 
-        theta_couple_jac_point_t xyP,xyQ,xyPmQ;
-        jac_point_t temp;
-        lift_basis(&xyP.P1,&xyQ.P1,&bas,&E0);
-        // TODO we can do better, the addition has been computed inside lift_basis
-        jac_neg(&temp,&xyQ.P1);
-        ADD(&xyPmQ.P1,&xyP.P1,&temp,&E0);
-        fp2_set_zero(&xyP.P2.x);
-        fp2_set_one(&xyP.P2.y);
-        fp2_set_zero(&xyP.P2.z);
-        fp2_set_zero(&xyQ.P2.x);
-        fp2_set_one(&xyQ.P2.y);
-        fp2_set_zero(&xyQ.P2.z);
-        fp2_set_zero(&xyPmQ.P2.x);
-        fp2_set_one(&xyPmQ.P2.y);
-        fp2_set_zero(&xyPmQ.P2.z);
-        theta_chain_eval_no_help(&V1,&Fu,&xyP,&E00);
-        theta_chain_eval_no_help(&V2,&Fu,&xyQ,&E00);
-        theta_chain_eval_no_help(&V1m2,&Fu,&xyPmQ,&E00);
+
+        theta_couple_point_t P,Q,PmQ;
+        copy_point(&P.P1,&bas.P);
+        copy_point(&PmQ.P1,&bas.PmQ);
+        copy_point(&Q.P1,&bas.Q);
+        ec_set_zero(&P.P2);
+        ec_set_zero(&Q.P2);
+        ec_set_zero(&PmQ.P2);
+        theta_chain_eval_special_case(&V1,&Fu,&P,&E00);
+        theta_chain_eval_special_case(&V2,&Fu,&Q,&E00);
+        theta_chain_eval_special_case(&V1m2,&Fu,&PmQ,&E00);
 
         assert(test_point_order_twof(&V1.P1,&Fu.codomain.E1,TORSION_PLUS_EVEN_POWER));
         assert(test_point_order_twof(&V1.P2,&Fu.codomain.E2,TORSION_PLUS_EVEN_POWER));
@@ -1164,24 +1139,17 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     assert(test_point_order_twof(&bas_u.Q,&E01.E1,TORSION_PLUS_EVEN_POWER));
 
     // evaluating the basis through the isogeny of degree u*d1
-    theta_couple_jac_point_t xyP,xyQ,xyPmQ;
-    jac_point_t temp;
-    lift_basis(&xyP.P1,&xyQ.P1,&bas_u,&E01.E1);
-    // TODO we can do better, the addition has been computed inside lift_basis
-    jac_neg(&temp,&xyQ.P1);
-    ADD(&xyPmQ.P1,&xyP.P1,&temp,&E01.E1);
-    fp2_set_zero(&xyP.P2.x);
-    fp2_set_one(&xyP.P2.y);
-    fp2_set_zero(&xyP.P2.z);
-    fp2_set_zero(&xyQ.P2.x);
-    fp2_set_one(&xyQ.P2.y);
-    fp2_set_zero(&xyQ.P2.z);
-    fp2_set_zero(&xyPmQ.P2.x);
-    fp2_set_one(&xyPmQ.P2.y);
-    fp2_set_zero(&xyPmQ.P2.z);
-    theta_chain_eval_no_help(&T1,isog,&xyP,&E01);
-    theta_chain_eval_no_help(&T2,isog,&xyQ,&E01);
-    theta_chain_eval_no_help(&T1m2,isog,&xyPmQ,&E01);
+
+    theta_couple_point_t P,Q,PmQ;
+    copy_point(&P.P1,&bas_u.P);
+    copy_point(&PmQ.P1,&bas_u.PmQ);
+    copy_point(&Q.P1,&bas_u.Q);
+    ec_set_zero(&P.P2);
+    ec_set_zero(&Q.P2);
+    ec_set_zero(&PmQ.P2);
+    theta_chain_eval_special_case(&T1,isog,&P,&E01);
+    theta_chain_eval_special_case(&T2,isog,&Q,&E01);
+    theta_chain_eval_special_case(&T1m2,isog,&PmQ,&E01);
 
     assert(test_point_order_twof(&T1.P1,&isog->codomain.E1,TORSION_PLUS_EVEN_POWER));
     assert(test_point_order_twof(&T1m2.P2,&isog->codomain.E2,TORSION_PLUS_EVEN_POWER));

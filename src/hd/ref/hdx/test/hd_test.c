@@ -98,7 +98,7 @@ int hd_chain_test() {
     // point_print("P2",B0_two.Q);
     // point_print("P1m2",B0_two.PmQ);
 
-    printf("%lld \n",TORSION_PLUS_EVEN_POWER);
+    printf("%ld \n",TORSION_PLUS_EVEN_POWER);
 
     #ifndef NDEBUG
         assert(test_point_order_twof(&B0_two.P,&E0,TORSION_PLUS_EVEN_POWER));
@@ -302,6 +302,27 @@ int hd_chain_test() {
     assert(ec_is_equal(&result_no_help.P1,&FP.P1));
     assert(ec_is_equal(&result_no_help.P2,&FP.P2));
     
+    theta_couple_point_t input_special_case;
+    theta_couple_point_t result_special_case;
+
+    jac_to_xz(&input_special_case.P1,&input_no_help.P1);
+    jac_to_xz(&input_special_case.P2,&input_no_help.P2);
+
+    theta_chain_eval_special_case(&result_special_case,&dimtwo_chain,&input_special_case,&E01);
+    assert(ec_is_equal(&result_no_help.P1,&result_special_case.P1));
+    assert(ec_is_equal(&result_no_help.P2,&result_special_case.P2));
+    
+    input_special_case.P1 = BASIS_THREE.P;
+    ec_set_zero(&input_special_case.P2);
+
+    assert(test_point_order_threef(&input_special_case.P1,&E01.E1,TORSION_MINUS_ODD_POWERS[0]));
+    theta_chain_eval_special_case(&result_special_case,&dimtwo_chain,&input_special_case,&E01);
+    assert(test_point_order_threef(&result_special_case.P2,&dimtwo_chain.codomain.E2,TORSION_MINUS_ODD_POWERS[0]));
+    input_special_case.P1 = BASIS_THREE.Q;
+    ec_set_zero(&input_special_case.P2);
+    assert(test_point_order_threef(&input_special_case.P1,&E01.E1,TORSION_MINUS_ODD_POWERS[0]));
+    theta_chain_eval_special_case(&result_special_case,&dimtwo_chain,&input_special_case,&E01);
+    assert(test_point_order_threef(&result_special_case.P2,&dimtwo_chain.codomain.E2,TORSION_MINUS_ODD_POWERS[0]));
 
     
     theta_couple_point_t FP_no_sq;
