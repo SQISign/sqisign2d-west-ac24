@@ -656,7 +656,6 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     quat_alg_elem_t theta;
     quat_alg_elem_t quat_tmp;
     quat_alg_elem_t quat_gcd_remove;
-    
 
     ibq_t norm;
     ibq_init(&norm);

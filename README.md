@@ -30,10 +30,10 @@ To reproduce the experiments of the paper, create the following builds
 
 - `mkdir -p build-ref build-broadwell`
 - `cd build-ref`
-- `make -DSQISIGN_BUILD_TYPE=ref -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release ..`
+- `cmake -DSQISIGN_BUILD_TYPE=ref -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release ..`
 - `make`
 - `cd ../build-broadwell`
-- `make -DSQISIGN_BUILD_TYPE=broadwell -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release ..`
+- `cmake -DSQISIGN_BUILD_TYPE=broadwell -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release ..`
 - `make`
 - `cd ..`
 
