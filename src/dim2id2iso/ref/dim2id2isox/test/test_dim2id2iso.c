@@ -152,7 +152,11 @@ int dim2id2iso_test_find_uv() {
     int exp = TORSION_PLUS_EVEN_POWER;
     ibz_pow(&target,&ibz_const_two,exp);
 
-    found = find_uv(&u,&v,&coeffs,&beta1,&beta2,&d1,&d2,&target,0,&lideal_small,&QUATALG_PINFTY);
+    int num_rerun = 0;
+    while (!found && num_rerun<3) {
+        found = find_uv(&u,&v,&coeffs,&beta1,&beta2,&d1,&d2,&target,0,&lideal_small,&QUATALG_PINFTY,num_rerun);
+        num_rerun++;
+    }
 
     // assert(found);
     if (!found) {

@@ -21,7 +21,7 @@
 
 /*************************** Functions *****************************/
 
-int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_alg_elem_t *beta2,ibz_t *d1,ibz_t *d2, const ibz_t *target,int number_sum_square,const quat_left_ideal_t *lideal, const quat_alg_t *Bpoo);
+int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_alg_elem_t *beta2,ibz_t *d1,ibz_t *d2, const ibz_t *target,int number_sum_square,const quat_left_ideal_t *lideal, const quat_alg_t *Bpoo, int num_rerun);
 
 /**
  * @brief Computes an arbitrary isogeny of fixed degree starting from E0

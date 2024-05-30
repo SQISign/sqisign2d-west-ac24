@@ -256,7 +256,7 @@ int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *
  * @param number_sum_square : int 
  * @param lideal : left quaternion ideal
 */
-int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_alg_elem_t *beta2,ibz_t *d1,ibz_t *d2, const ibz_t *target,int number_sum_square,const quat_left_ideal_t *lideal, const quat_alg_t *Bpoo) {
+int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_alg_elem_t *beta2,ibz_t *d1,ibz_t *d2, const ibz_t *target,int number_sum_square,const quat_left_ideal_t *lideal, const quat_alg_t *Bpoo, int num_rerun) {
 
 
     // variable declaration
@@ -393,7 +393,7 @@ int find_uv(ibz_t *u,ibz_t *v,ibz_vec_4_t *coeffs,quat_alg_elem_t *beta1,quat_al
     // global parameters for the enumerate
     // TODO may be overshot and we may improve this by sampling inside an hyperball instead 
     // TODO make this a proper constant
-    int m =1+ ( ibz_bitsize(&QUATALG_PINFTY.p)/120 )  +2*number_sum_square;
+    int m =1+ ( ibz_bitsize(&QUATALG_PINFTY.p)/120 )  +2*number_sum_square + 2*num_rerun;
     int m4 = (2*m+1)*(2*m+1)*(2*m+1)*(2*m+1)-1;
     int m3 = (2*m+1)*(2*m+1)*(2*m+1);
     int m2 = (2*m+1)*(2*m+1);
@@ -679,8 +679,12 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     // first, we find u,v,d1,d2,beta1,beta2
     // such that u*d1 + v*d2 = 2^TORSION_PLUS_EVEN_POWER and there are ideals of norm d1,d2 equivalent to ideal
     // beta1 and beta2 are elements of norm nd1, nd2 where n=n(lideal)
-    int found = find_uv(u,v,coeffs,beta1,beta2,d1,d2,&TORSION_PLUS_2POWER,number_sum_square,lideal,Bpoo);
-    
+    int found=0;
+    int num_iter_find_uv=0;
+    while (!found & (num_iter_find_uv<3) ) {
+      found= find_uv(u,v,coeffs,beta1,beta2,d1,d2,&TORSION_PLUS_2POWER,number_sum_square,lideal,Bpoo,num_iter_find_uv);
+      num_iter_find_uv++;
+    }
     // TOC(t,"\n \ntotal time to find u,v");
 
     if (!found) {
