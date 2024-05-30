@@ -2,7 +2,6 @@ set(SOURCE_FILES_ID2ISO_GENERIC_REF_TESTS
     ${ID2ISOX_DIR}/test/ker2id.c
     ${ID2ISOX_DIR}/test/id2ker_even.c
     ${ID2ISOX_DIR}/test/id2ker_odd.c
-    ${ID2ISOX_DIR}/test/id2iso.c
     ${ID2ISOX_DIR}/test/test_id2iso.c
 )
 add_executable(sqisign_test_id2iso_${SVARIANT_LOWER} ${SOURCE_FILES_ID2ISO_GENERIC_REF_TESTS})

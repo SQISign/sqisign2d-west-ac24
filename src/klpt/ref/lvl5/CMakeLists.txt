@@ -1,7 +1,4 @@
 set(SOURCE_FILES_KLPT_GENERIC_REF
-    ${KLPTX_DIR}/eichler.c
-    ${KLPTX_DIR}/equiv.c 
-    ${KLPTX_DIR}/klpt.c 
     ${KLPTX_DIR}/tools.c
 )
 

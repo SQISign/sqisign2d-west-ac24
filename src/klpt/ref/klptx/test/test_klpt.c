@@ -10,9 +10,6 @@ int main(){
     printf("\nRunning klpt module unit tests\n \n");
 
     res = res & klpt_test_tools();
-    res = res & klpt_test_equiv();
-    res = res & klpt_test_eichler();
-    res = res & klpt_test_klpt(); 
     if(!res){
         printf("\nSome tests failed!\n");
     } 

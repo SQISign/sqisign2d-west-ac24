@@ -14,7 +14,6 @@ int main(){
     res = res & id2iso_test_ker2id();
     res = res & id2iso_test_id2ker_odd();
     res = res & id2iso_test_id2ker_even();
-    res = res & id2iso_test_id2iso();
 
     if(!res){
         printf("\nSome tests failed!\n");
