@@ -41,10 +41,10 @@
 
 
 typedef struct signature {
-    ec_curve_t E_aux; /// the montgomery A coefficient for the auxilliary curve
+    ec_curve_t E_com; /// the montgomery A coefficient for commitment curve
 
     int two_resp_length;
-    int *hint_aux;
+    int *hint_com;
     ibz_t x;
     int hint_b;
     ibz_t b0;
@@ -91,7 +91,6 @@ typedef struct secret_key {
 
 void protocols_keygen(public_key_t *pk, secret_key_t *sk);
 int protocols_sign(signature_t *sig, const public_key_t *pk ,secret_key_t *sk, const unsigned char* m, size_t l, int verbose);
-int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned char* m, size_t l);
 
 
 void public_key_init(public_key_t *pk);

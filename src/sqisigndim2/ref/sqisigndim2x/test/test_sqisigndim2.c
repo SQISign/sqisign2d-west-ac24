@@ -264,11 +264,7 @@ int main(int argc, char** argv){
     test_LLL();
 
 
-    printf("\nRunning sqisigndim2 tests\n \n");
-
-    bench_fp2_operations(1000);
-
-    int runs = 0;
+    int runs = 1000;
     if (argc > 1)
         runs = atoi(argv[1]);
         

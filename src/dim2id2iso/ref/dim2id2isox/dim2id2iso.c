@@ -102,6 +102,8 @@ int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *
         // TODO This is a constant that should be set-up at a cleaner place 
         length = SQIsign2D_small_fixed_deg_exp;
         assert(u_bitsize<length);        
+        length = ibz_bitsize(&QUATALG_PINFTY.p) + 15 - ibz_bitsize(u);
+
     }
 
     // var init 
@@ -109,7 +111,6 @@ int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *
     quat_alg_elem_init(&theta);
 
     // TODO make a clean constant
-    length = ibz_bitsize(&QUATALG_PINFTY.p) + 15 - ibz_bitsize(u);
 
 
     // TODO we could get rid of this
@@ -127,6 +128,8 @@ int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *
     ibz_sub(&tmp,&two_pow,&tmp);
     ibz_mul(&tmp,&tmp,u);
 
+
+
     // TODO make this a clean constant
     found = 0;
     int count = 0;
@@ -135,10 +138,8 @@ int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *
         count++;
     }
 
-    // clock_t t = tic();
     
-    // TOC(t,"represent integer");
-
+    
     if (!found) {
         printf("represent integer failed for a target of size %d for a u of size %d with length = %d \n",ibz_bitsize(&tmp),ibz_bitsize(u),length);
         return 0;

@@ -85,34 +85,9 @@ int test_sqisign(int repeat, uint64_t bench)
         int val = protocols_sign(&sig, &pk, &sk, msg, 32, 0);
         t1 = rdtsc();
         TOC(t,"Signing");
-        printf("\x1b[34msigning took %'" PRIu64 " cycles\x1b[0m\n", t1-t0);
-
-        t = tic();
-        t0 = rdtsc();
-        int check = protocols_verif(&sig,&pk,msg,32);
-        if (!check) {
-            printf("verif failed ! \n");
-        } 
-        t1 = rdtsc();
-        TOC(t,"Verification");
-        printf("\x1b[34mverif   took %'" PRIu64 " cycles\x1b[0m\n", t1-t0);    
+        printf("\x1b[34msigning took %'" PRIu64 " cycles\x1b[0m\n", t1-t0); 
     
-        printf(" \x1b[35mfull\x1b[0m signature was: %s\n\n", check ? "\x1b[32mvalid\x1b[0m" : "\x1b[31minvalid\x1b[0m");
     }
-
-
-    // TOC(t, "protocols_sign");
-    // float ms = (1000. * (float) (clock() - t) / CLOCKS_PER_SEC);
-    // printf("average signing time [%.2f ms]\n", (float) (ms/repeat));
-
-    // clock_t t_verif = tic();
-    // for (int i = 0; i < repeat; ++i)
-    // {   
-        
-    // }
-    // TOC(t_verif,"protocols_verif");  
-    // ms = (1000. * (float) (clock() - t_verif) / CLOCKS_PER_SEC);
-    // printf("average verif time [%.2f ms]\n", (float) (ms/repeat));
 
     float ms;
 
@@ -141,20 +116,6 @@ int test_sqisign(int repeat, uint64_t bench)
     printf("Average signature time [%.2f ms]\n", (float) (ms/bench));
     printf("\x1b[34mAvg signature: %'" PRIu64 " cycles\x1b[0m\n", (t1-t0)/bench);
 
-    t = tic();
-    t0 = rdtsc();
-    for (int i = 0; i < bench; ++i)
-    {
-        int check = protocols_verif(&sig,&pk,msg,32);
-        if (!check) {
-            printf("verif failed ! \n");
-        } 
-    }
-    t1 = rdtsc();
-    // ms = tac();
-    ms = (1000. * (float) (clock() - t) / CLOCKS_PER_SEC);
-    printf("Average verification time [%.2f ms]\n", (float) (ms/bench));
-    printf("\x1b[34mAvg verification: %'" PRIu64 " cycles\x1b[0m\n", (t1-t0)/bench);
 
     public_key_finalize(&pk);
     secret_key_finalize(&sk);
