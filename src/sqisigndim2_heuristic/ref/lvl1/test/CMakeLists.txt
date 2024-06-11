@@ -11,5 +11,5 @@ add_custom_command(
   TARGET sqisign_test_sqisigndim2_heuristic_${SVARIANT_LOWER}
   POST_BUILD
   COMMAND ${CMAKE_COMMAND}
-  ARGS -E copy $<TARGET_FILE:sqisign_test_sqisigndim2_${SVARIANT_LOWER}> ${CMAKE_BINARY_DIR}/test/sqisign2d_heuristic_${SVARIANT_LOWER}
+  ARGS -E copy $<TARGET_FILE:sqisign_test_sqisigndim2_heuristic_${SVARIANT_LOWER}> ${CMAKE_BINARY_DIR}/test/sqisign2d_heuristic_${SVARIANT_LOWER}
 )
