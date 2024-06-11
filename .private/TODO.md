@@ -25,3 +25,4 @@ For IdealToIsogeny: investigate if we can find a better way to sample quaternion
 
 - Split 2^n dim 2 isogenies into 4-isogenies rather than 2-isogenies
 - Investigate the use of Weil's restriction (cf Costello, Reijnders, Santos)
+- Investigate the use of challenge by torsion rather than challenge by isogeny
