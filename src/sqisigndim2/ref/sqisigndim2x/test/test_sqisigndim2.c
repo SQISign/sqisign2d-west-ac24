@@ -264,7 +264,7 @@ int main(int argc, char** argv){
     test_LLL();
 
 
-    int runs = 1000;
+    int runs = 0;
     if (argc > 1)
         runs = atoi(argv[1]);
         
