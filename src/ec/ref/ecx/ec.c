@@ -447,7 +447,7 @@ void xDBLMUL(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_point_t co
     select_point(S, &R[0], &R[1], mevens);
 
     maskk = 0 - (bitk0 & bitl0);
-    select_point(S, &S[0], &R[2], maskk);
+    select_point(S, S, &R[2], maskk);
 
 }
 
@@ -605,7 +605,7 @@ void xDBLMUL_bounded(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_po
     select_point(S, &R[0], &R[1], mevens);
 
     maskk = 0 - (bitk0 & bitl0);
-    select_point(S, &S[0], &R[2], maskk);
+    select_point(S, S, &R[2], maskk);
 
 }
 
