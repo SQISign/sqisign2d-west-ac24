@@ -7,9 +7,7 @@
 
 void public_key_init(public_key_t *pk) {
     pk->hint_pk = (int*) malloc(2*sizeof(int));
-    ec_point_init(&pk->curve.A24);
-    pk->curve.is_A24_computed_and_normalized = 0;
-
+    ec_curve_init(&pk->curve);
 }
 
 void public_key_finalize(public_key_t *pk) {
@@ -20,7 +18,7 @@ void public_key_finalize(public_key_t *pk) {
 void secret_key_init(secret_key_t *sk) {
     quat_left_ideal_init(&(sk->secret_ideal));
     ibz_mat_2x2_init(&(sk->mat_BAcan_to_BA0_two));
-
+    ec_curve_init(&sk->curve);
 }
 
 void secret_key_finalize(secret_key_t *sk) {

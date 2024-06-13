@@ -314,7 +314,6 @@ void matrix_application_even_basis(ec_basis_t *bas, const ec_curve_t *E,ibz_mat_
     ibz_to_digit_array(scalars[0],&(*mat)[0][0]);
     // ibz_set(&mat[0][1],0);
     ibz_to_digit_array(scalars[1],&(*mat)[1][0]);
-    
     ec_biscalar_mul_bounded(&bas->P,E,scalars[0],scalars[1],&tmp_bas,f);
     ibz_to_digit_array(scalars[0],&(*mat)[0][1]);
     ibz_to_digit_array(scalars[1],&(*mat)[1][1]);

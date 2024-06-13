@@ -6,8 +6,7 @@
 
 
 void ec_curve_normalize_A24(ec_curve_t *E) {
-    // printf("This is the current value: %d\n", E->is_A24_computed_and_normalized);
-    if (E->is_A24_computed_and_normalized != 1){
+    if (E->is_A24_computed_and_normalized == 0){
         AC_to_A24(&E->A24,E);
         ec_normalize(&E->A24);
         E->is_A24_computed_and_normalized = 1;

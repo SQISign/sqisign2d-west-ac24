@@ -153,6 +153,11 @@ static void ec_eval_even_strategy(ec_curve_t* image, ec_point_t* points, unsigne
 
     // Output curve in the form (A:C)
     A24_to_AC(image, A24);
+
+    // TODO:
+    // The curve does not have A24 normalised though
+    // should we normalise it here, or do it later?
+    image->is_A24_computed_and_normalized = 0;
 }
 
 
@@ -201,6 +206,11 @@ void ec_eval_small_chain(ec_curve_t *image, const ec_point_t *kernel, int len,ec
         }
     }
     A24_to_AC(image,&A24);
+
+    // TODO:
+    // The curve does not have A24 normalised though
+    // should we normalise it here, or do it later?
+    image->is_A24_computed_and_normalized = 0;
 
 }
 
@@ -326,6 +336,11 @@ void ec_eval_three(ec_curve_t* image, const ec_isog_odd_t* phi,
     ec_eval_three_rec(&A24, phi->degree[0], &ker, stack, 0, points, length);
 
     A24_to_AC(image, &A24);
+
+    // TODO:
+    // The curve does not have A24 normalised though
+    // should we normalise it here, or do it later?
+    image->is_A24_computed_and_normalized = 0;
 }
 
 void ec_eval_odd(ec_curve_t* image, const ec_isog_odd_t* phi,
@@ -384,6 +399,11 @@ void ec_eval_odd(ec_curve_t* image, const ec_isog_odd_t* phi,
     }
 
     A24_to_AC(image, &A24);
+
+    // TODO:
+    // The curve does not have A24 normalised though
+    // should we normalise it here, or do it later?
+    image->is_A24_computed_and_normalized = 0;
 }
 
 void ec_curve_normalize(ec_curve_t *new, ec_isom_t *isom, const ec_curve_t *old){
