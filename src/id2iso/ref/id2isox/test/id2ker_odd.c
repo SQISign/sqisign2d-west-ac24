@@ -153,6 +153,9 @@ int _id2iso_test_id2ker_odd()
 
     {
         ec_curve_t curve1, curve2;
+
+        ec_curve_init(&curve1);
+        ec_curve_init(&curve2);
         ec_eval_odd(&curve1, &isog1, NULL, 0);
         ec_eval_odd(&curve2, &isog2, NULL, 0);
 

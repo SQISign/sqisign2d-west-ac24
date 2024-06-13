@@ -174,6 +174,8 @@ void ec_curve_to_basis_2_to_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int *h
      
     // Normalize points
     ec_curve_t E;
+    ec_curve_init(&E);
+
     fp2_mul(&t0, &P.z, &Q.z);
     fp2_mul(&t1, &t0, &curve->C);
     fp2_inv(&t1);
@@ -240,6 +242,8 @@ void ec_curve_to_basis_2_from_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int 
      
     // Normalize points
     ec_curve_t E;
+    ec_curve_init(&E);
+
     fp2_mul(&t0, &P.z, &Q.z);
     fp2_mul(&t1, &t0, &curve->C);
     fp2_inv(&t1);
@@ -348,6 +352,8 @@ void ec_curve_to_basis_2(ec_basis_t *PQ2, ec_curve_t *curve,int f){
 
     // Normalize points
     ec_curve_t E;
+    ec_curve_init(&E);
+
     fp2_mul(&t0, &P.z, &Q.z);
     fp2_mul(&t1, &t0, &curve->C);
     fp2_inv(&t1);
@@ -424,6 +430,8 @@ void ec_complete_basis_2(ec_basis_t* PQ2, const ec_curve_t* curve, const ec_poin
 
     // Normalize points
     ec_curve_t E;
+    ec_curve_init(&E);
+
     ec_point_t PP;
     fp2_mul(&t0, &P->z, &Q.z);
     fp2_mul(&t1, &t0, &curve->C);
@@ -535,6 +543,8 @@ void ec_curve_to_basis_3(ec_basis_t* PQ3, const ec_curve_t* curve){
 
     // Normalize points
     ec_curve_t E;
+    ec_curve_init(&E);
+
     fp2_mul(&t0, &P.z, &Q.z);
     fp2_mul(&t1, &t0, &curve->C);
     fp2_inv(&t1);
@@ -662,6 +672,8 @@ void ec_curve_to_basis_6(ec_basis_t* PQ6, const ec_curve_t* curve){
 
     // Normalize points
     ec_curve_t E;
+    ec_curve_init(&E);
+
     fp2_mul(&t0, &P.z, &Q.z);
     fp2_mul(&t1, &t0, &curve->C);
     fp2_inv(&t1);
@@ -924,6 +936,8 @@ normalise_points_for_basis(ec_basis_t *PQ2, const ec_curve_t *curve, ec_point_t 
     // Normalize points
     fp2_t t0, t1;
     ec_curve_t E;
+    ec_curve_init(&E);
+    
     fp2_mul(&t0, &P->z, &Q->z);
     fp2_mul(&t1, &t0, &curve->C);
     fp2_inv(&t1);

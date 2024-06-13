@@ -31,6 +31,11 @@ int dim2id2iso_test_fixed_degree_isogeny() {
     E0 = CURVE_E0;
     E00.E1 = CURVE_E0;
     E00.E2 = CURVE_E0;
+
+    ec_curve_init(&E0);
+    ec_curve_init(&E00.E1);
+    ec_curve_init(&E00.E2);
+
     ec_basis_t bas = BASIS_EVEN;
     lift_basis(&Teval1.P1,&Teval2.P1,&bas,&E0);
     jac_neg(&temp,&Teval2.P1);
@@ -250,6 +255,8 @@ int dim2id2iso_test_dimid2iso() {
     ec_basis_t bas = BASIS_EVEN;
     ec_basis_t bas_end;
     ec_curve_t codom;
+    ec_curve_init(&codom);
+
     clock_t tt = tic();
     found = dim2id2iso_ideal_to_isogeny_clapotis(&Phi,&beta1,&beta2,&u,&v,&coeffs,&phiu,&phiv,&d1,&d2,&codom,&bas_end,&lideal_small,&QUATALG_PINFTY);
     

@@ -138,8 +138,9 @@ typedef struct ec_isom_t {
  * @{
 */
 
-
+void ec_curve_init(ec_curve_t *E);
 void ec_curve_normalize_A24(ec_curve_t *E);
+
 
 /**
  * @brief j-invariant.

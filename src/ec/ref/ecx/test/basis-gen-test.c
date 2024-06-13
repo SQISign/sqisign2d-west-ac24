@@ -124,6 +124,8 @@ test_basis_generation(unsigned int n, bool new)
     ec_basis_t basis;
     ec_curve_t curve;
 
+    ec_curve_init(&curve);
+
     // Set a supersingular elliptic curve
     // E : y^2 = x^3 + 6*x^2 + x
     fp2_set_small(&(curve.A), 6);
@@ -146,6 +148,8 @@ test_basis_generation_with_hints(unsigned int n, bool new)
 {
     ec_basis_t basis, basis_hint;
     ec_curve_t curve;
+    ec_curve_init(&curve);
+
     int hint[2];
 
     int check_1, check_2;
@@ -188,6 +192,7 @@ test_complete_basis_generation(unsigned int n){
     // First just grab a good basis and try completing from either one
     ec_basis_t basis, basis_1, basis_2, basis_3;
     ec_curve_t curve;
+    ec_curve_init(&curve);
 
     // Set a supersingular elliptic curve
     // E : y^2 = x^3 + 6*x^2 + x
@@ -229,6 +234,7 @@ bench_old_basis_generation(unsigned int n){
 
     ec_basis_t basis;
     ec_curve_t curve;
+    ec_curve_init(&curve);
 
     // Set a supersingular elliptic curve
     // E : y^2 = x^3 + 6*x^2 + x
@@ -258,6 +264,7 @@ bench_new_basis_generation(unsigned int n){
 
     ec_basis_t basis;
     ec_curve_t curve;
+    ec_curve_init(&curve);
 
     // Set a supersingular elliptic curve
     // E : y^2 = x^3 + 6*x^2 + x
@@ -287,6 +294,7 @@ bench_old_basis_generation_from_hint(unsigned int n){
 
     ec_basis_t basis;
     ec_curve_t curve;
+    ec_curve_init(&curve);
 
     // Set a supersingular elliptic curve
     // E : y^2 = x^3 + 6*x^2 + x
@@ -319,6 +327,7 @@ bench_new_basis_generation_from_hint(unsigned int n){
 
     ec_basis_t basis;
     ec_curve_t curve;
+    ec_curve_init(&curve);
 
     // Set a supersingular elliptic curve
     // E : y^2 = x^3 + 6*x^2 + x
@@ -351,6 +360,7 @@ bench_old_basis_completion(){
 
     ec_basis_t basis, basis_1, basis_2, basis_3;
     ec_curve_t curve;
+    ec_curve_init(&curve);
 
     // Set a supersingular elliptic curve
     // E : y^2 = x^3 + 6*x^2 + x
@@ -383,6 +393,7 @@ bench_new_basis_completion(unsigned int n){
 
     ec_basis_t basis, basis_1, basis_2, basis_3;
     ec_curve_t curve;
+    ec_curve_init(&curve);
 
     // Set a supersingular elliptic curve
     // E : y^2 = x^3 + 6*x^2 + x
@@ -463,7 +474,7 @@ void bench_basis(bool new) {
 
 }
 
-int main(int argv){
+int main(void){
     test_basis(0);
     test_basis(1);
     /*

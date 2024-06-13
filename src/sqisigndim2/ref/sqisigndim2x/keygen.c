@@ -7,7 +7,7 @@
 
 void public_key_init(public_key_t *pk) {
     pk->hint_pk = (int*) malloc(2*sizeof(int));
-    ec_init(&pk->curve.A24);
+    ec_point_init(&pk->curve.A24);
     pk->curve.is_A24_computed_and_normalized = 0;
 
 }

@@ -49,6 +49,10 @@ int hd_chain_test() {
     ec_basis_t B0_two,B1_two,B0_three;
     ec_isog_odd_t phi;
 
+    ec_curve_init(&E0);
+    ec_curve_init(&E1);
+
+
     #ifndef NDEBUG
         // fp2_test 
         fp2_t xx,yy,z;
@@ -98,7 +102,7 @@ int hd_chain_test() {
     // point_print("P2",B0_two.Q);
     // point_print("P1m2",B0_two.PmQ);
 
-    printf("%ld \n",TORSION_PLUS_EVEN_POWER);
+    printf("%llu \n",TORSION_PLUS_EVEN_POWER);
 
     #ifndef NDEBUG
         assert(test_point_order_twof(&B0_two.P,&E0,TORSION_PLUS_EVEN_POWER));

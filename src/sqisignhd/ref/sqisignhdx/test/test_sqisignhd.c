@@ -37,6 +37,7 @@ bool curve_is_canonical(ec_curve_t const *E)
 {
     ec_curve_t EE;
     ec_isom_t isom;
+    ec_curve_init(&EE);
     ec_curve_normalize(&EE, &isom, E);
 
     fp2_t lhs, rhs;

@@ -6,10 +6,11 @@
 
 
 void ec_curve_normalize_A24(ec_curve_t *E) {
-    if (E->is_A24_computed_and_normalized!=155){
+    // printf("This is the current value: %d\n", E->is_A24_computed_and_normalized);
+    if (E->is_A24_computed_and_normalized != 1){
         AC_to_A24(&E->A24,E);
         ec_normalize(&E->A24);
-        E->is_A24_computed_and_normalized = 155;
+        E->is_A24_computed_and_normalized = 1;
     }
 }
 
@@ -18,13 +19,26 @@ bool ec_is_zero(ec_point_t const* P)
     return fp2_is_zero(&P->z);
 }
 
-void ec_init(ec_point_t* P)
+void ec_point_init(ec_point_t* P)
 { // Initialize point as identity element (1:0)
     fp2_set_one(&(P->x));
     fp2_set_zero(&(P->z));
-
 }
 
+// Initialise the curve struct
+void ec_curve_init(ec_curve_t *E) {
+    // Initialise the constants
+    fp2_set_zero(&(E->A));
+    fp2_set_one(&(E->C));
+
+    // Initalise the point (A+2 : 4C)
+    ec_point_init(&(E->A24));
+
+    // Set the bool to be false by default
+    E->is_A24_computed_and_normalized = 0;
+}
+
+// TODO: this is simply ec_point_init, we don't need both?
 void ec_set_zero(ec_point_t *P)
 {
     fp2_set_one(&(P->x));
@@ -222,7 +236,7 @@ void xMUL(ec_point_t* Q, ec_point_t const* P, digit_t const* k, ec_curve_t const
     fp2_add(&A24.x, &A24.x, &curve->A);
 
     // R0 <- (1:0), R1 <- P
-    ec_init(&R0);
+    ec_point_init(&R0);
     fp2_copy(&R1.x, &P->x);
     fp2_copy(&R1.z, &P->z);
 
@@ -252,7 +266,7 @@ void xMULv2(ec_point_t* Q, ec_point_t const* P, digit_t const* k, const int kbit
     unsigned int bit = 0, prevbit = 0, swap;
 
     // R0 <- (1:0), R1 <- P
-    ec_init(&R0);
+    ec_point_init(&R0);
     fp2_copy(&R1.x, &P->x);
     fp2_copy(&R1.z, &P->z);
 
@@ -364,7 +378,7 @@ void xDBLMUL(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_point_t co
     }
 
     // Point initialization
-    ec_init(&R[0]);
+    ec_point_init(&R[0]);
     maskk = 0 - sigma[0];
     select_ct((digit_t*)&R[1], (digit_t*)P, (digit_t*)Q, maskk, 4*NWORDS_FIELD);
     select_ct((digit_t*)&R[2], (digit_t*)Q, (digit_t*)P, maskk, 4*NWORDS_FIELD);
@@ -483,7 +497,7 @@ void xDBLMUL_bounded(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_po
     }
 
     // Point initialization
-    ec_init(&R[0]);
+    ec_point_init(&R[0]);
     maskk = 0 - sigma[0];
     select_ct((digit_t*)&R[1], (digit_t*)P, (digit_t*)Q, maskk, 4*NWORDS_FIELD);
     select_ct((digit_t*)&R[2], (digit_t*)Q, (digit_t*)P, maskk, 4*NWORDS_FIELD);
@@ -1088,6 +1102,8 @@ void ec_dlog_2(digit_t* scalarP, digit_t* scalarQ, const ec_basis_t* PQ2, const 
     ec_point_t Rnorm;    
     ec_curve_t curvenorm;
     ec_basis_t PQ2norm;
+
+    ec_curve_init(&curvenorm);
     
     f = POWER_OF_2;
     memset(scalarP, 0, NWORDS_ORDER*RADIX/8);
@@ -1595,6 +1611,8 @@ void ec_dlog_3(digit_t* scalarP, digit_t* scalarQ, const ec_basis_t* PQ3, const 
     ec_point_t Rnorm;
     ec_curve_t curvenorm;
     ec_basis_t PQ3norm;
+
+    ec_curve_init(&curvenorm);
 
     f = POWER_OF_3;
     memset(scalarP, 0, NWORDS_ORDER*RADIX/8);

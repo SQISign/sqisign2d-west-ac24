@@ -88,10 +88,11 @@ int fixed_degree_isogeny(theta_chain_t *isog, quat_left_ideal_t *lideal, ibz_t *
     int found;
     ibz_t two_pow,tmp;
     quat_alg_elem_t theta;
-    ec_curve_t E0 = CURVE_E0; 
+    ec_curve_t E0 = CURVE_E0;
+    ec_curve_init(&E0);
+
     int length;
     int extra_info = 1;
-
 
     int u_bitsize = ibz_bitsize(u);
 
@@ -760,6 +761,8 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
 
     // now we set-up the kernel 
     ec_curve_t E0 = CURVE_E0;
+    ec_curve_init(&E0);
+
     ec_basis_t bas;
     theta_couple_curve_t E01;
     theta_couple_point_t T1;

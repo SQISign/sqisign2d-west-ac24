@@ -354,6 +354,9 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     int pow_dim2_deg_resp;
     int backtracking;
 
+    ec_curve_init(&E_aux);
+    ec_curve_init(&E_com);
+
     ibz_init(&tmp); ibz_init(&lattice_content);ibz_init(&remain);
 
     ibz_init(&degree_full_resp);
@@ -729,7 +732,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     fp2_inv(&temp_fp2);
     fp2_mul(&sig->E_aux.A,&temp_fp2,&E_aux2.A);
     fp2_set_one(&sig->E_aux.C);
-    ec_init(&sig->E_aux.A24);
+    ec_point_init(&sig->E_aux.A24);
     sig->E_aux.is_A24_computed_and_normalized = 0;
 
     ibz_vec_2_finalize(&vec);

@@ -236,6 +236,8 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
 
     int found=1;
 
+    ec_curve_init(&E_aux);
+    ec_curve_init(&E_com);
     ibz_init(&tmp); ibz_init(&lattice_content);ibz_init(&remain);
 
     ibz_init(&degree_full_resp);
@@ -442,7 +444,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
     fp2_inv(&temp_fp2);
     fp2_mul(&sig->E_aux.A,&temp_fp2,&E_aux.A);
     fp2_set_one(&sig->E_aux.C);
-    ec_init(&sig->E_aux.A24);
+    ec_point_init(&sig->E_aux.A24);
     sig->E_aux.is_A24_computed_and_normalized = 0;
 
     ibz_pow(&tmp,&ibz_const_two,len_chall+exp_diadic_val_full_resp);
@@ -639,6 +641,8 @@ int protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned cha
     ec_isog_even_t phi_chall;
     ec_basis_t bas_EA,B_chall;
     ec_curve_t Epk;
+    
+    ec_curve_init(&Epk);
     ibz_mat_2x2_init(&mat);
     ibz_init(&tmp);ibz_init(&remain);ibz_init(&tmp2);
     ibz_vec_2_init(&vec_chall);
