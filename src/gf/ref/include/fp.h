@@ -26,6 +26,7 @@ void fp_encode(void *dst, const fp_t *a);
 void fp_decode_reduce(fp_t *d, const void *src, size_t len);
 void fp_decode(fp_t *d, const void *src);
 
+void fp_select(fp_t *d, const fp_t *a0, const fp_t *a1, uint32_t ctl);
 void fp_cswap(fp_t *a, fp_t *b, uint32_t ctl);
 
 void fp_add(fp_t* out, const fp_t* a, const fp_t* b);

@@ -199,10 +199,16 @@ bool is_point_equal(const ec_point_t* P, const ec_point_t* Q)
     return fp2_is_zero(&t0);
 }
 
+void select_point(ec_point_t* Q, ec_point_t const* P1, ec_point_t const* P2, const digit_t option)
+{ // Select points
+  // If option = 0 then Q <- P1, else if option = 0xFF...FF then Q <- P2
+    fp2_select(&(Q->x), &(P1->x), &(P2->x), option);
+    fp2_select(&(Q->z), &(P1->z), &(P2->z), option);
+}
+
 void swap_points(ec_point_t* P, ec_point_t* Q, const digit_t option)
 { // Swap points
   // If option = 0 then P <- P and Q <- Q, else if option = 0xFF...FF then P <- Q and Q <- P
-    // digit_t temp;
     fp2_cswap(&(P->x), &(Q->x), option);
     fp2_cswap(&(P->z), &(Q->z), option);
 }
@@ -287,7 +293,8 @@ void xMULv2(ec_point_t* Q, ec_point_t const* P, digit_t const* k, const int kbit
     fp2_copy(&Q->z, &R0.z);
 }
 
-
+// TODO:
+// These mp functions should be moved out of ec and into a multiprecision thing...
 
 static void mp_sub(digit_t* c, digit_t const* a, digit_t const* b, const unsigned int nwords)
 { // Multiprecision subtraction, assuming a > b
@@ -317,6 +324,10 @@ void swap_ct(digit_t* a, digit_t* b, const digit_t option, const int nwords)
         b[i] = temp ^ b[i];
     }
 }
+
+// These mp functions should be moved out of ec and into a multiprecision thing...
+// TODO
+
 
 // Compute S = k*P + l*Q, with PQ = P+Q
 void xDBLMUL(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_point_t const* Q, digit_t const* l, ec_point_t const* PQ, const ec_curve_t* curve)
@@ -379,8 +390,9 @@ void xDBLMUL(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_point_t co
     // Point initialization
     ec_point_init(&R[0]);
     maskk = 0 - sigma[0];
-    select_ct((digit_t*)&R[1], (digit_t*)P, (digit_t*)Q, maskk, 4*NWORDS_FIELD);
-    select_ct((digit_t*)&R[2], (digit_t*)Q, (digit_t*)P, maskk, 4*NWORDS_FIELD);
+    select_point(&R[1], P, Q, maskk);
+    select_point(&R[2], Q, P, maskk);
+
     fp2_copy(&DIFF1a.x, &R[1].x);
     fp2_copy(&DIFF1a.z, &R[1].z);
     fp2_copy(&DIFF1b.x, &R[2].x);
@@ -408,14 +420,15 @@ void xDBLMUL(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_point_t co
     for (i = BITS-1; i>=0; i--) {
         h = r[2*i] + r[2*i+1];    // in {0, 1, 2}
         maskk = 0 - (h & 1);
-        select_ct((digit_t*)&T[0], (digit_t*)&R[0], (digit_t*)&R[1], maskk, 4*NWORDS_FIELD);
+        select_point(&T[0], &R[0], &R[1], maskk);
         maskk = 0 - (h >> 1);
-        select_ct((digit_t*)&T[0], (digit_t*)&T[0], (digit_t*)&R[2], maskk, 4*NWORDS_FIELD);
+        select_point(&T[0], &T[0], &R[2], maskk);
         xDBLv2_normalized(&T[0], &T[0], &A24);
 
         maskk = 0 - r[2*i+1];     // in {0, 1}
-        select_ct((digit_t*)&T[1], (digit_t*)&R[0], (digit_t*)&R[1], maskk, 4*NWORDS_FIELD);
-        select_ct((digit_t*)&T[2], (digit_t*)&R[1], (digit_t*)&R[2], maskk, 4*NWORDS_FIELD);
+        select_point(&T[1], &R[0], &R[1], maskk);
+        select_point(&T[2], &R[1], &R[2], maskk);
+
         swap_points(&DIFF1a, &DIFF1b, maskk);
         xADD(&T[1], &T[1], &T[2], &DIFF1a);
         xADD(&T[2], &R[0], &R[2], &DIFF2a);
@@ -425,15 +438,16 @@ void xDBLMUL(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_point_t co
         swap_points(&DIFF2a, &DIFF2b, maskk);
 
         // R <- T
-        memcpy((digit_t*)&R[0], (digit_t*)&T[0], NWORDS_FIELD*RADIX*4/8);
-        memcpy((digit_t*)&R[1], (digit_t*)&T[1], NWORDS_FIELD*RADIX*4/8);
-        memcpy((digit_t*)&R[2], (digit_t*)&T[2], NWORDS_FIELD*RADIX*4/8);
+        copy_point(&R[0], &T[0]);
+        copy_point(&R[1], &T[1]);
+        copy_point(&R[2], &T[2]);
     }
 
     // Output R[evens]
-    select_ct((digit_t*)S, (digit_t*)&R[0], (digit_t*)&R[1], mevens, 4*NWORDS_FIELD);
+    select_point(S, &R[0], &R[1], mevens);
+
     maskk = 0 - (bitk0 & bitl0);
-    select_ct((digit_t*)S, (digit_t*)S, (digit_t*)&R[2], maskk, 4*NWORDS_FIELD);
+    select_point(S, &S[0], &R[2], maskk);
 
 }
 
@@ -498,8 +512,9 @@ void xDBLMUL_bounded(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_po
     // Point initialization
     ec_point_init(&R[0]);
     maskk = 0 - sigma[0];
-    select_ct((digit_t*)&R[1], (digit_t*)P, (digit_t*)Q, maskk, 4*NWORDS_FIELD);
-    select_ct((digit_t*)&R[2], (digit_t*)Q, (digit_t*)P, maskk, 4*NWORDS_FIELD);
+    select_point(&R[1], P, Q, maskk);
+    select_point(&R[2], Q, P, maskk);
+
     fp2_copy(&DIFF1a.x, &R[1].x);
     fp2_copy(&DIFF1a.z, &R[1].z);
     fp2_copy(&DIFF1b.x, &R[2].x);
@@ -523,9 +538,9 @@ void xDBLMUL_bounded(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_po
     copy_point(&A24,&E.A24);
 
     // T <- R
-    memcpy((digit_t*)&T[0], (digit_t*)&R[0], NWORDS_FIELD*RADIX*4/8);
-    memcpy((digit_t*)&T[1], (digit_t*)&R[1], NWORDS_FIELD*RADIX*4/8);
-    memcpy((digit_t*)&T[2], (digit_t*)&R[2], NWORDS_FIELD*RADIX*4/8);
+    copy_point(&T[0], &R[0]);
+    copy_point(&T[1], &R[1]);
+    copy_point(&T[2], &R[2]);
 
     // Main loop
     for (i = BITS-1; i>=0; i--) {
@@ -537,21 +552,21 @@ void xDBLMUL_bounded(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_po
         h = r[2*i] + r[2*i+1];    // in {0, 1, 2}
         maskk = 0 - (h & 1);
         if (apply) {
-            select_ct((digit_t*)&T[0], (digit_t*)&R[0], (digit_t*)&R[1], maskk, 4*NWORDS_FIELD);
+            select_point(&T[0], &R[0], &R[1], maskk);
         }
         
         maskk = 0 - (h >> 1);
         
         if (apply) {
-            select_ct((digit_t*)&T[0], (digit_t*)&T[0], (digit_t*)&R[2], maskk, 4*NWORDS_FIELD);
+            select_point(&T[0], &T[0], &R[2], maskk);
             xDBLv2_normalized(&T[0], &T[0], &A24);
         }
         
 
         maskk = 0 - r[2*i+1];     // in {0, 1}
         if (apply) {
-            select_ct((digit_t*)&T[1], (digit_t*)&R[0], (digit_t*)&R[1], maskk, 4*NWORDS_FIELD);
-            select_ct((digit_t*)&T[2], (digit_t*)&R[1], (digit_t*)&R[2], maskk, 4*NWORDS_FIELD);
+            select_point(&T[1], &R[0], &R[1], maskk);
+            select_point(&T[2], &R[1], &R[2], maskk);
         }
         
         swap_points(&DIFF1a, &DIFF1b, maskk);
@@ -566,9 +581,9 @@ void xDBLMUL_bounded(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_po
         swap_points(&DIFF2a, &DIFF2b, maskk);
 
         // R <- T
-        memcpy((digit_t*)&R[0], (digit_t*)&T[0], NWORDS_FIELD*RADIX*4/8);
-        memcpy((digit_t*)&R[1], (digit_t*)&T[1], NWORDS_FIELD*RADIX*4/8);
-        memcpy((digit_t*)&R[2], (digit_t*)&T[2], NWORDS_FIELD*RADIX*4/8);
+        copy_point(&R[0], &T[0]);
+        copy_point(&R[1], &T[1]);
+        copy_point(&R[2], &T[2]);
         
         // fp2_copy(&t1,&R[0].z);
         // fp2_inv(&t1);
@@ -587,9 +602,10 @@ void xDBLMUL_bounded(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_po
     }
 
     // Output R[evens]
-    select_ct((digit_t*)S, (digit_t*)&R[0], (digit_t*)&R[1], mevens, 4*NWORDS_FIELD);
+    select_point(S, &R[0], &R[1], mevens);
+
     maskk = 0 - (bitk0 & bitl0);
-    select_ct((digit_t*)S, (digit_t*)S, (digit_t*)&R[2], maskk, 4*NWORDS_FIELD);
+    select_point(S, &S[0], &R[2], maskk);
 
 }
 
@@ -1258,7 +1274,7 @@ void ec_dlog_2(digit_t* scalarP, digit_t* scalarQ, const ec_basis_t* PQ2, const 
     }
     mp_add(scalarP, &xx[0], &ww[0], NWORDS_ORDER);
     mp_add(scalarQ, &yy[0], &zz[0], NWORDS_ORDER);
-    // fp_copy(fp2, TWOpFm1);   // 2^(f-1)
+    // TODO: these variable names and types aren't so explicit here...
     memcpy((digit_t*)fp2, (digit_t*)TWOpFm1, NWORDS_FIELD*RADIX/8);
 
     // If scalarP > 2^(f-1) or (scalarQ > 2^(f-1) and (scalarP = 0 or scalarP = 2^(f-1))) then output -scalarP mod 2^f, -scalarQ mod 2^f

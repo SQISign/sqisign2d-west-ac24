@@ -46,6 +46,12 @@ bool fp2_is_one(const fp2_t* a)
 }
 
 void
+fp2_select(fp2_t *d, const fp2_t *a0, const fp2_t *a1, uint32_t ctl){
+    fp_select(&(d->re), &(a0->re), &(a1->re), ctl);
+    fp_select(&(d->im), &(a0->im), &(a1->im), ctl);
+}
+
+void
 fp2_cswap(fp2_t *a, fp2_t *b, uint32_t ctl){
     fp_cswap(&(a->re), &(b->re), ctl);
     fp_cswap(&(a->im), &(b->im), ctl);
