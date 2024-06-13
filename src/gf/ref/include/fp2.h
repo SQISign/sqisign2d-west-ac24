@@ -35,6 +35,7 @@ void fp2_pow(fp2_t *out,const fp2_t * x,const digit_t *exp,const int size);
 void fp2_print(char *name, fp2_t const a);
 void digit_print(char *name,digit_t *a);
 void fp2_encode(void *dst, const fp2_t *a);
+void fp2_select(fp2_t *d, const fp2_t *a0, const fp2_t *a1, uint32_t ctl);
 void fp2_cswap(fp2_t *a, fp2_t *b, uint32_t ctl);
 
 extern const uint64_t NQR_TABLE[20][2][NWORDS_FIELD];

@@ -27,7 +27,8 @@
 #define fp_sqr gf27500_square
 #define fp_half gf27500_half
 
-// Conditional swapping
+// Constant time selection and swapping
+#define fp_select gf27500_select
 #define fp_swap gf27500_cswap
 
 // Comparisons for fp elements
@@ -52,19 +53,19 @@
 static inline void
 fp_copy(fp_t * out, const fp_t * a)
 {
-    *out = *a;
+    memcpy(out, a, sizeof(fp_t));
 }
 
 static inline void
 fp_set_zero(fp_t * a)
 {
-    *a = ZERO;
+    memcpy(a, &ZERO, sizeof(fp_t));
 }
 
 static inline void
 fp_set_one(fp_t * a)
 {
-    *a = ONE;
+    memcpy(a, &ONE, sizeof(fp_t));
 }
 
 // Functions defined in low level code but with different API
