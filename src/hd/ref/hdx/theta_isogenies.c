@@ -1333,6 +1333,9 @@ int splitting_comput(theta_splitting_t *out, const theta_structure_t *A) {
 void theta_product_structure_to_elliptic_product(theta_couple_curve_t *E12, theta_structure_t *A) {
     fp2_t xx,yy,temp1,temp2;
 
+    ec_curve_init(&(E12->E1));
+    ec_curve_init(&(E12->E2));
+
     // xx = x², yy = y² 
     fp2_sqr(&xx,&A->null_point.x);
     fp2_sqr(&yy,&A->null_point.y);
@@ -1344,6 +1347,7 @@ void theta_product_structure_to_elliptic_product(theta_couple_curve_t *E12, thet
     fp2_sqr(&temp1,&temp1);
     fp2_sqr(&temp2,&temp2);
     fp2_add(&temp1,&temp1,&temp2);
+    // TODO fix this!
     fp2_sett(&E12->E1.A,1);
     fp2_mul(&E12->E1.A,&E12->E1.A,&temp1);
     fp2_neg(&E12->E1.A,&E12->E1.A);

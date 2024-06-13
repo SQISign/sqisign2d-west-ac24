@@ -201,14 +201,14 @@ void fp2_print(char *name, fp2_t const a){
     fp_to_w64(re_arr, &(b.re));
     fp_to_w64(im_arr, &(b.im));
 
-    for (int i = 0; i < NWORDS_FIELD*RADIX; i++) {
-        printf("%016llx", re_arr[i]);
+    for (int i = 0; i < NWORDS_FIELD; i++) {
+        printf("%016llx", re_arr[NWORDS_FIELD - i - 1]);
     }
 
     printf(" + i*0x");
     
-    for (int i = 0; i < NWORDS_FIELD*RADIX; i++) {
-        printf("%016llx", im_arr[i]);
+    for (int i = 0; i < NWORDS_FIELD; i++) {
+        printf("%016llx", im_arr[NWORDS_FIELD - i - 1]);
     }
     printf("\n");
 }

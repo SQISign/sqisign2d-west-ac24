@@ -790,7 +790,7 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         theta_chain_t Fu,Fv;
         theta_couple_point_t V1,V2,V1m2; 
         theta_couple_curve_t E00;
-        E00.E1=E0;
+        E00.E1 = E0;
         E00.E2 = E0;
 
         // we perform the computation of phiu with a fixed degree isogeny 

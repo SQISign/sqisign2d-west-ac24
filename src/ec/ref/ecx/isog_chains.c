@@ -153,6 +153,11 @@ static void ec_eval_even_strategy(ec_curve_t* image, ec_point_t* points, unsigne
 
     // Output curve in the form (A:C)
     A24_to_AC(image, A24);
+
+    // TODO:
+    // The curve does not have A24 normalised though
+    // should we normalise it here, or do it later?
+    image->is_A24_computed_and_normalized = 0;
 }
 
 
