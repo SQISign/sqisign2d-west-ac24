@@ -1,5 +1,4 @@
 #include "curve_extras.h"
-#include "tedwards.h"
 #include <ec_params.h>
 #include <assert.h>
 

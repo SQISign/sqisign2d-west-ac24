@@ -406,49 +406,6 @@ void ec_eval_odd(ec_curve_t* image, const ec_isog_odd_t* phi,
     image->is_A24_computed_and_normalized = 0;
 }
 
-void ec_curve_normalize(ec_curve_t *new, ec_isom_t *isom, const ec_curve_t *old){
-    fp2_t t0, t1, t2, t3, t4, t5;
-    // Compute the other solutions:
-    // A'^2 = [ sqrt(A^2-4C^2)*(9C^2-A^2) +- (A^3-3AC^2) ] / [ 2C^2*sqrt(A^2-4C^2) ]
-    fp2_sqr(&t0, &old->C);      //C^2
-    fp2_add(&t1, &t0, &t0);     //2C^2
-    fp2_add(&t2, &t1, &t1);     //4C^2
-    fp2_sqr(&t3, &old->A);      //A^2
-    fp2_sub(&t2, &t3, &t2);     //A^2-4C^2
-    fp2_sqrt(&t2);              //sqrt(A^2-4C^2)
-    fp2_add(&t0, &t0, &t1);     //3C^2
-    fp2_mul(&t1, &t2, &t1);     //2C^2*sqrt(A^2-4C^2)
-    fp2_sub(&t5, &t3, &t0);     //A^2-3C^2
-    fp2_mul(&t5, &t5, &old->A);     //A^3-3AC^2
-    fp2_add(&t4, &t0, &t0);     //6C^2
-    fp2_add(&t0, &t4, &t0);     //9C^2
-    fp2_sub(&t0, &t0, &t3);     //9C^2-A^2
-    fp2_add(&t3, &t3, &t3);     //2A^2
-    fp2_mul(&t3, &t3, &t2);     //2A^2*sqrt(A^2-4C^2)
-    fp2_mul(&t2, &t2, &t0);     //sqrt(A^2-4C^2)*(9C^2-A^2)
-    fp2_add(&t0, &t2, &t5);     //sqrt(A^2-4C^2)*(9C^2-A^2) + (A^3-3AC^2)
-    fp2_sub(&t2, &t2, &t5);     //sqrt(A^2-4C^2)*(9C^2-A^2) - (A^3-3AC^2)
-    fp2_inv(&t1);               //1/2C^2*sqrt(A^2-4C^2)
-    fp2_mul(&t0, &t0, &t1);     // First solution
-    fp2_mul(&t2, &t2, &t1);     // Second solution
-    fp2_mul(&t1, &t3, &t1);     // Original solution
-
-    // Chose the lexicographically first solution
-    if(fp2_cmp(&t0, &t1)==1)
-        fp2_copy(&t0, &t1);
-    if(fp2_cmp(&t0, &t2)==1)
-        fp2_copy(&t0, &t2);
-
-    // Copy the solution
-    fp2_sqrt(&t0);
-    ec_curve_t E;
-    fp2_copy(&E.A, &t0);
-    fp2_set_one(&E.C);
-    ec_isomorphism(isom, old, &E);
-    fp2_copy(&new->A, &E.A);
-    fp2_copy(&new->C, &E.C);
-}
-
 void ec_isomorphism(ec_isom_t* isom, const ec_curve_t* from, const ec_curve_t* to){
     fp2_t t0, t1, t2, t3, t4;
     fp2_mul(&t0, &from->A, &to->C);

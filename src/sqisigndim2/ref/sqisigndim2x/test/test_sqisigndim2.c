@@ -30,22 +30,6 @@ static __inline__ uint64_t rdtsc(void)
     return (uint64_t) cpucycles();
 }
 
-
-
-
-bool curve_is_canonical(ec_curve_t const *E)
-{
-    ec_curve_t EE;
-    ec_isom_t isom;
-    ec_curve_init(&EE);
-    ec_curve_normalize(&EE, &isom, E);
-
-    fp2_t lhs, rhs;
-    fp2_mul(&lhs, &E->A, &EE.C);
-    fp2_mul(&rhs, &E->C, &EE.A);
-    return fp2_is_equal(&lhs, &rhs);
-}
-
 void bench_fp2_operations(int repeat) {
 
     uint64_t t0, t1;

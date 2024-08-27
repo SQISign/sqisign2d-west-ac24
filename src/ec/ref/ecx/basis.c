@@ -1,5 +1,7 @@
-#include "isog.h"
+#include "ec.h"
 #include "fp2.h"
+#include "isog.h"
+#include "gf_constants.h"
 
 
 static void xTPL(ec_point_t* Q, const ec_point_t* P, const ec_point_t* A3)
@@ -743,7 +745,7 @@ ec_curve_to_point_2f_above_montgomery(ec_point_t *P, const ec_curve_t *curve){
         // collect z2-value from table, we have 20 chances
         // and expect to be correct 50% of the time.
         if (hint < 20){
-            z2 = *(fp2_t*)Z_NQR_TABLE[hint];
+            z2 = Z_NQR_TABLE[hint];
         }
         // Fallback method for when we're unlucky
         else {
@@ -823,7 +825,7 @@ ec_curve_to_point_2f_above_montgomery_from_hint(ec_point_t *P, const ec_curve_t 
     // With 1/2^20 chance we can use the table look up
     fp2_t z1, z2;
     if (hint < 20) {
-        z2 = *(fp2_t*)Z_NQR_TABLE[hint];
+        z2 = Z_NQR_TABLE[hint];
     }
      // Otherwise we create this using the form i + hint
     else{
@@ -854,7 +856,7 @@ ec_curve_to_point_2f_not_above_montgomery(ec_point_t *P, const ec_curve_t *curve
         // For each guess of an x, we expect it to be a point 1/2
         // the time, so our table look up will work with failure 2^20
         if (hint < 20){
-            x = *(fp2_t*)NQR_TABLE[hint];
+            x = NQR_TABLE[hint];
         }
 
         // Fallback method in case we do not find a value!
@@ -917,7 +919,7 @@ ec_curve_to_point_2f_not_above_montgomery_from_hint(ec_point_t *P, const ec_curv
     // If we got lucky (1/2^20) then we just grab an x-value 
     // from the table
     if (hint < 20){
-        x = *(fp2_t*)NQR_TABLE[hint];
+        x = NQR_TABLE[hint];
     }
     // Otherwise, we find points of the form
     // i + hint

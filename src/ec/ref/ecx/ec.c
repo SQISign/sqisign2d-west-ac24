@@ -1,5 +1,4 @@
 #include "curve_extras.h"
-#include "tedwards.h"
 #include <ec_params.h>
 #include <assert.h>
 #include <stdio.h>
@@ -292,42 +291,6 @@ void xMULv2(ec_point_t* Q, ec_point_t const* P, digit_t const* k, const int kbit
     fp2_copy(&Q->x, &R0.x);
     fp2_copy(&Q->z, &R0.z);
 }
-
-// TODO:
-// These mp functions should be moved out of ec and into a multiprecision thing...
-
-static void mp_sub(digit_t* c, digit_t const* a, digit_t const* b, const unsigned int nwords)
-{ // Multiprecision subtraction, assuming a > b
-    unsigned int i, borrow = 0;
-
-    for (i = 0; i < nwords; i++) {
-        SUBC(c[i], borrow, a[i], b[i], borrow);
-    }
-}
-
-void select_ct(digit_t* c, const digit_t* a, const digit_t* b, const digit_t mask, const int nwords)
-{ // Select c <- a if mask = 0, select c <- b if mask = 1...1
-
-    for (int i = 0; i < nwords; i++) {
-        c[i] = ((a[i] ^ b[i]) & mask) ^ a[i];
-    }
-}
-
-void swap_ct(digit_t* a, digit_t* b, const digit_t option, const int nwords)
-{ // Swap entries
-  // If option = 0 then P <- P and Q <- Q, else if option = 0xFF...FF then a <- b and b <- a
-    digit_t temp;
-
-    for (int i = 0; i < nwords; i++) {
-        temp = option & (a[i] ^ b[i]);
-        a[i] = temp ^ a[i];
-        b[i] = temp ^ b[i];
-    }
-}
-
-// These mp functions should be moved out of ec and into a multiprecision thing...
-// TODO
-
 
 // Compute S = k*P + l*Q, with PQ = P+Q
 void xDBLMUL(ec_point_t* S, ec_point_t const* P, digit_t const* k, ec_point_t const* Q, digit_t const* l, ec_point_t const* PQ, const ec_curve_t* curve)
@@ -835,42 +798,6 @@ void recover_y(fp2_t* y, fp2_t const* Px, ec_curve_t const* curve)
     fp2_mul(&t0, &t0, Px);
     fp2_add(y, y, &t0);            // x^3 + Ax^2 + x
     fp2_sqrt(y);
-
-    //fp2_t t0, t1;
-
-    //fp2_sqr(&t0, &P->x);
-    //fp2_sqr(&t1, &P->z);
-    //fp2_mul(y, &t0, &t1);
-    //fp2_mul(y, y, &curve->A);    // AX^2Z^2
-    //fp2_mul(&t0, &t0, &P->x);
-    //fp2_add(y, y, &t0);          // X^3 + AX^2Z^2
-    //fp2_mul(&t0, &t1, &P->z);
-    //fp2_sqr(&t1, &t0);
-    //fp2_mul(&t1, &t1, &P->x);
-    //fp2_add(y, y, &t1);          // X^3 + AX^2Z^2 + XZ^6
-    //fp2_sqrt(y);
-}
-
-
-static int mp_compare(digit_t* a, digit_t* b, unsigned int nwords)
-{ // Multiprecision comparison, a=b? : (1) a>b, (0) a=b, (-1) a<b
-
-    for (int i = nwords-1; i >= 0; i--) {
-        if (a[i] > b[i]) return 1;
-        else if (a[i] < b[i]) return -1;
-    }
-    return 0;
-}
-
-static bool mp_is_zero(const digit_t* a, unsigned int nwords)
-{ // Is a multiprecision element zero?
-  // Returns 1 (true) if a=0, 0 (false) otherwise
-    digit_t r = 0;
-
-    for (unsigned int i = 0; i < nwords; i++)
-        r |= a[i] ^ 0;
-
-    return (bool)is_digit_zero_ct(r);
 }
 
 // Double-scalar multiplication R <- k*P + l*Q, fixed for (64*size)-bit scalars
@@ -963,24 +890,6 @@ void DBLMUL2(jac_point_t* R, const jac_point_t* P, const digit_t* k, const jac_p
             ADD(R, R, Q, curve);
         }
     }
-}
-
-static void mp_mul2(digit_t* c, const digit_t* a, const digit_t* b)
-{ // Multiprecision multiplication fixed to two-digit operands
-    unsigned int carry = 0;
-    digit_t t0[2], t1[2], t2[2];
-
-    MUL(t0, a[0], b[0]);
-    MUL(t1, a[0], b[1]);
-    ADDC(t0[1], carry, t0[1], t1[0], carry);
-    ADDC(t1[1], carry, 0, t1[1], carry);
-    MUL(t2, a[1], b[1]);
-    ADDC(t2[0], carry, t2[0], t1[1], carry);
-    ADDC(t2[1], carry, 0, t2[1], carry);
-    c[0] = t0[0];
-    c[1] = t0[1];
-    c[2] = t2[0];
-    c[3] = t2[1];
 }
 
 static void ec_dlog_2_step(digit_t* x, digit_t* y, const jac_point_t* R, const int f, const int B, const jac_point_t* Pe2, const jac_point_t* Qe2, const jac_point_t* PQe2, const ec_curve_t* curve)

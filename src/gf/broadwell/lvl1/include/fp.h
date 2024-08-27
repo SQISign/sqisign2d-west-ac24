@@ -29,7 +29,7 @@
 
 // Constant time selection and swapping
 #define fp_select gf5248_select
-#define fp_swap gf5248_cswap
+#define fp_cswap gf5248_cswap
 
 // Comparisons for fp elements
 #define fp_is_zero gf5248_iszero
@@ -37,10 +37,6 @@
 
 // Set a uint32 to an Fp value
 #define fp_set_small gf5248_set_small
-
-// Copy a convert to and from little endian u64 words
-#define fp_to_w64 gf5248_to_w64
-#define fp_from_w64 gf5248_from_w64
 
 // Encoding and decoding of bytes
 #define fp_encode gf5248_encode
@@ -51,30 +47,26 @@
 // use = for the shallow copies we need, but they're here for
 // now until we do a larger refactoring
 static inline void
-fp_copy(fp_t * out, const fp_t * a)
+fp_copy(fp_t *out, const fp_t *a)
 {
     memcpy(out, a, sizeof(fp_t));
 }
 
 static inline void
-fp_set_zero(fp_t * a)
+fp_set_zero(fp_t *a)
 {
     memcpy(a, &ZERO, sizeof(fp_t));
 }
 
 static inline void
-fp_set_one(fp_t * a)
+fp_set_one(fp_t *a)
 {
     memcpy(a, &ONE, sizeof(fp_t));
 }
 
 // Functions defined in low level code but with different API
-void fp_inv(fp_t * a);
-void fp_sqrt(fp_t * a);
-bool fp_is_square(const fp_t * a);
-
-// TODO
-extern const uint64_t NQR_TABLE[20][2][NWORDS_FIELD];
-extern const uint64_t Z_NQR_TABLE[20][2][NWORDS_FIELD];
+void fp_inv(fp_t *a);
+void fp_sqrt(fp_t *a);
+uint32_t fp_is_square(const fp_t *a);
 
 #endif

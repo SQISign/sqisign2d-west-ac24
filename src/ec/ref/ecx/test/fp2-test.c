@@ -81,16 +81,16 @@ int main(int argc, char* argv[])
 		assert(fp2_is_equal(&d, &c) == 1);
 
 		// fp_set(e, 1);	// Now e == 1
-		// fp2_pow(d, e, c);
+		// fp2_pow_vartime(d, e, c);
 		// assert(fp2_is_equal(&d,& c) == 1);
 		
 		// fp_set(e, 0);	// Now e == 0
-		// fp2_pow(d, e, c);
+		// fp2_pow_vartime(d, e, c);
 		// assert(fp2_is_one(&d) == 1);
 
 		// fp2_set(a, 1);	// Now e == R mod p
 		// fp_random(e);
-		// fp2_pow(d, e, a);
+		// fp2_pow_vartime(d, e, a);
 		// assert(fp2_is_one(&d) == 1);
 
 		// Testing 1/a by computing (1/a) x a

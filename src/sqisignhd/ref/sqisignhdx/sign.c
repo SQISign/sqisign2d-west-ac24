@@ -432,7 +432,7 @@ int protocols_sign(signature_t *sig, const public_key_t *pk, secret_key_t *sk, c
         weil(&w1,TORSION_PLUS_EVEN_POWER,&bas_test.P,&bas_test.Q,&bas_test.PmQ,&sk->curve.A24);
         digit_t scal[NWORDS_ORDER] = {0};
         ibz_to_digit_array(scal,&sk->secret_ideal.norm);
-        fp2_pow(&w0_test,&w0,scal,NWORDS_ORDER);
+        fp2_pow_vartime(&w0_test,&w0,scal,NWORDS_ORDER);
         assert(fp2_is_equal(&w0_test,&w1));
     #endif 
 

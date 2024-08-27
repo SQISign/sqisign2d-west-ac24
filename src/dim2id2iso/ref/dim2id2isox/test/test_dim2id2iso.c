@@ -84,23 +84,23 @@ int dim2id2iso_test_fixed_degree_isogeny() {
     digit_t digit_u[NWORDS_ORDER]={0};
     ibz_to_digit_array(digit_u,&tmp);
     fp2_t test_pow;
-    fp2_pow(&test_pow,&w0,digit_u,NWORDS_ORDER);
+    fp2_pow_vartime(&test_pow,&w0,digit_u,NWORDS_ORDER);
 
     // it seems like we always get the second curve 
     assert(fp2_is_equal(&test_pow,&w2));
     ibz_to_digit_array(digit_u,&two_pow);
-    fp2_pow(&test_pow,&w0,digit_u,NWORDS_ORDER);
+    fp2_pow_vartime(&test_pow,&w0,digit_u,NWORDS_ORDER);
     assert(fp2_is_equal(&test_pow,&w1));
 
     if (fp2_is_equal(&test_pow,&w1)) {
         ibz_to_digit_array(digit_u,&two_pow);
-        fp2_pow(&test_pow,&w0,digit_u,NWORDS_ORDER);
+        fp2_pow_vartime(&test_pow,&w0,digit_u,NWORDS_ORDER);
         fp2_is_equal(&test_pow,&w2);
     }
     else if (fp2_is_equal(&test_pow,&w2)) {
         assert(fp2_is_equal(&test_pow,&w2));
         ibz_to_digit_array(digit_u,&two_pow);
-        fp2_pow(&test_pow,&w0,digit_u,NWORDS_ORDER);
+        fp2_pow_vartime(&test_pow,&w0,digit_u,NWORDS_ORDER);
         assert(fp2_is_equal(&test_pow,&w1));
     }
     else {

@@ -44,7 +44,7 @@ static void ibz_vec_4_print2(char *name, const ibz_vec_4_t *vec){
 void print_signature(const signature_t *sig) {
     fp2_t j;
     ec_j_inv(&j, &sig->E_aux);
-    fp2_print("j_E1 = ", j);
+    fp2_print("j_E1 = ", &j);
     // ibz_mat_2x2_print(&sig->mat_sigma_phichall);
     ibz_printf("M_sigma[00] = %Zd, ", &((sig->mat_Bchall_can_to_B_chall)[0][0]));
     ibz_printf("M_sigma[01] = %Zd, ", &((sig->mat_Bchall_can_to_B_chall)[0][1]));
@@ -56,7 +56,7 @@ void print_signature(const signature_t *sig) {
 void print_public_key(const public_key_t *pk) {
     fp2_t j;
     ec_j_inv(&j, &pk->curve);
-    fp2_print("j_EA = ", j);
+    fp2_print("j_EA = ", &j);
 }
 
 

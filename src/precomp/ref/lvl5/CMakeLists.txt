@@ -1,4 +1,5 @@
 set(SOURCE_FILES_PRECOMP_${SVARIANT_UPPER}_REF
+    gf_constants.c
     torsion_constants.c
     quaternion_data.c
     endomorphism_action.c
@@ -11,6 +12,7 @@ target_compile_options(${LIB_PRECOMP_${SVARIANT_UPPER}} PRIVATE ${C_OPT_FLAGS})
 
 add_custom_command(
     OUTPUT
+        "${CMAKE_CURRENT_SOURCE_DIR}/gf_constants.c"
         "${CMAKE_CURRENT_SOURCE_DIR}/torsion_constants.c"
         "${CMAKE_CURRENT_SOURCE_DIR}/include/torsion_constants.h"
         "${CMAKE_CURRENT_SOURCE_DIR}/include/klpt_constants.h"
@@ -41,6 +43,8 @@ add_custom_target(precomp_${SVARIANT_LOWER}
         "${SAGEMATH}" "${PROJECT_SOURCE_DIR}/scripts/precompute_endomorphism_action.sage"
     COMMAND
         "${SAGEMATH}" "${PROJECT_SOURCE_DIR}/scripts/ec_params.py"
+    COMMAND
+        "${SAGEMATH}" "${PROJECT_SOURCE_DIR}/scripts/precompute_gf_constants.sage"
     WORKING_DIRECTORY
         "${CMAKE_CURRENT_SOURCE_DIR}"
 )
@@ -48,4 +52,4 @@ add_custom_target(precomp_${SVARIANT_LOWER}
 set_directory_properties(PROPERTIES CLEAN_NO_CUSTOM true)
 set_target_properties(precomp_${SVARIANT_LOWER} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
-add_dependencies(precomp precomp_lvl5)
+add_dependencies(precomp precomp_lvl1)

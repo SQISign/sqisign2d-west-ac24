@@ -174,15 +174,6 @@ void ec_iso_inv(ec_isom_t* isom);
  */
 void ec_iso_eval(ec_point_t* P, ec_isom_t* isom);
 
-/**
- * @brief Given a Montgomery curve, computes a standard model for it and the isomorphism to it.
- *
- * @param new computed new curve
- * @param isom computed isomorphism from `old` to `new`
- * @param old A Montgomery curve
- */
-void ec_curve_normalize(ec_curve_t *new, ec_isom_t *isom, const ec_curve_t *old);
-
 /** @}
 */
 /** @defgroup ec_point_t Point operations
@@ -516,7 +507,7 @@ static void point_print(char *name, ec_point_t P){
     fp2_copy(&a, &P.z);
     fp2_inv(&a);
     fp2_mul(&a, &a, &P.x);
-    fp2_print(name, a);
+    fp2_print(name, &a);
     }
 }
 
@@ -525,7 +516,7 @@ static void curve_print(char *name, ec_curve_t E){
     fp2_copy(&a, &E.C);
     fp2_inv(&a);
     fp2_mul(&a, &a, &E.A);
-    fp2_print(name, a);
+    fp2_print(name, &a);
 }
 
 static inline void AC_to_A24(ec_point_t *A24, ec_curve_t const *E)

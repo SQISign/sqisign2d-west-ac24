@@ -13,7 +13,7 @@ void theta_print(char *name, theta_point_t P) {
     fp2_copy(&a,&P.y);
     fp2_inv(&a);
     fp2_mul(&a,&a,&P.t);
-    fp2_print(name,a);
+    fp2_print(name, &a);
 }
 
 

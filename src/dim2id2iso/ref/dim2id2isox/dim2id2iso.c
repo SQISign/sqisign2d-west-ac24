@@ -840,11 +840,11 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
             digit_t digit_u[NWORDS_ORDER]={0};
             ibz_to_digit_array(digit_u,&tmp);
             fp2_t test_pow;
-            fp2_pow(&test_pow,&w0,digit_u,NWORDS_ORDER);
+            fp2_pow_vartime(&test_pow,&w0,digit_u,NWORDS_ORDER);
              
             assert(fp2_is_equal(&test_pow,&w2));
             ibz_to_digit_array(digit_u,&two_pow);
-            fp2_pow(&test_pow,&w0,digit_u,NWORDS_ORDER);
+            fp2_pow_vartime(&test_pow,&w0,digit_u,NWORDS_ORDER);
             assert(fp2_is_equal(&test_pow,&w1));        
         #endif
 
@@ -891,13 +891,13 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
             ibz_sub(&two_pow,&two_pow,&tmp);
             // now we are checking that one of the two is equal to the correct value
             ibz_to_digit_array(digit_u,&tmp);
-            fp2_pow(&test_pow,&w0,digit_u,NWORDS_ORDER);
+            fp2_pow_vartime(&test_pow,&w0,digit_u,NWORDS_ORDER);
             if (!fp2_is_equal(&test_pow,&w2)) {
                 assert(fp2_is_equal(&test_pow,&w1));
 
             }
             ibz_to_digit_array(digit_u,&two_pow);
-            fp2_pow(&test_pow,&w0,digit_u,NWORDS_ORDER);
+            fp2_pow_vartime(&test_pow,&w0,digit_u,NWORDS_ORDER);
             assert(fp2_is_equal(&test_pow,&w1));        
         #endif
 
@@ -986,11 +986,11 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
             digit_t digit_u[NWORDS_ORDER]={0};
             ibz_to_digit_array(digit_u,&tmp);
             fp2_t test_pow;
-            fp2_pow(&test_pow,&w0,digit_u,NWORDS_ORDER);
+            fp2_pow_vartime(&test_pow,&w0,digit_u,NWORDS_ORDER);
              
             assert(fp2_is_equal(&test_pow,&w2));
             ibz_to_digit_array(digit_u,&two_pow);
-            fp2_pow(&test_pow,&w0,digit_u,NWORDS_ORDER);
+            fp2_pow_vartime(&test_pow,&w0,digit_u,NWORDS_ORDER);
             assert(fp2_is_equal(&test_pow,&w1));        
         #endif
 
@@ -1188,7 +1188,7 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
     
     ibz_to_digit_array(digit_d,&tmp);
     fp2_t test_pow;
-    fp2_pow(&test_pow,&w0,digit_d,NWORDS_ORDER);
+    fp2_pow_vartime(&test_pow,&w0,digit_d,NWORDS_ORDER);
 
     // then we have selected the wrong one
     if (!fp2_is_equal(&w1,&test_pow)) {        
@@ -1210,7 +1210,7 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
             ibz_mul(&tmp,&tmp,&adjust_u);
             ibz_mod(&tmp,&tmp,&TORSION_PLUS_2POWER); 
             ibz_to_digit_array(digit_d,&tmp);
-            fp2_pow(&test_pow,&w0,digit_d,NWORDS_ORDER);
+            fp2_pow_vartime(&test_pow,&w0,digit_d,NWORDS_ORDER);
             assert(fp2_is_equal(&test_pow,&w1));
         #endif 
 
@@ -1236,7 +1236,7 @@ int dim2id2iso_ideal_to_isogeny_clapotis(theta_chain_t *isog, quat_alg_elem_t *b
         weil(&w1,TORSION_PLUS_EVEN_POWER,&basis->P,&basis->Q,&basis->PmQ,&A24);
 
         ibz_to_digit_array(digit_d,&lideal->norm);
-        fp2_pow(&test_pow,&w0,digit_d,NWORDS_ORDER);
+        fp2_pow_vartime(&test_pow,&w0,digit_d,NWORDS_ORDER);
         assert(fp2_is_equal(&test_pow,&w1));
 
     #endif
