@@ -13,36 +13,45 @@
 /*  */
 /* Computed values: */
 /*   eval z = z[0] + (z[1] << 64) + (z[2] << 128) + (z[3] << 192) */
-/*   bytes_eval z = z[0] + (z[1] << 8) + (z[2] << 16) + (z[3] << 24) + (z[4] << 32) + (z[5] << 40) + (z[6] << 48) + (z[7] << 56) + (z[8] << 64) + (z[9] << 72) + (z[10] << 80) + (z[11] << 88) + (z[12] << 96) + (z[13] << 104) + (z[14] << 112) + (z[15] << 120) + (z[16] << 128) + (z[17] << 136) + (z[18] << 144) + (z[19] << 152) + (z[20] << 160) + (z[21] << 168) + (z[22] << 176) + (z[23] << 184) + (z[24] << 192) + (z[25] << 200) + (z[26] << 208) + (z[27] << 216) + (z[28] << 224) + (z[29] << 232) + (z[30] << 240) + (z[31] << 248) */
+/*   bytes_eval z = z[0] + (z[1] << 8) + (z[2] << 16) + (z[3] << 24) + (z[4] << 32) + (z[5] << 40) +
+ * (z[6] << 48) + (z[7] << 56) + (z[8] << 64) + (z[9] << 72) + (z[10] << 80) + (z[11] << 88) +
+ * (z[12] << 96) + (z[13] << 104) + (z[14] << 112) + (z[15] << 120) + (z[16] << 128) + (z[17] <<
+ * 136) + (z[18] << 144) + (z[19] << 152) + (z[20] << 160) + (z[21] << 168) + (z[22] << 176) +
+ * (z[23] << 184) + (z[24] << 192) + (z[25] << 200) + (z[26] << 208) + (z[27] << 216) + (z[28] <<
+ * 224) + (z[29] << 232) + (z[30] << 240) + (z[31] << 248) */
 /*   twos_complement_eval z = let x1 := z[0] + (z[1] << 64) + (z[2] << 128) + (z[3] << 192) in */
-/*                            if x1 & (2^256-1) < 2^255 then x1 & (2^256-1) else (x1 & (2^256-1)) - 2^256 */
+/*                            if x1 & (2^256-1) < 2^255 then x1 & (2^256-1) else (x1 & (2^256-1)) -
+ * 2^256 */
 
 #include <stdint.h>
 typedef unsigned char fiat_p5248_uint1;
 typedef signed char fiat_p5248_int1;
 #if defined(__GNUC__) || defined(__clang__)
-#  define FIAT_P5248_FIAT_EXTENSION __extension__
-#  define FIAT_P5248_FIAT_INLINE __inline__
+#define FIAT_P5248_FIAT_EXTENSION __extension__
+#define FIAT_P5248_FIAT_INLINE __inline__
 #else
-#  define FIAT_P5248_FIAT_EXTENSION
-#  define FIAT_P5248_FIAT_INLINE
+#define FIAT_P5248_FIAT_EXTENSION
+#define FIAT_P5248_FIAT_INLINE
 #endif
 
 FIAT_P5248_FIAT_EXTENSION typedef signed __int128 fiat_p5248_int128;
 FIAT_P5248_FIAT_EXTENSION typedef unsigned __int128 fiat_p5248_uint128;
 
-/* The type fiat_p5248_montgomery_domain_field_element is a field element in the Montgomery domain. */
-/* Bounds: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]] */
+/* The type fiat_p5248_montgomery_domain_field_element is a field element in the Montgomery domain.
+ */
+/* Bounds: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff],
+ * [0x0 ~> 0xffffffffffffffff]] */
 typedef uint64_t fiat_p5248_montgomery_domain_field_element[4];
 
-/* The type fiat_p5248_non_montgomery_domain_field_element is a field element NOT in the Montgomery domain. */
-/* Bounds: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]] */
+/* The type fiat_p5248_non_montgomery_domain_field_element is a field element NOT in the Montgomery
+ * domain. */
+/* Bounds: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff],
+ * [0x0 ~> 0xffffffffffffffff]] */
 typedef uint64_t fiat_p5248_non_montgomery_domain_field_element[4];
 
 #if (-1 & 3) != 3
 #error "This code only works on a two's complement system"
 #endif
-
 
 /*
  * The function fiat_p5248_addcarryx_u64 is an addition with carry.
@@ -59,15 +68,21 @@ typedef uint64_t fiat_p5248_non_montgomery_domain_field_element[4];
  *   out1: [0x0 ~> 0xffffffffffffffff]
  *   out2: [0x0 ~> 0x1]
  */
-void fiat_p5248_addcarryx_u64(uint64_t* out1, fiat_p5248_uint1* out2, fiat_p5248_uint1 arg1, uint64_t arg2, uint64_t arg3) {
-  fiat_p5248_uint128 x1;
-  uint64_t x2;
-  fiat_p5248_uint1 x3;
-  x1 = ((arg1 + (fiat_p5248_uint128)arg2) + arg3);
-  x2 = (uint64_t)(x1 & UINT64_C(0xffffffffffffffff));
-  x3 = (fiat_p5248_uint1)(x1 >> 64);
-  *out1 = x2;
-  *out2 = x3;
+void
+fiat_p5248_addcarryx_u64(uint64_t *out1,
+                         fiat_p5248_uint1 *out2,
+                         fiat_p5248_uint1 arg1,
+                         uint64_t arg2,
+                         uint64_t arg3)
+{
+    fiat_p5248_uint128 x1;
+    uint64_t x2;
+    fiat_p5248_uint1 x3;
+    x1 = ((arg1 + (fiat_p5248_uint128)arg2) + arg3);
+    x2 = (uint64_t)(x1 & UINT64_C(0xffffffffffffffff));
+    x3 = (fiat_p5248_uint1)(x1 >> 64);
+    *out1 = x2;
+    *out2 = x3;
 }
 
 /*
@@ -85,15 +100,21 @@ void fiat_p5248_addcarryx_u64(uint64_t* out1, fiat_p5248_uint1* out2, fiat_p5248
  *   out1: [0x0 ~> 0xffffffffffffffff]
  *   out2: [0x0 ~> 0x1]
  */
-void fiat_p5248_subborrowx_u64(uint64_t* out1, fiat_p5248_uint1* out2, fiat_p5248_uint1 arg1, uint64_t arg2, uint64_t arg3) {
-  fiat_p5248_int128 x1;
-  fiat_p5248_int1 x2;
-  uint64_t x3;
-  x1 = ((arg2 - (fiat_p5248_int128)arg1) - arg3);
-  x2 = (fiat_p5248_int1)(x1 >> 64);
-  x3 = (uint64_t)(x1 & UINT64_C(0xffffffffffffffff));
-  *out1 = x3;
-  *out2 = (fiat_p5248_uint1)(0x0 - x2);
+void
+fiat_p5248_subborrowx_u64(uint64_t *out1,
+                          fiat_p5248_uint1 *out2,
+                          fiat_p5248_uint1 arg1,
+                          uint64_t arg2,
+                          uint64_t arg3)
+{
+    fiat_p5248_int128 x1;
+    fiat_p5248_int1 x2;
+    uint64_t x3;
+    x1 = ((arg2 - (fiat_p5248_int128)arg1) - arg3);
+    x2 = (fiat_p5248_int1)(x1 >> 64);
+    x3 = (uint64_t)(x1 & UINT64_C(0xffffffffffffffff));
+    *out1 = x3;
+    *out2 = (fiat_p5248_uint1)(0x0 - x2);
 }
 
 /*
@@ -110,15 +131,17 @@ void fiat_p5248_subborrowx_u64(uint64_t* out1, fiat_p5248_uint1* out2, fiat_p524
  *   out1: [0x0 ~> 0xffffffffffffffff]
  *   out2: [0x0 ~> 0xffffffffffffffff]
  */
-void fiat_p5248_mulx_u64(uint64_t* out1, uint64_t* out2, uint64_t arg1, uint64_t arg2) {
-  fiat_p5248_uint128 x1;
-  uint64_t x2;
-  uint64_t x3;
-  x1 = ((fiat_p5248_uint128)arg1 * arg2);
-  x2 = (uint64_t)(x1 & UINT64_C(0xffffffffffffffff));
-  x3 = (uint64_t)(x1 >> 64);
-  *out1 = x2;
-  *out2 = x3;
+void
+fiat_p5248_mulx_u64(uint64_t *out1, uint64_t *out2, uint64_t arg1, uint64_t arg2)
+{
+    fiat_p5248_uint128 x1;
+    uint64_t x2;
+    uint64_t x3;
+    x1 = ((fiat_p5248_uint128)arg1 * arg2);
+    x2 = (uint64_t)(x1 & UINT64_C(0xffffffffffffffff));
+    x3 = (uint64_t)(x1 >> 64);
+    *out1 = x2;
+    *out2 = x3;
 }
 
 /*
@@ -134,14 +157,16 @@ void fiat_p5248_mulx_u64(uint64_t* out1, uint64_t* out2, uint64_t arg1, uint64_t
  * Output Bounds:
  *   out1: [0x0 ~> 0xffffffffffffffff]
  */
-void fiat_p5248_cmovznz_u64(uint64_t* out1, fiat_p5248_uint1 arg1, uint64_t arg2, uint64_t arg3) {
-  fiat_p5248_uint1 x1;
-  uint64_t x2;
-  uint64_t x3;
-  x1 = (!(!arg1));
-  x2 = ((fiat_p5248_int1)(0x0 - x1) & UINT64_C(0xffffffffffffffff));
-  x3 = ((x2 & arg3) | ((~x2) & arg2));
-  *out1 = x3;
+void
+fiat_p5248_cmovznz_u64(uint64_t *out1, fiat_p5248_uint1 arg1, uint64_t arg2, uint64_t arg3)
+{
+    fiat_p5248_uint1 x1;
+    uint64_t x2;
+    uint64_t x3;
+    x1 = (!(!arg1));
+    x2 = ((fiat_p5248_int1)(0x0 - x1) & UINT64_C(0xffffffffffffffff));
+    x3 = ((x2 & arg3) | ((~x2) & arg2));
+    *out1 = x3;
 }
 
 /*
@@ -151,341 +176,345 @@ void fiat_p5248_cmovznz_u64(uint64_t* out1, fiat_p5248_uint1 arg1, uint64_t arg2
  *   0 ≤ eval arg1 < m
  *   0 ≤ eval arg2 < m
  * Postconditions:
- *   eval (from_montgomery out1) mod m = (eval (from_montgomery arg1) * eval (from_montgomery arg2)) mod m
- *   0 ≤ eval out1 < m
+ *   eval (from_montgomery out1) mod m = (eval (from_montgomery arg1) * eval (from_montgomery arg2))
+ * mod m 0 ≤ eval out1 < m
  *
  */
-void fiat_p5248_mul(fiat_p5248_montgomery_domain_field_element out1, const fiat_p5248_montgomery_domain_field_element arg1, const fiat_p5248_montgomery_domain_field_element arg2) {
-  uint64_t x1;
-  uint64_t x2;
-  uint64_t x3;
-  uint64_t x4;
-  uint64_t x5;
-  uint64_t x6;
-  uint64_t x7;
-  uint64_t x8;
-  uint64_t x9;
-  uint64_t x10;
-  uint64_t x11;
-  uint64_t x12;
-  uint64_t x13;
-  fiat_p5248_uint1 x14;
-  uint64_t x15;
-  fiat_p5248_uint1 x16;
-  uint64_t x17;
-  fiat_p5248_uint1 x18;
-  uint64_t x19;
-  uint64_t x20;
-  uint64_t x21;
-  uint64_t x22;
-  uint64_t x23;
-  uint64_t x24;
-  uint64_t x25;
-  uint64_t x26;
-  uint64_t x27;
-  uint64_t x28;
-  fiat_p5248_uint1 x29;
-  uint64_t x30;
-  fiat_p5248_uint1 x31;
-  uint64_t x32;
-  fiat_p5248_uint1 x33;
-  uint64_t x34;
-  uint64_t x35;
-  fiat_p5248_uint1 x36;
-  uint64_t x37;
-  fiat_p5248_uint1 x38;
-  uint64_t x39;
-  fiat_p5248_uint1 x40;
-  uint64_t x41;
-  fiat_p5248_uint1 x42;
-  uint64_t x43;
-  fiat_p5248_uint1 x44;
-  uint64_t x45;
-  uint64_t x46;
-  uint64_t x47;
-  uint64_t x48;
-  uint64_t x49;
-  uint64_t x50;
-  uint64_t x51;
-  uint64_t x52;
-  uint64_t x53;
-  fiat_p5248_uint1 x54;
-  uint64_t x55;
-  fiat_p5248_uint1 x56;
-  uint64_t x57;
-  fiat_p5248_uint1 x58;
-  uint64_t x59;
-  uint64_t x60;
-  fiat_p5248_uint1 x61;
-  uint64_t x62;
-  fiat_p5248_uint1 x63;
-  uint64_t x64;
-  fiat_p5248_uint1 x65;
-  uint64_t x66;
-  fiat_p5248_uint1 x67;
-  uint64_t x68;
-  fiat_p5248_uint1 x69;
-  uint64_t x70;
-  uint64_t x71;
-  uint64_t x72;
-  uint64_t x73;
-  uint64_t x74;
-  uint64_t x75;
-  uint64_t x76;
-  uint64_t x77;
-  uint64_t x78;
-  fiat_p5248_uint1 x79;
-  uint64_t x80;
-  fiat_p5248_uint1 x81;
-  uint64_t x82;
-  fiat_p5248_uint1 x83;
-  uint64_t x84;
-  uint64_t x85;
-  fiat_p5248_uint1 x86;
-  uint64_t x87;
-  fiat_p5248_uint1 x88;
-  uint64_t x89;
-  fiat_p5248_uint1 x90;
-  uint64_t x91;
-  fiat_p5248_uint1 x92;
-  uint64_t x93;
-  fiat_p5248_uint1 x94;
-  uint64_t x95;
-  uint64_t x96;
-  uint64_t x97;
-  uint64_t x98;
-  uint64_t x99;
-  uint64_t x100;
-  uint64_t x101;
-  uint64_t x102;
-  uint64_t x103;
-  uint64_t x104;
-  fiat_p5248_uint1 x105;
-  uint64_t x106;
-  fiat_p5248_uint1 x107;
-  uint64_t x108;
-  fiat_p5248_uint1 x109;
-  uint64_t x110;
-  uint64_t x111;
-  fiat_p5248_uint1 x112;
-  uint64_t x113;
-  fiat_p5248_uint1 x114;
-  uint64_t x115;
-  fiat_p5248_uint1 x116;
-  uint64_t x117;
-  fiat_p5248_uint1 x118;
-  uint64_t x119;
-  fiat_p5248_uint1 x120;
-  uint64_t x121;
-  uint64_t x122;
-  uint64_t x123;
-  uint64_t x124;
-  uint64_t x125;
-  uint64_t x126;
-  uint64_t x127;
-  uint64_t x128;
-  uint64_t x129;
-  fiat_p5248_uint1 x130;
-  uint64_t x131;
-  fiat_p5248_uint1 x132;
-  uint64_t x133;
-  fiat_p5248_uint1 x134;
-  uint64_t x135;
-  uint64_t x136;
-  fiat_p5248_uint1 x137;
-  uint64_t x138;
-  fiat_p5248_uint1 x139;
-  uint64_t x140;
-  fiat_p5248_uint1 x141;
-  uint64_t x142;
-  fiat_p5248_uint1 x143;
-  uint64_t x144;
-  fiat_p5248_uint1 x145;
-  uint64_t x146;
-  uint64_t x147;
-  uint64_t x148;
-  uint64_t x149;
-  uint64_t x150;
-  uint64_t x151;
-  uint64_t x152;
-  uint64_t x153;
-  uint64_t x154;
-  uint64_t x155;
-  fiat_p5248_uint1 x156;
-  uint64_t x157;
-  fiat_p5248_uint1 x158;
-  uint64_t x159;
-  fiat_p5248_uint1 x160;
-  uint64_t x161;
-  uint64_t x162;
-  fiat_p5248_uint1 x163;
-  uint64_t x164;
-  fiat_p5248_uint1 x165;
-  uint64_t x166;
-  fiat_p5248_uint1 x167;
-  uint64_t x168;
-  fiat_p5248_uint1 x169;
-  uint64_t x170;
-  fiat_p5248_uint1 x171;
-  uint64_t x172;
-  uint64_t x173;
-  uint64_t x174;
-  uint64_t x175;
-  uint64_t x176;
-  uint64_t x177;
-  uint64_t x178;
-  uint64_t x179;
-  uint64_t x180;
-  fiat_p5248_uint1 x181;
-  uint64_t x182;
-  fiat_p5248_uint1 x183;
-  uint64_t x184;
-  fiat_p5248_uint1 x185;
-  uint64_t x186;
-  uint64_t x187;
-  fiat_p5248_uint1 x188;
-  uint64_t x189;
-  fiat_p5248_uint1 x190;
-  uint64_t x191;
-  fiat_p5248_uint1 x192;
-  uint64_t x193;
-  fiat_p5248_uint1 x194;
-  uint64_t x195;
-  fiat_p5248_uint1 x196;
-  uint64_t x197;
-  uint64_t x198;
-  fiat_p5248_uint1 x199;
-  uint64_t x200;
-  fiat_p5248_uint1 x201;
-  uint64_t x202;
-  fiat_p5248_uint1 x203;
-  uint64_t x204;
-  fiat_p5248_uint1 x205;
-  uint64_t x206;
-  fiat_p5248_uint1 x207;
-  uint64_t x208;
-  uint64_t x209;
-  uint64_t x210;
-  uint64_t x211;
-  x1 = (arg1[1]);
-  x2 = (arg1[2]);
-  x3 = (arg1[3]);
-  x4 = (arg1[0]);
-  fiat_p5248_mulx_u64(&x5, &x6, x4, (arg2[3]));
-  fiat_p5248_mulx_u64(&x7, &x8, x4, (arg2[2]));
-  fiat_p5248_mulx_u64(&x9, &x10, x4, (arg2[1]));
-  fiat_p5248_mulx_u64(&x11, &x12, x4, (arg2[0]));
-  fiat_p5248_addcarryx_u64(&x13, &x14, 0x0, x12, x9);
-  fiat_p5248_addcarryx_u64(&x15, &x16, x14, x10, x7);
-  fiat_p5248_addcarryx_u64(&x17, &x18, x16, x8, x5);
-  x19 = (x18 + x6);
-  fiat_p5248_mulx_u64(&x20, &x21, x11, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_mulx_u64(&x22, &x23, x11, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x24, &x25, x11, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x26, &x27, x11, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_addcarryx_u64(&x28, &x29, 0x0, x27, x24);
-  fiat_p5248_addcarryx_u64(&x30, &x31, x29, x25, x22);
-  fiat_p5248_addcarryx_u64(&x32, &x33, x31, x23, x20);
-  x34 = (x33 + x21);
-  fiat_p5248_addcarryx_u64(&x35, &x36, 0x0, x11, x26);
-  fiat_p5248_addcarryx_u64(&x37, &x38, x36, x13, x28);
-  fiat_p5248_addcarryx_u64(&x39, &x40, x38, x15, x30);
-  fiat_p5248_addcarryx_u64(&x41, &x42, x40, x17, x32);
-  fiat_p5248_addcarryx_u64(&x43, &x44, x42, x19, x34);
-  fiat_p5248_mulx_u64(&x45, &x46, x1, (arg2[3]));
-  fiat_p5248_mulx_u64(&x47, &x48, x1, (arg2[2]));
-  fiat_p5248_mulx_u64(&x49, &x50, x1, (arg2[1]));
-  fiat_p5248_mulx_u64(&x51, &x52, x1, (arg2[0]));
-  fiat_p5248_addcarryx_u64(&x53, &x54, 0x0, x52, x49);
-  fiat_p5248_addcarryx_u64(&x55, &x56, x54, x50, x47);
-  fiat_p5248_addcarryx_u64(&x57, &x58, x56, x48, x45);
-  x59 = (x58 + x46);
-  fiat_p5248_addcarryx_u64(&x60, &x61, 0x0, x37, x51);
-  fiat_p5248_addcarryx_u64(&x62, &x63, x61, x39, x53);
-  fiat_p5248_addcarryx_u64(&x64, &x65, x63, x41, x55);
-  fiat_p5248_addcarryx_u64(&x66, &x67, x65, x43, x57);
-  fiat_p5248_addcarryx_u64(&x68, &x69, x67, x44, x59);
-  fiat_p5248_mulx_u64(&x70, &x71, x60, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_mulx_u64(&x72, &x73, x60, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x74, &x75, x60, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x76, &x77, x60, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_addcarryx_u64(&x78, &x79, 0x0, x77, x74);
-  fiat_p5248_addcarryx_u64(&x80, &x81, x79, x75, x72);
-  fiat_p5248_addcarryx_u64(&x82, &x83, x81, x73, x70);
-  x84 = (x83 + x71);
-  fiat_p5248_addcarryx_u64(&x85, &x86, 0x0, x60, x76);
-  fiat_p5248_addcarryx_u64(&x87, &x88, x86, x62, x78);
-  fiat_p5248_addcarryx_u64(&x89, &x90, x88, x64, x80);
-  fiat_p5248_addcarryx_u64(&x91, &x92, x90, x66, x82);
-  fiat_p5248_addcarryx_u64(&x93, &x94, x92, x68, x84);
-  x95 = ((uint64_t)x94 + x69);
-  fiat_p5248_mulx_u64(&x96, &x97, x2, (arg2[3]));
-  fiat_p5248_mulx_u64(&x98, &x99, x2, (arg2[2]));
-  fiat_p5248_mulx_u64(&x100, &x101, x2, (arg2[1]));
-  fiat_p5248_mulx_u64(&x102, &x103, x2, (arg2[0]));
-  fiat_p5248_addcarryx_u64(&x104, &x105, 0x0, x103, x100);
-  fiat_p5248_addcarryx_u64(&x106, &x107, x105, x101, x98);
-  fiat_p5248_addcarryx_u64(&x108, &x109, x107, x99, x96);
-  x110 = (x109 + x97);
-  fiat_p5248_addcarryx_u64(&x111, &x112, 0x0, x87, x102);
-  fiat_p5248_addcarryx_u64(&x113, &x114, x112, x89, x104);
-  fiat_p5248_addcarryx_u64(&x115, &x116, x114, x91, x106);
-  fiat_p5248_addcarryx_u64(&x117, &x118, x116, x93, x108);
-  fiat_p5248_addcarryx_u64(&x119, &x120, x118, x95, x110);
-  fiat_p5248_mulx_u64(&x121, &x122, x111, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_mulx_u64(&x123, &x124, x111, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x125, &x126, x111, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x127, &x128, x111, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_addcarryx_u64(&x129, &x130, 0x0, x128, x125);
-  fiat_p5248_addcarryx_u64(&x131, &x132, x130, x126, x123);
-  fiat_p5248_addcarryx_u64(&x133, &x134, x132, x124, x121);
-  x135 = (x134 + x122);
-  fiat_p5248_addcarryx_u64(&x136, &x137, 0x0, x111, x127);
-  fiat_p5248_addcarryx_u64(&x138, &x139, x137, x113, x129);
-  fiat_p5248_addcarryx_u64(&x140, &x141, x139, x115, x131);
-  fiat_p5248_addcarryx_u64(&x142, &x143, x141, x117, x133);
-  fiat_p5248_addcarryx_u64(&x144, &x145, x143, x119, x135);
-  x146 = ((uint64_t)x145 + x120);
-  fiat_p5248_mulx_u64(&x147, &x148, x3, (arg2[3]));
-  fiat_p5248_mulx_u64(&x149, &x150, x3, (arg2[2]));
-  fiat_p5248_mulx_u64(&x151, &x152, x3, (arg2[1]));
-  fiat_p5248_mulx_u64(&x153, &x154, x3, (arg2[0]));
-  fiat_p5248_addcarryx_u64(&x155, &x156, 0x0, x154, x151);
-  fiat_p5248_addcarryx_u64(&x157, &x158, x156, x152, x149);
-  fiat_p5248_addcarryx_u64(&x159, &x160, x158, x150, x147);
-  x161 = (x160 + x148);
-  fiat_p5248_addcarryx_u64(&x162, &x163, 0x0, x138, x153);
-  fiat_p5248_addcarryx_u64(&x164, &x165, x163, x140, x155);
-  fiat_p5248_addcarryx_u64(&x166, &x167, x165, x142, x157);
-  fiat_p5248_addcarryx_u64(&x168, &x169, x167, x144, x159);
-  fiat_p5248_addcarryx_u64(&x170, &x171, x169, x146, x161);
-  fiat_p5248_mulx_u64(&x172, &x173, x162, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_mulx_u64(&x174, &x175, x162, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x176, &x177, x162, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x178, &x179, x162, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_addcarryx_u64(&x180, &x181, 0x0, x179, x176);
-  fiat_p5248_addcarryx_u64(&x182, &x183, x181, x177, x174);
-  fiat_p5248_addcarryx_u64(&x184, &x185, x183, x175, x172);
-  x186 = (x185 + x173);
-  fiat_p5248_addcarryx_u64(&x187, &x188, 0x0, x162, x178);
-  fiat_p5248_addcarryx_u64(&x189, &x190, x188, x164, x180);
-  fiat_p5248_addcarryx_u64(&x191, &x192, x190, x166, x182);
-  fiat_p5248_addcarryx_u64(&x193, &x194, x192, x168, x184);
-  fiat_p5248_addcarryx_u64(&x195, &x196, x194, x170, x186);
-  x197 = ((uint64_t)x196 + x171);
-  fiat_p5248_subborrowx_u64(&x198, &x199, 0x0, x189, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x200, &x201, x199, x191, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x202, &x203, x201, x193, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x204, &x205, x203, x195, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x206, &x207, x205, x197, 0x0);
-  fiat_p5248_cmovznz_u64(&x208, x207, x198, x189);
-  fiat_p5248_cmovznz_u64(&x209, x207, x200, x191);
-  fiat_p5248_cmovznz_u64(&x210, x207, x202, x193);
-  fiat_p5248_cmovznz_u64(&x211, x207, x204, x195);
-  out1[0] = x208;
-  out1[1] = x209;
-  out1[2] = x210;
-  out1[3] = x211;
+void
+fiat_p5248_mul(fiat_p5248_montgomery_domain_field_element out1,
+               const fiat_p5248_montgomery_domain_field_element arg1,
+               const fiat_p5248_montgomery_domain_field_element arg2)
+{
+    uint64_t x1;
+    uint64_t x2;
+    uint64_t x3;
+    uint64_t x4;
+    uint64_t x5;
+    uint64_t x6;
+    uint64_t x7;
+    uint64_t x8;
+    uint64_t x9;
+    uint64_t x10;
+    uint64_t x11;
+    uint64_t x12;
+    uint64_t x13;
+    fiat_p5248_uint1 x14;
+    uint64_t x15;
+    fiat_p5248_uint1 x16;
+    uint64_t x17;
+    fiat_p5248_uint1 x18;
+    uint64_t x19;
+    uint64_t x20;
+    uint64_t x21;
+    uint64_t x22;
+    uint64_t x23;
+    uint64_t x24;
+    uint64_t x25;
+    uint64_t x26;
+    uint64_t x27;
+    uint64_t x28;
+    fiat_p5248_uint1 x29;
+    uint64_t x30;
+    fiat_p5248_uint1 x31;
+    uint64_t x32;
+    fiat_p5248_uint1 x33;
+    uint64_t x34;
+    uint64_t x35;
+    fiat_p5248_uint1 x36;
+    uint64_t x37;
+    fiat_p5248_uint1 x38;
+    uint64_t x39;
+    fiat_p5248_uint1 x40;
+    uint64_t x41;
+    fiat_p5248_uint1 x42;
+    uint64_t x43;
+    fiat_p5248_uint1 x44;
+    uint64_t x45;
+    uint64_t x46;
+    uint64_t x47;
+    uint64_t x48;
+    uint64_t x49;
+    uint64_t x50;
+    uint64_t x51;
+    uint64_t x52;
+    uint64_t x53;
+    fiat_p5248_uint1 x54;
+    uint64_t x55;
+    fiat_p5248_uint1 x56;
+    uint64_t x57;
+    fiat_p5248_uint1 x58;
+    uint64_t x59;
+    uint64_t x60;
+    fiat_p5248_uint1 x61;
+    uint64_t x62;
+    fiat_p5248_uint1 x63;
+    uint64_t x64;
+    fiat_p5248_uint1 x65;
+    uint64_t x66;
+    fiat_p5248_uint1 x67;
+    uint64_t x68;
+    fiat_p5248_uint1 x69;
+    uint64_t x70;
+    uint64_t x71;
+    uint64_t x72;
+    uint64_t x73;
+    uint64_t x74;
+    uint64_t x75;
+    uint64_t x76;
+    uint64_t x77;
+    uint64_t x78;
+    fiat_p5248_uint1 x79;
+    uint64_t x80;
+    fiat_p5248_uint1 x81;
+    uint64_t x82;
+    fiat_p5248_uint1 x83;
+    uint64_t x84;
+    uint64_t x85;
+    fiat_p5248_uint1 x86;
+    uint64_t x87;
+    fiat_p5248_uint1 x88;
+    uint64_t x89;
+    fiat_p5248_uint1 x90;
+    uint64_t x91;
+    fiat_p5248_uint1 x92;
+    uint64_t x93;
+    fiat_p5248_uint1 x94;
+    uint64_t x95;
+    uint64_t x96;
+    uint64_t x97;
+    uint64_t x98;
+    uint64_t x99;
+    uint64_t x100;
+    uint64_t x101;
+    uint64_t x102;
+    uint64_t x103;
+    uint64_t x104;
+    fiat_p5248_uint1 x105;
+    uint64_t x106;
+    fiat_p5248_uint1 x107;
+    uint64_t x108;
+    fiat_p5248_uint1 x109;
+    uint64_t x110;
+    uint64_t x111;
+    fiat_p5248_uint1 x112;
+    uint64_t x113;
+    fiat_p5248_uint1 x114;
+    uint64_t x115;
+    fiat_p5248_uint1 x116;
+    uint64_t x117;
+    fiat_p5248_uint1 x118;
+    uint64_t x119;
+    fiat_p5248_uint1 x120;
+    uint64_t x121;
+    uint64_t x122;
+    uint64_t x123;
+    uint64_t x124;
+    uint64_t x125;
+    uint64_t x126;
+    uint64_t x127;
+    uint64_t x128;
+    uint64_t x129;
+    fiat_p5248_uint1 x130;
+    uint64_t x131;
+    fiat_p5248_uint1 x132;
+    uint64_t x133;
+    fiat_p5248_uint1 x134;
+    uint64_t x135;
+    uint64_t x136;
+    fiat_p5248_uint1 x137;
+    uint64_t x138;
+    fiat_p5248_uint1 x139;
+    uint64_t x140;
+    fiat_p5248_uint1 x141;
+    uint64_t x142;
+    fiat_p5248_uint1 x143;
+    uint64_t x144;
+    fiat_p5248_uint1 x145;
+    uint64_t x146;
+    uint64_t x147;
+    uint64_t x148;
+    uint64_t x149;
+    uint64_t x150;
+    uint64_t x151;
+    uint64_t x152;
+    uint64_t x153;
+    uint64_t x154;
+    uint64_t x155;
+    fiat_p5248_uint1 x156;
+    uint64_t x157;
+    fiat_p5248_uint1 x158;
+    uint64_t x159;
+    fiat_p5248_uint1 x160;
+    uint64_t x161;
+    uint64_t x162;
+    fiat_p5248_uint1 x163;
+    uint64_t x164;
+    fiat_p5248_uint1 x165;
+    uint64_t x166;
+    fiat_p5248_uint1 x167;
+    uint64_t x168;
+    fiat_p5248_uint1 x169;
+    uint64_t x170;
+    fiat_p5248_uint1 x171;
+    uint64_t x172;
+    uint64_t x173;
+    uint64_t x174;
+    uint64_t x175;
+    uint64_t x176;
+    uint64_t x177;
+    uint64_t x178;
+    uint64_t x179;
+    uint64_t x180;
+    fiat_p5248_uint1 x181;
+    uint64_t x182;
+    fiat_p5248_uint1 x183;
+    uint64_t x184;
+    fiat_p5248_uint1 x185;
+    uint64_t x186;
+    uint64_t x187;
+    fiat_p5248_uint1 x188;
+    uint64_t x189;
+    fiat_p5248_uint1 x190;
+    uint64_t x191;
+    fiat_p5248_uint1 x192;
+    uint64_t x193;
+    fiat_p5248_uint1 x194;
+    uint64_t x195;
+    fiat_p5248_uint1 x196;
+    uint64_t x197;
+    uint64_t x198;
+    fiat_p5248_uint1 x199;
+    uint64_t x200;
+    fiat_p5248_uint1 x201;
+    uint64_t x202;
+    fiat_p5248_uint1 x203;
+    uint64_t x204;
+    fiat_p5248_uint1 x205;
+    uint64_t x206;
+    fiat_p5248_uint1 x207;
+    uint64_t x208;
+    uint64_t x209;
+    uint64_t x210;
+    uint64_t x211;
+    x1 = (arg1[1]);
+    x2 = (arg1[2]);
+    x3 = (arg1[3]);
+    x4 = (arg1[0]);
+    fiat_p5248_mulx_u64(&x5, &x6, x4, (arg2[3]));
+    fiat_p5248_mulx_u64(&x7, &x8, x4, (arg2[2]));
+    fiat_p5248_mulx_u64(&x9, &x10, x4, (arg2[1]));
+    fiat_p5248_mulx_u64(&x11, &x12, x4, (arg2[0]));
+    fiat_p5248_addcarryx_u64(&x13, &x14, 0x0, x12, x9);
+    fiat_p5248_addcarryx_u64(&x15, &x16, x14, x10, x7);
+    fiat_p5248_addcarryx_u64(&x17, &x18, x16, x8, x5);
+    x19 = (x18 + x6);
+    fiat_p5248_mulx_u64(&x20, &x21, x11, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_mulx_u64(&x22, &x23, x11, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x24, &x25, x11, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x26, &x27, x11, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_addcarryx_u64(&x28, &x29, 0x0, x27, x24);
+    fiat_p5248_addcarryx_u64(&x30, &x31, x29, x25, x22);
+    fiat_p5248_addcarryx_u64(&x32, &x33, x31, x23, x20);
+    x34 = (x33 + x21);
+    fiat_p5248_addcarryx_u64(&x35, &x36, 0x0, x11, x26);
+    fiat_p5248_addcarryx_u64(&x37, &x38, x36, x13, x28);
+    fiat_p5248_addcarryx_u64(&x39, &x40, x38, x15, x30);
+    fiat_p5248_addcarryx_u64(&x41, &x42, x40, x17, x32);
+    fiat_p5248_addcarryx_u64(&x43, &x44, x42, x19, x34);
+    fiat_p5248_mulx_u64(&x45, &x46, x1, (arg2[3]));
+    fiat_p5248_mulx_u64(&x47, &x48, x1, (arg2[2]));
+    fiat_p5248_mulx_u64(&x49, &x50, x1, (arg2[1]));
+    fiat_p5248_mulx_u64(&x51, &x52, x1, (arg2[0]));
+    fiat_p5248_addcarryx_u64(&x53, &x54, 0x0, x52, x49);
+    fiat_p5248_addcarryx_u64(&x55, &x56, x54, x50, x47);
+    fiat_p5248_addcarryx_u64(&x57, &x58, x56, x48, x45);
+    x59 = (x58 + x46);
+    fiat_p5248_addcarryx_u64(&x60, &x61, 0x0, x37, x51);
+    fiat_p5248_addcarryx_u64(&x62, &x63, x61, x39, x53);
+    fiat_p5248_addcarryx_u64(&x64, &x65, x63, x41, x55);
+    fiat_p5248_addcarryx_u64(&x66, &x67, x65, x43, x57);
+    fiat_p5248_addcarryx_u64(&x68, &x69, x67, x44, x59);
+    fiat_p5248_mulx_u64(&x70, &x71, x60, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_mulx_u64(&x72, &x73, x60, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x74, &x75, x60, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x76, &x77, x60, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_addcarryx_u64(&x78, &x79, 0x0, x77, x74);
+    fiat_p5248_addcarryx_u64(&x80, &x81, x79, x75, x72);
+    fiat_p5248_addcarryx_u64(&x82, &x83, x81, x73, x70);
+    x84 = (x83 + x71);
+    fiat_p5248_addcarryx_u64(&x85, &x86, 0x0, x60, x76);
+    fiat_p5248_addcarryx_u64(&x87, &x88, x86, x62, x78);
+    fiat_p5248_addcarryx_u64(&x89, &x90, x88, x64, x80);
+    fiat_p5248_addcarryx_u64(&x91, &x92, x90, x66, x82);
+    fiat_p5248_addcarryx_u64(&x93, &x94, x92, x68, x84);
+    x95 = ((uint64_t)x94 + x69);
+    fiat_p5248_mulx_u64(&x96, &x97, x2, (arg2[3]));
+    fiat_p5248_mulx_u64(&x98, &x99, x2, (arg2[2]));
+    fiat_p5248_mulx_u64(&x100, &x101, x2, (arg2[1]));
+    fiat_p5248_mulx_u64(&x102, &x103, x2, (arg2[0]));
+    fiat_p5248_addcarryx_u64(&x104, &x105, 0x0, x103, x100);
+    fiat_p5248_addcarryx_u64(&x106, &x107, x105, x101, x98);
+    fiat_p5248_addcarryx_u64(&x108, &x109, x107, x99, x96);
+    x110 = (x109 + x97);
+    fiat_p5248_addcarryx_u64(&x111, &x112, 0x0, x87, x102);
+    fiat_p5248_addcarryx_u64(&x113, &x114, x112, x89, x104);
+    fiat_p5248_addcarryx_u64(&x115, &x116, x114, x91, x106);
+    fiat_p5248_addcarryx_u64(&x117, &x118, x116, x93, x108);
+    fiat_p5248_addcarryx_u64(&x119, &x120, x118, x95, x110);
+    fiat_p5248_mulx_u64(&x121, &x122, x111, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_mulx_u64(&x123, &x124, x111, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x125, &x126, x111, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x127, &x128, x111, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_addcarryx_u64(&x129, &x130, 0x0, x128, x125);
+    fiat_p5248_addcarryx_u64(&x131, &x132, x130, x126, x123);
+    fiat_p5248_addcarryx_u64(&x133, &x134, x132, x124, x121);
+    x135 = (x134 + x122);
+    fiat_p5248_addcarryx_u64(&x136, &x137, 0x0, x111, x127);
+    fiat_p5248_addcarryx_u64(&x138, &x139, x137, x113, x129);
+    fiat_p5248_addcarryx_u64(&x140, &x141, x139, x115, x131);
+    fiat_p5248_addcarryx_u64(&x142, &x143, x141, x117, x133);
+    fiat_p5248_addcarryx_u64(&x144, &x145, x143, x119, x135);
+    x146 = ((uint64_t)x145 + x120);
+    fiat_p5248_mulx_u64(&x147, &x148, x3, (arg2[3]));
+    fiat_p5248_mulx_u64(&x149, &x150, x3, (arg2[2]));
+    fiat_p5248_mulx_u64(&x151, &x152, x3, (arg2[1]));
+    fiat_p5248_mulx_u64(&x153, &x154, x3, (arg2[0]));
+    fiat_p5248_addcarryx_u64(&x155, &x156, 0x0, x154, x151);
+    fiat_p5248_addcarryx_u64(&x157, &x158, x156, x152, x149);
+    fiat_p5248_addcarryx_u64(&x159, &x160, x158, x150, x147);
+    x161 = (x160 + x148);
+    fiat_p5248_addcarryx_u64(&x162, &x163, 0x0, x138, x153);
+    fiat_p5248_addcarryx_u64(&x164, &x165, x163, x140, x155);
+    fiat_p5248_addcarryx_u64(&x166, &x167, x165, x142, x157);
+    fiat_p5248_addcarryx_u64(&x168, &x169, x167, x144, x159);
+    fiat_p5248_addcarryx_u64(&x170, &x171, x169, x146, x161);
+    fiat_p5248_mulx_u64(&x172, &x173, x162, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_mulx_u64(&x174, &x175, x162, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x176, &x177, x162, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x178, &x179, x162, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_addcarryx_u64(&x180, &x181, 0x0, x179, x176);
+    fiat_p5248_addcarryx_u64(&x182, &x183, x181, x177, x174);
+    fiat_p5248_addcarryx_u64(&x184, &x185, x183, x175, x172);
+    x186 = (x185 + x173);
+    fiat_p5248_addcarryx_u64(&x187, &x188, 0x0, x162, x178);
+    fiat_p5248_addcarryx_u64(&x189, &x190, x188, x164, x180);
+    fiat_p5248_addcarryx_u64(&x191, &x192, x190, x166, x182);
+    fiat_p5248_addcarryx_u64(&x193, &x194, x192, x168, x184);
+    fiat_p5248_addcarryx_u64(&x195, &x196, x194, x170, x186);
+    x197 = ((uint64_t)x196 + x171);
+    fiat_p5248_subborrowx_u64(&x198, &x199, 0x0, x189, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x200, &x201, x199, x191, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x202, &x203, x201, x193, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x204, &x205, x203, x195, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x206, &x207, x205, x197, 0x0);
+    fiat_p5248_cmovznz_u64(&x208, x207, x198, x189);
+    fiat_p5248_cmovznz_u64(&x209, x207, x200, x191);
+    fiat_p5248_cmovznz_u64(&x210, x207, x202, x193);
+    fiat_p5248_cmovznz_u64(&x211, x207, x204, x195);
+    out1[0] = x208;
+    out1[1] = x209;
+    out1[2] = x210;
+    out1[3] = x211;
 }
 
 /*
@@ -494,341 +523,344 @@ void fiat_p5248_mul(fiat_p5248_montgomery_domain_field_element out1, const fiat_
  * Preconditions:
  *   0 ≤ eval arg1 < m
  * Postconditions:
- *   eval (from_montgomery out1) mod m = (eval (from_montgomery arg1) * eval (from_montgomery arg1)) mod m
- *   0 ≤ eval out1 < m
+ *   eval (from_montgomery out1) mod m = (eval (from_montgomery arg1) * eval (from_montgomery arg1))
+ * mod m 0 ≤ eval out1 < m
  *
  */
-void fiat_p5248_square(fiat_p5248_montgomery_domain_field_element out1, const fiat_p5248_montgomery_domain_field_element arg1) {
-  uint64_t x1;
-  uint64_t x2;
-  uint64_t x3;
-  uint64_t x4;
-  uint64_t x5;
-  uint64_t x6;
-  uint64_t x7;
-  uint64_t x8;
-  uint64_t x9;
-  uint64_t x10;
-  uint64_t x11;
-  uint64_t x12;
-  uint64_t x13;
-  fiat_p5248_uint1 x14;
-  uint64_t x15;
-  fiat_p5248_uint1 x16;
-  uint64_t x17;
-  fiat_p5248_uint1 x18;
-  uint64_t x19;
-  uint64_t x20;
-  uint64_t x21;
-  uint64_t x22;
-  uint64_t x23;
-  uint64_t x24;
-  uint64_t x25;
-  uint64_t x26;
-  uint64_t x27;
-  uint64_t x28;
-  fiat_p5248_uint1 x29;
-  uint64_t x30;
-  fiat_p5248_uint1 x31;
-  uint64_t x32;
-  fiat_p5248_uint1 x33;
-  uint64_t x34;
-  uint64_t x35;
-  fiat_p5248_uint1 x36;
-  uint64_t x37;
-  fiat_p5248_uint1 x38;
-  uint64_t x39;
-  fiat_p5248_uint1 x40;
-  uint64_t x41;
-  fiat_p5248_uint1 x42;
-  uint64_t x43;
-  fiat_p5248_uint1 x44;
-  uint64_t x45;
-  uint64_t x46;
-  uint64_t x47;
-  uint64_t x48;
-  uint64_t x49;
-  uint64_t x50;
-  uint64_t x51;
-  uint64_t x52;
-  uint64_t x53;
-  fiat_p5248_uint1 x54;
-  uint64_t x55;
-  fiat_p5248_uint1 x56;
-  uint64_t x57;
-  fiat_p5248_uint1 x58;
-  uint64_t x59;
-  uint64_t x60;
-  fiat_p5248_uint1 x61;
-  uint64_t x62;
-  fiat_p5248_uint1 x63;
-  uint64_t x64;
-  fiat_p5248_uint1 x65;
-  uint64_t x66;
-  fiat_p5248_uint1 x67;
-  uint64_t x68;
-  fiat_p5248_uint1 x69;
-  uint64_t x70;
-  uint64_t x71;
-  uint64_t x72;
-  uint64_t x73;
-  uint64_t x74;
-  uint64_t x75;
-  uint64_t x76;
-  uint64_t x77;
-  uint64_t x78;
-  fiat_p5248_uint1 x79;
-  uint64_t x80;
-  fiat_p5248_uint1 x81;
-  uint64_t x82;
-  fiat_p5248_uint1 x83;
-  uint64_t x84;
-  uint64_t x85;
-  fiat_p5248_uint1 x86;
-  uint64_t x87;
-  fiat_p5248_uint1 x88;
-  uint64_t x89;
-  fiat_p5248_uint1 x90;
-  uint64_t x91;
-  fiat_p5248_uint1 x92;
-  uint64_t x93;
-  fiat_p5248_uint1 x94;
-  uint64_t x95;
-  uint64_t x96;
-  uint64_t x97;
-  uint64_t x98;
-  uint64_t x99;
-  uint64_t x100;
-  uint64_t x101;
-  uint64_t x102;
-  uint64_t x103;
-  uint64_t x104;
-  fiat_p5248_uint1 x105;
-  uint64_t x106;
-  fiat_p5248_uint1 x107;
-  uint64_t x108;
-  fiat_p5248_uint1 x109;
-  uint64_t x110;
-  uint64_t x111;
-  fiat_p5248_uint1 x112;
-  uint64_t x113;
-  fiat_p5248_uint1 x114;
-  uint64_t x115;
-  fiat_p5248_uint1 x116;
-  uint64_t x117;
-  fiat_p5248_uint1 x118;
-  uint64_t x119;
-  fiat_p5248_uint1 x120;
-  uint64_t x121;
-  uint64_t x122;
-  uint64_t x123;
-  uint64_t x124;
-  uint64_t x125;
-  uint64_t x126;
-  uint64_t x127;
-  uint64_t x128;
-  uint64_t x129;
-  fiat_p5248_uint1 x130;
-  uint64_t x131;
-  fiat_p5248_uint1 x132;
-  uint64_t x133;
-  fiat_p5248_uint1 x134;
-  uint64_t x135;
-  uint64_t x136;
-  fiat_p5248_uint1 x137;
-  uint64_t x138;
-  fiat_p5248_uint1 x139;
-  uint64_t x140;
-  fiat_p5248_uint1 x141;
-  uint64_t x142;
-  fiat_p5248_uint1 x143;
-  uint64_t x144;
-  fiat_p5248_uint1 x145;
-  uint64_t x146;
-  uint64_t x147;
-  uint64_t x148;
-  uint64_t x149;
-  uint64_t x150;
-  uint64_t x151;
-  uint64_t x152;
-  uint64_t x153;
-  uint64_t x154;
-  uint64_t x155;
-  fiat_p5248_uint1 x156;
-  uint64_t x157;
-  fiat_p5248_uint1 x158;
-  uint64_t x159;
-  fiat_p5248_uint1 x160;
-  uint64_t x161;
-  uint64_t x162;
-  fiat_p5248_uint1 x163;
-  uint64_t x164;
-  fiat_p5248_uint1 x165;
-  uint64_t x166;
-  fiat_p5248_uint1 x167;
-  uint64_t x168;
-  fiat_p5248_uint1 x169;
-  uint64_t x170;
-  fiat_p5248_uint1 x171;
-  uint64_t x172;
-  uint64_t x173;
-  uint64_t x174;
-  uint64_t x175;
-  uint64_t x176;
-  uint64_t x177;
-  uint64_t x178;
-  uint64_t x179;
-  uint64_t x180;
-  fiat_p5248_uint1 x181;
-  uint64_t x182;
-  fiat_p5248_uint1 x183;
-  uint64_t x184;
-  fiat_p5248_uint1 x185;
-  uint64_t x186;
-  uint64_t x187;
-  fiat_p5248_uint1 x188;
-  uint64_t x189;
-  fiat_p5248_uint1 x190;
-  uint64_t x191;
-  fiat_p5248_uint1 x192;
-  uint64_t x193;
-  fiat_p5248_uint1 x194;
-  uint64_t x195;
-  fiat_p5248_uint1 x196;
-  uint64_t x197;
-  uint64_t x198;
-  fiat_p5248_uint1 x199;
-  uint64_t x200;
-  fiat_p5248_uint1 x201;
-  uint64_t x202;
-  fiat_p5248_uint1 x203;
-  uint64_t x204;
-  fiat_p5248_uint1 x205;
-  uint64_t x206;
-  fiat_p5248_uint1 x207;
-  uint64_t x208;
-  uint64_t x209;
-  uint64_t x210;
-  uint64_t x211;
-  x1 = (arg1[1]);
-  x2 = (arg1[2]);
-  x3 = (arg1[3]);
-  x4 = (arg1[0]);
-  fiat_p5248_mulx_u64(&x5, &x6, x4, (arg1[3]));
-  fiat_p5248_mulx_u64(&x7, &x8, x4, (arg1[2]));
-  fiat_p5248_mulx_u64(&x9, &x10, x4, (arg1[1]));
-  fiat_p5248_mulx_u64(&x11, &x12, x4, (arg1[0]));
-  fiat_p5248_addcarryx_u64(&x13, &x14, 0x0, x12, x9);
-  fiat_p5248_addcarryx_u64(&x15, &x16, x14, x10, x7);
-  fiat_p5248_addcarryx_u64(&x17, &x18, x16, x8, x5);
-  x19 = (x18 + x6);
-  fiat_p5248_mulx_u64(&x20, &x21, x11, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_mulx_u64(&x22, &x23, x11, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x24, &x25, x11, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x26, &x27, x11, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_addcarryx_u64(&x28, &x29, 0x0, x27, x24);
-  fiat_p5248_addcarryx_u64(&x30, &x31, x29, x25, x22);
-  fiat_p5248_addcarryx_u64(&x32, &x33, x31, x23, x20);
-  x34 = (x33 + x21);
-  fiat_p5248_addcarryx_u64(&x35, &x36, 0x0, x11, x26);
-  fiat_p5248_addcarryx_u64(&x37, &x38, x36, x13, x28);
-  fiat_p5248_addcarryx_u64(&x39, &x40, x38, x15, x30);
-  fiat_p5248_addcarryx_u64(&x41, &x42, x40, x17, x32);
-  fiat_p5248_addcarryx_u64(&x43, &x44, x42, x19, x34);
-  fiat_p5248_mulx_u64(&x45, &x46, x1, (arg1[3]));
-  fiat_p5248_mulx_u64(&x47, &x48, x1, (arg1[2]));
-  fiat_p5248_mulx_u64(&x49, &x50, x1, (arg1[1]));
-  fiat_p5248_mulx_u64(&x51, &x52, x1, (arg1[0]));
-  fiat_p5248_addcarryx_u64(&x53, &x54, 0x0, x52, x49);
-  fiat_p5248_addcarryx_u64(&x55, &x56, x54, x50, x47);
-  fiat_p5248_addcarryx_u64(&x57, &x58, x56, x48, x45);
-  x59 = (x58 + x46);
-  fiat_p5248_addcarryx_u64(&x60, &x61, 0x0, x37, x51);
-  fiat_p5248_addcarryx_u64(&x62, &x63, x61, x39, x53);
-  fiat_p5248_addcarryx_u64(&x64, &x65, x63, x41, x55);
-  fiat_p5248_addcarryx_u64(&x66, &x67, x65, x43, x57);
-  fiat_p5248_addcarryx_u64(&x68, &x69, x67, x44, x59);
-  fiat_p5248_mulx_u64(&x70, &x71, x60, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_mulx_u64(&x72, &x73, x60, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x74, &x75, x60, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x76, &x77, x60, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_addcarryx_u64(&x78, &x79, 0x0, x77, x74);
-  fiat_p5248_addcarryx_u64(&x80, &x81, x79, x75, x72);
-  fiat_p5248_addcarryx_u64(&x82, &x83, x81, x73, x70);
-  x84 = (x83 + x71);
-  fiat_p5248_addcarryx_u64(&x85, &x86, 0x0, x60, x76);
-  fiat_p5248_addcarryx_u64(&x87, &x88, x86, x62, x78);
-  fiat_p5248_addcarryx_u64(&x89, &x90, x88, x64, x80);
-  fiat_p5248_addcarryx_u64(&x91, &x92, x90, x66, x82);
-  fiat_p5248_addcarryx_u64(&x93, &x94, x92, x68, x84);
-  x95 = ((uint64_t)x94 + x69);
-  fiat_p5248_mulx_u64(&x96, &x97, x2, (arg1[3]));
-  fiat_p5248_mulx_u64(&x98, &x99, x2, (arg1[2]));
-  fiat_p5248_mulx_u64(&x100, &x101, x2, (arg1[1]));
-  fiat_p5248_mulx_u64(&x102, &x103, x2, (arg1[0]));
-  fiat_p5248_addcarryx_u64(&x104, &x105, 0x0, x103, x100);
-  fiat_p5248_addcarryx_u64(&x106, &x107, x105, x101, x98);
-  fiat_p5248_addcarryx_u64(&x108, &x109, x107, x99, x96);
-  x110 = (x109 + x97);
-  fiat_p5248_addcarryx_u64(&x111, &x112, 0x0, x87, x102);
-  fiat_p5248_addcarryx_u64(&x113, &x114, x112, x89, x104);
-  fiat_p5248_addcarryx_u64(&x115, &x116, x114, x91, x106);
-  fiat_p5248_addcarryx_u64(&x117, &x118, x116, x93, x108);
-  fiat_p5248_addcarryx_u64(&x119, &x120, x118, x95, x110);
-  fiat_p5248_mulx_u64(&x121, &x122, x111, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_mulx_u64(&x123, &x124, x111, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x125, &x126, x111, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x127, &x128, x111, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_addcarryx_u64(&x129, &x130, 0x0, x128, x125);
-  fiat_p5248_addcarryx_u64(&x131, &x132, x130, x126, x123);
-  fiat_p5248_addcarryx_u64(&x133, &x134, x132, x124, x121);
-  x135 = (x134 + x122);
-  fiat_p5248_addcarryx_u64(&x136, &x137, 0x0, x111, x127);
-  fiat_p5248_addcarryx_u64(&x138, &x139, x137, x113, x129);
-  fiat_p5248_addcarryx_u64(&x140, &x141, x139, x115, x131);
-  fiat_p5248_addcarryx_u64(&x142, &x143, x141, x117, x133);
-  fiat_p5248_addcarryx_u64(&x144, &x145, x143, x119, x135);
-  x146 = ((uint64_t)x145 + x120);
-  fiat_p5248_mulx_u64(&x147, &x148, x3, (arg1[3]));
-  fiat_p5248_mulx_u64(&x149, &x150, x3, (arg1[2]));
-  fiat_p5248_mulx_u64(&x151, &x152, x3, (arg1[1]));
-  fiat_p5248_mulx_u64(&x153, &x154, x3, (arg1[0]));
-  fiat_p5248_addcarryx_u64(&x155, &x156, 0x0, x154, x151);
-  fiat_p5248_addcarryx_u64(&x157, &x158, x156, x152, x149);
-  fiat_p5248_addcarryx_u64(&x159, &x160, x158, x150, x147);
-  x161 = (x160 + x148);
-  fiat_p5248_addcarryx_u64(&x162, &x163, 0x0, x138, x153);
-  fiat_p5248_addcarryx_u64(&x164, &x165, x163, x140, x155);
-  fiat_p5248_addcarryx_u64(&x166, &x167, x165, x142, x157);
-  fiat_p5248_addcarryx_u64(&x168, &x169, x167, x144, x159);
-  fiat_p5248_addcarryx_u64(&x170, &x171, x169, x146, x161);
-  fiat_p5248_mulx_u64(&x172, &x173, x162, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_mulx_u64(&x174, &x175, x162, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x176, &x177, x162, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x178, &x179, x162, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_addcarryx_u64(&x180, &x181, 0x0, x179, x176);
-  fiat_p5248_addcarryx_u64(&x182, &x183, x181, x177, x174);
-  fiat_p5248_addcarryx_u64(&x184, &x185, x183, x175, x172);
-  x186 = (x185 + x173);
-  fiat_p5248_addcarryx_u64(&x187, &x188, 0x0, x162, x178);
-  fiat_p5248_addcarryx_u64(&x189, &x190, x188, x164, x180);
-  fiat_p5248_addcarryx_u64(&x191, &x192, x190, x166, x182);
-  fiat_p5248_addcarryx_u64(&x193, &x194, x192, x168, x184);
-  fiat_p5248_addcarryx_u64(&x195, &x196, x194, x170, x186);
-  x197 = ((uint64_t)x196 + x171);
-  fiat_p5248_subborrowx_u64(&x198, &x199, 0x0, x189, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x200, &x201, x199, x191, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x202, &x203, x201, x193, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x204, &x205, x203, x195, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x206, &x207, x205, x197, 0x0);
-  fiat_p5248_cmovznz_u64(&x208, x207, x198, x189);
-  fiat_p5248_cmovznz_u64(&x209, x207, x200, x191);
-  fiat_p5248_cmovznz_u64(&x210, x207, x202, x193);
-  fiat_p5248_cmovznz_u64(&x211, x207, x204, x195);
-  out1[0] = x208;
-  out1[1] = x209;
-  out1[2] = x210;
-  out1[3] = x211;
+void
+fiat_p5248_square(fiat_p5248_montgomery_domain_field_element out1,
+                  const fiat_p5248_montgomery_domain_field_element arg1)
+{
+    uint64_t x1;
+    uint64_t x2;
+    uint64_t x3;
+    uint64_t x4;
+    uint64_t x5;
+    uint64_t x6;
+    uint64_t x7;
+    uint64_t x8;
+    uint64_t x9;
+    uint64_t x10;
+    uint64_t x11;
+    uint64_t x12;
+    uint64_t x13;
+    fiat_p5248_uint1 x14;
+    uint64_t x15;
+    fiat_p5248_uint1 x16;
+    uint64_t x17;
+    fiat_p5248_uint1 x18;
+    uint64_t x19;
+    uint64_t x20;
+    uint64_t x21;
+    uint64_t x22;
+    uint64_t x23;
+    uint64_t x24;
+    uint64_t x25;
+    uint64_t x26;
+    uint64_t x27;
+    uint64_t x28;
+    fiat_p5248_uint1 x29;
+    uint64_t x30;
+    fiat_p5248_uint1 x31;
+    uint64_t x32;
+    fiat_p5248_uint1 x33;
+    uint64_t x34;
+    uint64_t x35;
+    fiat_p5248_uint1 x36;
+    uint64_t x37;
+    fiat_p5248_uint1 x38;
+    uint64_t x39;
+    fiat_p5248_uint1 x40;
+    uint64_t x41;
+    fiat_p5248_uint1 x42;
+    uint64_t x43;
+    fiat_p5248_uint1 x44;
+    uint64_t x45;
+    uint64_t x46;
+    uint64_t x47;
+    uint64_t x48;
+    uint64_t x49;
+    uint64_t x50;
+    uint64_t x51;
+    uint64_t x52;
+    uint64_t x53;
+    fiat_p5248_uint1 x54;
+    uint64_t x55;
+    fiat_p5248_uint1 x56;
+    uint64_t x57;
+    fiat_p5248_uint1 x58;
+    uint64_t x59;
+    uint64_t x60;
+    fiat_p5248_uint1 x61;
+    uint64_t x62;
+    fiat_p5248_uint1 x63;
+    uint64_t x64;
+    fiat_p5248_uint1 x65;
+    uint64_t x66;
+    fiat_p5248_uint1 x67;
+    uint64_t x68;
+    fiat_p5248_uint1 x69;
+    uint64_t x70;
+    uint64_t x71;
+    uint64_t x72;
+    uint64_t x73;
+    uint64_t x74;
+    uint64_t x75;
+    uint64_t x76;
+    uint64_t x77;
+    uint64_t x78;
+    fiat_p5248_uint1 x79;
+    uint64_t x80;
+    fiat_p5248_uint1 x81;
+    uint64_t x82;
+    fiat_p5248_uint1 x83;
+    uint64_t x84;
+    uint64_t x85;
+    fiat_p5248_uint1 x86;
+    uint64_t x87;
+    fiat_p5248_uint1 x88;
+    uint64_t x89;
+    fiat_p5248_uint1 x90;
+    uint64_t x91;
+    fiat_p5248_uint1 x92;
+    uint64_t x93;
+    fiat_p5248_uint1 x94;
+    uint64_t x95;
+    uint64_t x96;
+    uint64_t x97;
+    uint64_t x98;
+    uint64_t x99;
+    uint64_t x100;
+    uint64_t x101;
+    uint64_t x102;
+    uint64_t x103;
+    uint64_t x104;
+    fiat_p5248_uint1 x105;
+    uint64_t x106;
+    fiat_p5248_uint1 x107;
+    uint64_t x108;
+    fiat_p5248_uint1 x109;
+    uint64_t x110;
+    uint64_t x111;
+    fiat_p5248_uint1 x112;
+    uint64_t x113;
+    fiat_p5248_uint1 x114;
+    uint64_t x115;
+    fiat_p5248_uint1 x116;
+    uint64_t x117;
+    fiat_p5248_uint1 x118;
+    uint64_t x119;
+    fiat_p5248_uint1 x120;
+    uint64_t x121;
+    uint64_t x122;
+    uint64_t x123;
+    uint64_t x124;
+    uint64_t x125;
+    uint64_t x126;
+    uint64_t x127;
+    uint64_t x128;
+    uint64_t x129;
+    fiat_p5248_uint1 x130;
+    uint64_t x131;
+    fiat_p5248_uint1 x132;
+    uint64_t x133;
+    fiat_p5248_uint1 x134;
+    uint64_t x135;
+    uint64_t x136;
+    fiat_p5248_uint1 x137;
+    uint64_t x138;
+    fiat_p5248_uint1 x139;
+    uint64_t x140;
+    fiat_p5248_uint1 x141;
+    uint64_t x142;
+    fiat_p5248_uint1 x143;
+    uint64_t x144;
+    fiat_p5248_uint1 x145;
+    uint64_t x146;
+    uint64_t x147;
+    uint64_t x148;
+    uint64_t x149;
+    uint64_t x150;
+    uint64_t x151;
+    uint64_t x152;
+    uint64_t x153;
+    uint64_t x154;
+    uint64_t x155;
+    fiat_p5248_uint1 x156;
+    uint64_t x157;
+    fiat_p5248_uint1 x158;
+    uint64_t x159;
+    fiat_p5248_uint1 x160;
+    uint64_t x161;
+    uint64_t x162;
+    fiat_p5248_uint1 x163;
+    uint64_t x164;
+    fiat_p5248_uint1 x165;
+    uint64_t x166;
+    fiat_p5248_uint1 x167;
+    uint64_t x168;
+    fiat_p5248_uint1 x169;
+    uint64_t x170;
+    fiat_p5248_uint1 x171;
+    uint64_t x172;
+    uint64_t x173;
+    uint64_t x174;
+    uint64_t x175;
+    uint64_t x176;
+    uint64_t x177;
+    uint64_t x178;
+    uint64_t x179;
+    uint64_t x180;
+    fiat_p5248_uint1 x181;
+    uint64_t x182;
+    fiat_p5248_uint1 x183;
+    uint64_t x184;
+    fiat_p5248_uint1 x185;
+    uint64_t x186;
+    uint64_t x187;
+    fiat_p5248_uint1 x188;
+    uint64_t x189;
+    fiat_p5248_uint1 x190;
+    uint64_t x191;
+    fiat_p5248_uint1 x192;
+    uint64_t x193;
+    fiat_p5248_uint1 x194;
+    uint64_t x195;
+    fiat_p5248_uint1 x196;
+    uint64_t x197;
+    uint64_t x198;
+    fiat_p5248_uint1 x199;
+    uint64_t x200;
+    fiat_p5248_uint1 x201;
+    uint64_t x202;
+    fiat_p5248_uint1 x203;
+    uint64_t x204;
+    fiat_p5248_uint1 x205;
+    uint64_t x206;
+    fiat_p5248_uint1 x207;
+    uint64_t x208;
+    uint64_t x209;
+    uint64_t x210;
+    uint64_t x211;
+    x1 = (arg1[1]);
+    x2 = (arg1[2]);
+    x3 = (arg1[3]);
+    x4 = (arg1[0]);
+    fiat_p5248_mulx_u64(&x5, &x6, x4, (arg1[3]));
+    fiat_p5248_mulx_u64(&x7, &x8, x4, (arg1[2]));
+    fiat_p5248_mulx_u64(&x9, &x10, x4, (arg1[1]));
+    fiat_p5248_mulx_u64(&x11, &x12, x4, (arg1[0]));
+    fiat_p5248_addcarryx_u64(&x13, &x14, 0x0, x12, x9);
+    fiat_p5248_addcarryx_u64(&x15, &x16, x14, x10, x7);
+    fiat_p5248_addcarryx_u64(&x17, &x18, x16, x8, x5);
+    x19 = (x18 + x6);
+    fiat_p5248_mulx_u64(&x20, &x21, x11, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_mulx_u64(&x22, &x23, x11, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x24, &x25, x11, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x26, &x27, x11, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_addcarryx_u64(&x28, &x29, 0x0, x27, x24);
+    fiat_p5248_addcarryx_u64(&x30, &x31, x29, x25, x22);
+    fiat_p5248_addcarryx_u64(&x32, &x33, x31, x23, x20);
+    x34 = (x33 + x21);
+    fiat_p5248_addcarryx_u64(&x35, &x36, 0x0, x11, x26);
+    fiat_p5248_addcarryx_u64(&x37, &x38, x36, x13, x28);
+    fiat_p5248_addcarryx_u64(&x39, &x40, x38, x15, x30);
+    fiat_p5248_addcarryx_u64(&x41, &x42, x40, x17, x32);
+    fiat_p5248_addcarryx_u64(&x43, &x44, x42, x19, x34);
+    fiat_p5248_mulx_u64(&x45, &x46, x1, (arg1[3]));
+    fiat_p5248_mulx_u64(&x47, &x48, x1, (arg1[2]));
+    fiat_p5248_mulx_u64(&x49, &x50, x1, (arg1[1]));
+    fiat_p5248_mulx_u64(&x51, &x52, x1, (arg1[0]));
+    fiat_p5248_addcarryx_u64(&x53, &x54, 0x0, x52, x49);
+    fiat_p5248_addcarryx_u64(&x55, &x56, x54, x50, x47);
+    fiat_p5248_addcarryx_u64(&x57, &x58, x56, x48, x45);
+    x59 = (x58 + x46);
+    fiat_p5248_addcarryx_u64(&x60, &x61, 0x0, x37, x51);
+    fiat_p5248_addcarryx_u64(&x62, &x63, x61, x39, x53);
+    fiat_p5248_addcarryx_u64(&x64, &x65, x63, x41, x55);
+    fiat_p5248_addcarryx_u64(&x66, &x67, x65, x43, x57);
+    fiat_p5248_addcarryx_u64(&x68, &x69, x67, x44, x59);
+    fiat_p5248_mulx_u64(&x70, &x71, x60, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_mulx_u64(&x72, &x73, x60, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x74, &x75, x60, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x76, &x77, x60, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_addcarryx_u64(&x78, &x79, 0x0, x77, x74);
+    fiat_p5248_addcarryx_u64(&x80, &x81, x79, x75, x72);
+    fiat_p5248_addcarryx_u64(&x82, &x83, x81, x73, x70);
+    x84 = (x83 + x71);
+    fiat_p5248_addcarryx_u64(&x85, &x86, 0x0, x60, x76);
+    fiat_p5248_addcarryx_u64(&x87, &x88, x86, x62, x78);
+    fiat_p5248_addcarryx_u64(&x89, &x90, x88, x64, x80);
+    fiat_p5248_addcarryx_u64(&x91, &x92, x90, x66, x82);
+    fiat_p5248_addcarryx_u64(&x93, &x94, x92, x68, x84);
+    x95 = ((uint64_t)x94 + x69);
+    fiat_p5248_mulx_u64(&x96, &x97, x2, (arg1[3]));
+    fiat_p5248_mulx_u64(&x98, &x99, x2, (arg1[2]));
+    fiat_p5248_mulx_u64(&x100, &x101, x2, (arg1[1]));
+    fiat_p5248_mulx_u64(&x102, &x103, x2, (arg1[0]));
+    fiat_p5248_addcarryx_u64(&x104, &x105, 0x0, x103, x100);
+    fiat_p5248_addcarryx_u64(&x106, &x107, x105, x101, x98);
+    fiat_p5248_addcarryx_u64(&x108, &x109, x107, x99, x96);
+    x110 = (x109 + x97);
+    fiat_p5248_addcarryx_u64(&x111, &x112, 0x0, x87, x102);
+    fiat_p5248_addcarryx_u64(&x113, &x114, x112, x89, x104);
+    fiat_p5248_addcarryx_u64(&x115, &x116, x114, x91, x106);
+    fiat_p5248_addcarryx_u64(&x117, &x118, x116, x93, x108);
+    fiat_p5248_addcarryx_u64(&x119, &x120, x118, x95, x110);
+    fiat_p5248_mulx_u64(&x121, &x122, x111, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_mulx_u64(&x123, &x124, x111, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x125, &x126, x111, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x127, &x128, x111, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_addcarryx_u64(&x129, &x130, 0x0, x128, x125);
+    fiat_p5248_addcarryx_u64(&x131, &x132, x130, x126, x123);
+    fiat_p5248_addcarryx_u64(&x133, &x134, x132, x124, x121);
+    x135 = (x134 + x122);
+    fiat_p5248_addcarryx_u64(&x136, &x137, 0x0, x111, x127);
+    fiat_p5248_addcarryx_u64(&x138, &x139, x137, x113, x129);
+    fiat_p5248_addcarryx_u64(&x140, &x141, x139, x115, x131);
+    fiat_p5248_addcarryx_u64(&x142, &x143, x141, x117, x133);
+    fiat_p5248_addcarryx_u64(&x144, &x145, x143, x119, x135);
+    x146 = ((uint64_t)x145 + x120);
+    fiat_p5248_mulx_u64(&x147, &x148, x3, (arg1[3]));
+    fiat_p5248_mulx_u64(&x149, &x150, x3, (arg1[2]));
+    fiat_p5248_mulx_u64(&x151, &x152, x3, (arg1[1]));
+    fiat_p5248_mulx_u64(&x153, &x154, x3, (arg1[0]));
+    fiat_p5248_addcarryx_u64(&x155, &x156, 0x0, x154, x151);
+    fiat_p5248_addcarryx_u64(&x157, &x158, x156, x152, x149);
+    fiat_p5248_addcarryx_u64(&x159, &x160, x158, x150, x147);
+    x161 = (x160 + x148);
+    fiat_p5248_addcarryx_u64(&x162, &x163, 0x0, x138, x153);
+    fiat_p5248_addcarryx_u64(&x164, &x165, x163, x140, x155);
+    fiat_p5248_addcarryx_u64(&x166, &x167, x165, x142, x157);
+    fiat_p5248_addcarryx_u64(&x168, &x169, x167, x144, x159);
+    fiat_p5248_addcarryx_u64(&x170, &x171, x169, x146, x161);
+    fiat_p5248_mulx_u64(&x172, &x173, x162, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_mulx_u64(&x174, &x175, x162, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x176, &x177, x162, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x178, &x179, x162, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_addcarryx_u64(&x180, &x181, 0x0, x179, x176);
+    fiat_p5248_addcarryx_u64(&x182, &x183, x181, x177, x174);
+    fiat_p5248_addcarryx_u64(&x184, &x185, x183, x175, x172);
+    x186 = (x185 + x173);
+    fiat_p5248_addcarryx_u64(&x187, &x188, 0x0, x162, x178);
+    fiat_p5248_addcarryx_u64(&x189, &x190, x188, x164, x180);
+    fiat_p5248_addcarryx_u64(&x191, &x192, x190, x166, x182);
+    fiat_p5248_addcarryx_u64(&x193, &x194, x192, x168, x184);
+    fiat_p5248_addcarryx_u64(&x195, &x196, x194, x170, x186);
+    x197 = ((uint64_t)x196 + x171);
+    fiat_p5248_subborrowx_u64(&x198, &x199, 0x0, x189, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x200, &x201, x199, x191, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x202, &x203, x201, x193, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x204, &x205, x203, x195, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x206, &x207, x205, x197, 0x0);
+    fiat_p5248_cmovznz_u64(&x208, x207, x198, x189);
+    fiat_p5248_cmovznz_u64(&x209, x207, x200, x191);
+    fiat_p5248_cmovznz_u64(&x210, x207, x202, x193);
+    fiat_p5248_cmovznz_u64(&x211, x207, x204, x195);
+    out1[0] = x208;
+    out1[1] = x209;
+    out1[2] = x210;
+    out1[3] = x211;
 }
 
 /*
@@ -838,50 +870,54 @@ void fiat_p5248_square(fiat_p5248_montgomery_domain_field_element out1, const fi
  *   0 ≤ eval arg1 < m
  *   0 ≤ eval arg2 < m
  * Postconditions:
- *   eval (from_montgomery out1) mod m = (eval (from_montgomery arg1) + eval (from_montgomery arg2)) mod m
- *   0 ≤ eval out1 < m
+ *   eval (from_montgomery out1) mod m = (eval (from_montgomery arg1) + eval (from_montgomery arg2))
+ * mod m 0 ≤ eval out1 < m
  *
  */
-void fiat_p5248_add(fiat_p5248_montgomery_domain_field_element out1, const fiat_p5248_montgomery_domain_field_element arg1, const fiat_p5248_montgomery_domain_field_element arg2) {
-  uint64_t x1;
-  fiat_p5248_uint1 x2;
-  uint64_t x3;
-  fiat_p5248_uint1 x4;
-  uint64_t x5;
-  fiat_p5248_uint1 x6;
-  uint64_t x7;
-  fiat_p5248_uint1 x8;
-  uint64_t x9;
-  fiat_p5248_uint1 x10;
-  uint64_t x11;
-  fiat_p5248_uint1 x12;
-  uint64_t x13;
-  fiat_p5248_uint1 x14;
-  uint64_t x15;
-  fiat_p5248_uint1 x16;
-  uint64_t x17;
-  fiat_p5248_uint1 x18;
-  uint64_t x19;
-  uint64_t x20;
-  uint64_t x21;
-  uint64_t x22;
-  fiat_p5248_addcarryx_u64(&x1, &x2, 0x0, (arg1[0]), (arg2[0]));
-  fiat_p5248_addcarryx_u64(&x3, &x4, x2, (arg1[1]), (arg2[1]));
-  fiat_p5248_addcarryx_u64(&x5, &x6, x4, (arg1[2]), (arg2[2]));
-  fiat_p5248_addcarryx_u64(&x7, &x8, x6, (arg1[3]), (arg2[3]));
-  fiat_p5248_subborrowx_u64(&x9, &x10, 0x0, x1, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x11, &x12, x10, x3, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x13, &x14, x12, x5, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x15, &x16, x14, x7, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x17, &x18, x16, x8, 0x0);
-  fiat_p5248_cmovznz_u64(&x19, x18, x9, x1);
-  fiat_p5248_cmovznz_u64(&x20, x18, x11, x3);
-  fiat_p5248_cmovznz_u64(&x21, x18, x13, x5);
-  fiat_p5248_cmovznz_u64(&x22, x18, x15, x7);
-  out1[0] = x19;
-  out1[1] = x20;
-  out1[2] = x21;
-  out1[3] = x22;
+void
+fiat_p5248_add(fiat_p5248_montgomery_domain_field_element out1,
+               const fiat_p5248_montgomery_domain_field_element arg1,
+               const fiat_p5248_montgomery_domain_field_element arg2)
+{
+    uint64_t x1;
+    fiat_p5248_uint1 x2;
+    uint64_t x3;
+    fiat_p5248_uint1 x4;
+    uint64_t x5;
+    fiat_p5248_uint1 x6;
+    uint64_t x7;
+    fiat_p5248_uint1 x8;
+    uint64_t x9;
+    fiat_p5248_uint1 x10;
+    uint64_t x11;
+    fiat_p5248_uint1 x12;
+    uint64_t x13;
+    fiat_p5248_uint1 x14;
+    uint64_t x15;
+    fiat_p5248_uint1 x16;
+    uint64_t x17;
+    fiat_p5248_uint1 x18;
+    uint64_t x19;
+    uint64_t x20;
+    uint64_t x21;
+    uint64_t x22;
+    fiat_p5248_addcarryx_u64(&x1, &x2, 0x0, (arg1[0]), (arg2[0]));
+    fiat_p5248_addcarryx_u64(&x3, &x4, x2, (arg1[1]), (arg2[1]));
+    fiat_p5248_addcarryx_u64(&x5, &x6, x4, (arg1[2]), (arg2[2]));
+    fiat_p5248_addcarryx_u64(&x7, &x8, x6, (arg1[3]), (arg2[3]));
+    fiat_p5248_subborrowx_u64(&x9, &x10, 0x0, x1, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x11, &x12, x10, x3, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x13, &x14, x12, x5, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x15, &x16, x14, x7, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x17, &x18, x16, x8, 0x0);
+    fiat_p5248_cmovznz_u64(&x19, x18, x9, x1);
+    fiat_p5248_cmovznz_u64(&x20, x18, x11, x3);
+    fiat_p5248_cmovznz_u64(&x21, x18, x13, x5);
+    fiat_p5248_cmovznz_u64(&x22, x18, x15, x7);
+    out1[0] = x19;
+    out1[1] = x20;
+    out1[2] = x21;
+    out1[3] = x22;
 }
 
 /*
@@ -891,41 +927,45 @@ void fiat_p5248_add(fiat_p5248_montgomery_domain_field_element out1, const fiat_
  *   0 ≤ eval arg1 < m
  *   0 ≤ eval arg2 < m
  * Postconditions:
- *   eval (from_montgomery out1) mod m = (eval (from_montgomery arg1) - eval (from_montgomery arg2)) mod m
- *   0 ≤ eval out1 < m
+ *   eval (from_montgomery out1) mod m = (eval (from_montgomery arg1) - eval (from_montgomery arg2))
+ * mod m 0 ≤ eval out1 < m
  *
  */
-void fiat_p5248_sub(fiat_p5248_montgomery_domain_field_element out1, const fiat_p5248_montgomery_domain_field_element arg1, const fiat_p5248_montgomery_domain_field_element arg2) {
-  uint64_t x1;
-  fiat_p5248_uint1 x2;
-  uint64_t x3;
-  fiat_p5248_uint1 x4;
-  uint64_t x5;
-  fiat_p5248_uint1 x6;
-  uint64_t x7;
-  fiat_p5248_uint1 x8;
-  uint64_t x9;
-  uint64_t x10;
-  fiat_p5248_uint1 x11;
-  uint64_t x12;
-  fiat_p5248_uint1 x13;
-  uint64_t x14;
-  fiat_p5248_uint1 x15;
-  uint64_t x16;
-  fiat_p5248_uint1 x17;
-  fiat_p5248_subborrowx_u64(&x1, &x2, 0x0, (arg1[0]), (arg2[0]));
-  fiat_p5248_subborrowx_u64(&x3, &x4, x2, (arg1[1]), (arg2[1]));
-  fiat_p5248_subborrowx_u64(&x5, &x6, x4, (arg1[2]), (arg2[2]));
-  fiat_p5248_subborrowx_u64(&x7, &x8, x6, (arg1[3]), (arg2[3]));
-  fiat_p5248_cmovznz_u64(&x9, x8, 0x0, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_addcarryx_u64(&x10, &x11, 0x0, x1, x9);
-  fiat_p5248_addcarryx_u64(&x12, &x13, x11, x3, x9);
-  fiat_p5248_addcarryx_u64(&x14, &x15, x13, x5, x9);
-  fiat_p5248_addcarryx_u64(&x16, &x17, x15, x7, (x9 & UINT64_C(0x4ffffffffffffff)));
-  out1[0] = x10;
-  out1[1] = x12;
-  out1[2] = x14;
-  out1[3] = x16;
+void
+fiat_p5248_sub(fiat_p5248_montgomery_domain_field_element out1,
+               const fiat_p5248_montgomery_domain_field_element arg1,
+               const fiat_p5248_montgomery_domain_field_element arg2)
+{
+    uint64_t x1;
+    fiat_p5248_uint1 x2;
+    uint64_t x3;
+    fiat_p5248_uint1 x4;
+    uint64_t x5;
+    fiat_p5248_uint1 x6;
+    uint64_t x7;
+    fiat_p5248_uint1 x8;
+    uint64_t x9;
+    uint64_t x10;
+    fiat_p5248_uint1 x11;
+    uint64_t x12;
+    fiat_p5248_uint1 x13;
+    uint64_t x14;
+    fiat_p5248_uint1 x15;
+    uint64_t x16;
+    fiat_p5248_uint1 x17;
+    fiat_p5248_subborrowx_u64(&x1, &x2, 0x0, (arg1[0]), (arg2[0]));
+    fiat_p5248_subborrowx_u64(&x3, &x4, x2, (arg1[1]), (arg2[1]));
+    fiat_p5248_subborrowx_u64(&x5, &x6, x4, (arg1[2]), (arg2[2]));
+    fiat_p5248_subborrowx_u64(&x7, &x8, x6, (arg1[3]), (arg2[3]));
+    fiat_p5248_cmovznz_u64(&x9, x8, 0x0, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_addcarryx_u64(&x10, &x11, 0x0, x1, x9);
+    fiat_p5248_addcarryx_u64(&x12, &x13, x11, x3, x9);
+    fiat_p5248_addcarryx_u64(&x14, &x15, x13, x5, x9);
+    fiat_p5248_addcarryx_u64(&x16, &x17, x15, x7, (x9 & UINT64_C(0x4ffffffffffffff)));
+    out1[0] = x10;
+    out1[1] = x12;
+    out1[2] = x14;
+    out1[3] = x16;
 }
 
 /*
@@ -938,37 +978,40 @@ void fiat_p5248_sub(fiat_p5248_montgomery_domain_field_element out1, const fiat_
  *   0 ≤ eval out1 < m
  *
  */
-void fiat_p5248_opp(fiat_p5248_montgomery_domain_field_element out1, const fiat_p5248_montgomery_domain_field_element arg1) {
-  uint64_t x1;
-  fiat_p5248_uint1 x2;
-  uint64_t x3;
-  fiat_p5248_uint1 x4;
-  uint64_t x5;
-  fiat_p5248_uint1 x6;
-  uint64_t x7;
-  fiat_p5248_uint1 x8;
-  uint64_t x9;
-  uint64_t x10;
-  fiat_p5248_uint1 x11;
-  uint64_t x12;
-  fiat_p5248_uint1 x13;
-  uint64_t x14;
-  fiat_p5248_uint1 x15;
-  uint64_t x16;
-  fiat_p5248_uint1 x17;
-  fiat_p5248_subborrowx_u64(&x1, &x2, 0x0, 0x0, (arg1[0]));
-  fiat_p5248_subborrowx_u64(&x3, &x4, x2, 0x0, (arg1[1]));
-  fiat_p5248_subborrowx_u64(&x5, &x6, x4, 0x0, (arg1[2]));
-  fiat_p5248_subborrowx_u64(&x7, &x8, x6, 0x0, (arg1[3]));
-  fiat_p5248_cmovznz_u64(&x9, x8, 0x0, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_addcarryx_u64(&x10, &x11, 0x0, x1, x9);
-  fiat_p5248_addcarryx_u64(&x12, &x13, x11, x3, x9);
-  fiat_p5248_addcarryx_u64(&x14, &x15, x13, x5, x9);
-  fiat_p5248_addcarryx_u64(&x16, &x17, x15, x7, (x9 & UINT64_C(0x4ffffffffffffff)));
-  out1[0] = x10;
-  out1[1] = x12;
-  out1[2] = x14;
-  out1[3] = x16;
+void
+fiat_p5248_opp(fiat_p5248_montgomery_domain_field_element out1,
+               const fiat_p5248_montgomery_domain_field_element arg1)
+{
+    uint64_t x1;
+    fiat_p5248_uint1 x2;
+    uint64_t x3;
+    fiat_p5248_uint1 x4;
+    uint64_t x5;
+    fiat_p5248_uint1 x6;
+    uint64_t x7;
+    fiat_p5248_uint1 x8;
+    uint64_t x9;
+    uint64_t x10;
+    fiat_p5248_uint1 x11;
+    uint64_t x12;
+    fiat_p5248_uint1 x13;
+    uint64_t x14;
+    fiat_p5248_uint1 x15;
+    uint64_t x16;
+    fiat_p5248_uint1 x17;
+    fiat_p5248_subborrowx_u64(&x1, &x2, 0x0, 0x0, (arg1[0]));
+    fiat_p5248_subborrowx_u64(&x3, &x4, x2, 0x0, (arg1[1]));
+    fiat_p5248_subborrowx_u64(&x5, &x6, x4, 0x0, (arg1[2]));
+    fiat_p5248_subborrowx_u64(&x7, &x8, x6, 0x0, (arg1[3]));
+    fiat_p5248_cmovznz_u64(&x9, x8, 0x0, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_addcarryx_u64(&x10, &x11, 0x0, x1, x9);
+    fiat_p5248_addcarryx_u64(&x12, &x13, x11, x3, x9);
+    fiat_p5248_addcarryx_u64(&x14, &x15, x13, x5, x9);
+    fiat_p5248_addcarryx_u64(&x16, &x17, x15, x7, (x9 & UINT64_C(0x4ffffffffffffff)));
+    out1[0] = x10;
+    out1[1] = x12;
+    out1[2] = x14;
+    out1[3] = x16;
 }
 
 /*
@@ -981,197 +1024,200 @@ void fiat_p5248_opp(fiat_p5248_montgomery_domain_field_element out1, const fiat_
  *   0 ≤ eval out1 < m
  *
  */
-void fiat_p5248_from_montgomery(fiat_p5248_non_montgomery_domain_field_element out1, const fiat_p5248_montgomery_domain_field_element arg1) {
-  uint64_t x1;
-  uint64_t x2;
-  uint64_t x3;
-  uint64_t x4;
-  uint64_t x5;
-  uint64_t x6;
-  uint64_t x7;
-  uint64_t x8;
-  uint64_t x9;
-  uint64_t x10;
-  fiat_p5248_uint1 x11;
-  uint64_t x12;
-  fiat_p5248_uint1 x13;
-  uint64_t x14;
-  fiat_p5248_uint1 x15;
-  uint64_t x16;
-  fiat_p5248_uint1 x17;
-  uint64_t x18;
-  fiat_p5248_uint1 x19;
-  uint64_t x20;
-  fiat_p5248_uint1 x21;
-  uint64_t x22;
-  fiat_p5248_uint1 x23;
-  uint64_t x24;
-  fiat_p5248_uint1 x25;
-  uint64_t x26;
-  fiat_p5248_uint1 x27;
-  uint64_t x28;
-  fiat_p5248_uint1 x29;
-  uint64_t x30;
-  uint64_t x31;
-  uint64_t x32;
-  uint64_t x33;
-  uint64_t x34;
-  uint64_t x35;
-  uint64_t x36;
-  uint64_t x37;
-  uint64_t x38;
-  fiat_p5248_uint1 x39;
-  uint64_t x40;
-  fiat_p5248_uint1 x41;
-  uint64_t x42;
-  fiat_p5248_uint1 x43;
-  uint64_t x44;
-  fiat_p5248_uint1 x45;
-  uint64_t x46;
-  fiat_p5248_uint1 x47;
-  uint64_t x48;
-  fiat_p5248_uint1 x49;
-  uint64_t x50;
-  fiat_p5248_uint1 x51;
-  uint64_t x52;
-  fiat_p5248_uint1 x53;
-  uint64_t x54;
-  fiat_p5248_uint1 x55;
-  uint64_t x56;
-  fiat_p5248_uint1 x57;
-  uint64_t x58;
-  uint64_t x59;
-  uint64_t x60;
-  uint64_t x61;
-  uint64_t x62;
-  uint64_t x63;
-  uint64_t x64;
-  uint64_t x65;
-  uint64_t x66;
-  fiat_p5248_uint1 x67;
-  uint64_t x68;
-  fiat_p5248_uint1 x69;
-  uint64_t x70;
-  fiat_p5248_uint1 x71;
-  uint64_t x72;
-  fiat_p5248_uint1 x73;
-  uint64_t x74;
-  fiat_p5248_uint1 x75;
-  uint64_t x76;
-  fiat_p5248_uint1 x77;
-  uint64_t x78;
-  fiat_p5248_uint1 x79;
-  uint64_t x80;
-  fiat_p5248_uint1 x81;
-  uint64_t x82;
-  fiat_p5248_uint1 x83;
-  uint64_t x84;
-  fiat_p5248_uint1 x85;
-  uint64_t x86;
-  uint64_t x87;
-  uint64_t x88;
-  uint64_t x89;
-  uint64_t x90;
-  uint64_t x91;
-  uint64_t x92;
-  uint64_t x93;
-  uint64_t x94;
-  fiat_p5248_uint1 x95;
-  uint64_t x96;
-  fiat_p5248_uint1 x97;
-  uint64_t x98;
-  fiat_p5248_uint1 x99;
-  uint64_t x100;
-  fiat_p5248_uint1 x101;
-  uint64_t x102;
-  fiat_p5248_uint1 x103;
-  uint64_t x104;
-  fiat_p5248_uint1 x105;
-  uint64_t x106;
-  fiat_p5248_uint1 x107;
-  uint64_t x108;
-  uint64_t x109;
-  fiat_p5248_uint1 x110;
-  uint64_t x111;
-  fiat_p5248_uint1 x112;
-  uint64_t x113;
-  fiat_p5248_uint1 x114;
-  uint64_t x115;
-  fiat_p5248_uint1 x116;
-  uint64_t x117;
-  fiat_p5248_uint1 x118;
-  uint64_t x119;
-  uint64_t x120;
-  uint64_t x121;
-  uint64_t x122;
-  x1 = (arg1[0]);
-  fiat_p5248_mulx_u64(&x2, &x3, x1, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_mulx_u64(&x4, &x5, x1, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x6, &x7, x1, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x8, &x9, x1, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_addcarryx_u64(&x10, &x11, 0x0, x9, x6);
-  fiat_p5248_addcarryx_u64(&x12, &x13, x11, x7, x4);
-  fiat_p5248_addcarryx_u64(&x14, &x15, x13, x5, x2);
-  fiat_p5248_addcarryx_u64(&x16, &x17, 0x0, x1, x8);
-  fiat_p5248_addcarryx_u64(&x18, &x19, x17, 0x0, x10);
-  fiat_p5248_addcarryx_u64(&x20, &x21, x19, 0x0, x12);
-  fiat_p5248_addcarryx_u64(&x22, &x23, x21, 0x0, x14);
-  fiat_p5248_addcarryx_u64(&x24, &x25, 0x0, x18, (arg1[1]));
-  fiat_p5248_addcarryx_u64(&x26, &x27, x25, x20, 0x0);
-  fiat_p5248_addcarryx_u64(&x28, &x29, x27, x22, 0x0);
-  fiat_p5248_mulx_u64(&x30, &x31, x24, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_mulx_u64(&x32, &x33, x24, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x34, &x35, x24, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x36, &x37, x24, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_addcarryx_u64(&x38, &x39, 0x0, x37, x34);
-  fiat_p5248_addcarryx_u64(&x40, &x41, x39, x35, x32);
-  fiat_p5248_addcarryx_u64(&x42, &x43, x41, x33, x30);
-  fiat_p5248_addcarryx_u64(&x44, &x45, 0x0, x24, x36);
-  fiat_p5248_addcarryx_u64(&x46, &x47, x45, x26, x38);
-  fiat_p5248_addcarryx_u64(&x48, &x49, x47, x28, x40);
-  fiat_p5248_addcarryx_u64(&x50, &x51, x49, (x29 + (x23 + (x15 + x3))), x42);
-  fiat_p5248_addcarryx_u64(&x52, &x53, 0x0, x46, (arg1[2]));
-  fiat_p5248_addcarryx_u64(&x54, &x55, x53, x48, 0x0);
-  fiat_p5248_addcarryx_u64(&x56, &x57, x55, x50, 0x0);
-  fiat_p5248_mulx_u64(&x58, &x59, x52, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_mulx_u64(&x60, &x61, x52, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x62, &x63, x52, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x64, &x65, x52, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_addcarryx_u64(&x66, &x67, 0x0, x65, x62);
-  fiat_p5248_addcarryx_u64(&x68, &x69, x67, x63, x60);
-  fiat_p5248_addcarryx_u64(&x70, &x71, x69, x61, x58);
-  fiat_p5248_addcarryx_u64(&x72, &x73, 0x0, x52, x64);
-  fiat_p5248_addcarryx_u64(&x74, &x75, x73, x54, x66);
-  fiat_p5248_addcarryx_u64(&x76, &x77, x75, x56, x68);
-  fiat_p5248_addcarryx_u64(&x78, &x79, x77, (x57 + (x51 + (x43 + x31))), x70);
-  fiat_p5248_addcarryx_u64(&x80, &x81, 0x0, x74, (arg1[3]));
-  fiat_p5248_addcarryx_u64(&x82, &x83, x81, x76, 0x0);
-  fiat_p5248_addcarryx_u64(&x84, &x85, x83, x78, 0x0);
-  fiat_p5248_mulx_u64(&x86, &x87, x80, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_mulx_u64(&x88, &x89, x80, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x90, &x91, x80, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x92, &x93, x80, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_addcarryx_u64(&x94, &x95, 0x0, x93, x90);
-  fiat_p5248_addcarryx_u64(&x96, &x97, x95, x91, x88);
-  fiat_p5248_addcarryx_u64(&x98, &x99, x97, x89, x86);
-  fiat_p5248_addcarryx_u64(&x100, &x101, 0x0, x80, x92);
-  fiat_p5248_addcarryx_u64(&x102, &x103, x101, x82, x94);
-  fiat_p5248_addcarryx_u64(&x104, &x105, x103, x84, x96);
-  fiat_p5248_addcarryx_u64(&x106, &x107, x105, (x85 + (x79 + (x71 + x59))), x98);
-  x108 = (x107 + (x99 + x87));
-  fiat_p5248_subborrowx_u64(&x109, &x110, 0x0, x102, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x111, &x112, x110, x104, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x113, &x114, x112, x106, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x115, &x116, x114, x108, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x117, &x118, x116, 0x0, 0x0);
-  fiat_p5248_cmovznz_u64(&x119, x118, x109, x102);
-  fiat_p5248_cmovznz_u64(&x120, x118, x111, x104);
-  fiat_p5248_cmovznz_u64(&x121, x118, x113, x106);
-  fiat_p5248_cmovznz_u64(&x122, x118, x115, x108);
-  out1[0] = x119;
-  out1[1] = x120;
-  out1[2] = x121;
-  out1[3] = x122;
+void
+fiat_p5248_from_montgomery(fiat_p5248_non_montgomery_domain_field_element out1,
+                           const fiat_p5248_montgomery_domain_field_element arg1)
+{
+    uint64_t x1;
+    uint64_t x2;
+    uint64_t x3;
+    uint64_t x4;
+    uint64_t x5;
+    uint64_t x6;
+    uint64_t x7;
+    uint64_t x8;
+    uint64_t x9;
+    uint64_t x10;
+    fiat_p5248_uint1 x11;
+    uint64_t x12;
+    fiat_p5248_uint1 x13;
+    uint64_t x14;
+    fiat_p5248_uint1 x15;
+    uint64_t x16;
+    fiat_p5248_uint1 x17;
+    uint64_t x18;
+    fiat_p5248_uint1 x19;
+    uint64_t x20;
+    fiat_p5248_uint1 x21;
+    uint64_t x22;
+    fiat_p5248_uint1 x23;
+    uint64_t x24;
+    fiat_p5248_uint1 x25;
+    uint64_t x26;
+    fiat_p5248_uint1 x27;
+    uint64_t x28;
+    fiat_p5248_uint1 x29;
+    uint64_t x30;
+    uint64_t x31;
+    uint64_t x32;
+    uint64_t x33;
+    uint64_t x34;
+    uint64_t x35;
+    uint64_t x36;
+    uint64_t x37;
+    uint64_t x38;
+    fiat_p5248_uint1 x39;
+    uint64_t x40;
+    fiat_p5248_uint1 x41;
+    uint64_t x42;
+    fiat_p5248_uint1 x43;
+    uint64_t x44;
+    fiat_p5248_uint1 x45;
+    uint64_t x46;
+    fiat_p5248_uint1 x47;
+    uint64_t x48;
+    fiat_p5248_uint1 x49;
+    uint64_t x50;
+    fiat_p5248_uint1 x51;
+    uint64_t x52;
+    fiat_p5248_uint1 x53;
+    uint64_t x54;
+    fiat_p5248_uint1 x55;
+    uint64_t x56;
+    fiat_p5248_uint1 x57;
+    uint64_t x58;
+    uint64_t x59;
+    uint64_t x60;
+    uint64_t x61;
+    uint64_t x62;
+    uint64_t x63;
+    uint64_t x64;
+    uint64_t x65;
+    uint64_t x66;
+    fiat_p5248_uint1 x67;
+    uint64_t x68;
+    fiat_p5248_uint1 x69;
+    uint64_t x70;
+    fiat_p5248_uint1 x71;
+    uint64_t x72;
+    fiat_p5248_uint1 x73;
+    uint64_t x74;
+    fiat_p5248_uint1 x75;
+    uint64_t x76;
+    fiat_p5248_uint1 x77;
+    uint64_t x78;
+    fiat_p5248_uint1 x79;
+    uint64_t x80;
+    fiat_p5248_uint1 x81;
+    uint64_t x82;
+    fiat_p5248_uint1 x83;
+    uint64_t x84;
+    fiat_p5248_uint1 x85;
+    uint64_t x86;
+    uint64_t x87;
+    uint64_t x88;
+    uint64_t x89;
+    uint64_t x90;
+    uint64_t x91;
+    uint64_t x92;
+    uint64_t x93;
+    uint64_t x94;
+    fiat_p5248_uint1 x95;
+    uint64_t x96;
+    fiat_p5248_uint1 x97;
+    uint64_t x98;
+    fiat_p5248_uint1 x99;
+    uint64_t x100;
+    fiat_p5248_uint1 x101;
+    uint64_t x102;
+    fiat_p5248_uint1 x103;
+    uint64_t x104;
+    fiat_p5248_uint1 x105;
+    uint64_t x106;
+    fiat_p5248_uint1 x107;
+    uint64_t x108;
+    uint64_t x109;
+    fiat_p5248_uint1 x110;
+    uint64_t x111;
+    fiat_p5248_uint1 x112;
+    uint64_t x113;
+    fiat_p5248_uint1 x114;
+    uint64_t x115;
+    fiat_p5248_uint1 x116;
+    uint64_t x117;
+    fiat_p5248_uint1 x118;
+    uint64_t x119;
+    uint64_t x120;
+    uint64_t x121;
+    uint64_t x122;
+    x1 = (arg1[0]);
+    fiat_p5248_mulx_u64(&x2, &x3, x1, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_mulx_u64(&x4, &x5, x1, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x6, &x7, x1, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x8, &x9, x1, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_addcarryx_u64(&x10, &x11, 0x0, x9, x6);
+    fiat_p5248_addcarryx_u64(&x12, &x13, x11, x7, x4);
+    fiat_p5248_addcarryx_u64(&x14, &x15, x13, x5, x2);
+    fiat_p5248_addcarryx_u64(&x16, &x17, 0x0, x1, x8);
+    fiat_p5248_addcarryx_u64(&x18, &x19, x17, 0x0, x10);
+    fiat_p5248_addcarryx_u64(&x20, &x21, x19, 0x0, x12);
+    fiat_p5248_addcarryx_u64(&x22, &x23, x21, 0x0, x14);
+    fiat_p5248_addcarryx_u64(&x24, &x25, 0x0, x18, (arg1[1]));
+    fiat_p5248_addcarryx_u64(&x26, &x27, x25, x20, 0x0);
+    fiat_p5248_addcarryx_u64(&x28, &x29, x27, x22, 0x0);
+    fiat_p5248_mulx_u64(&x30, &x31, x24, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_mulx_u64(&x32, &x33, x24, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x34, &x35, x24, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x36, &x37, x24, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_addcarryx_u64(&x38, &x39, 0x0, x37, x34);
+    fiat_p5248_addcarryx_u64(&x40, &x41, x39, x35, x32);
+    fiat_p5248_addcarryx_u64(&x42, &x43, x41, x33, x30);
+    fiat_p5248_addcarryx_u64(&x44, &x45, 0x0, x24, x36);
+    fiat_p5248_addcarryx_u64(&x46, &x47, x45, x26, x38);
+    fiat_p5248_addcarryx_u64(&x48, &x49, x47, x28, x40);
+    fiat_p5248_addcarryx_u64(&x50, &x51, x49, (x29 + (x23 + (x15 + x3))), x42);
+    fiat_p5248_addcarryx_u64(&x52, &x53, 0x0, x46, (arg1[2]));
+    fiat_p5248_addcarryx_u64(&x54, &x55, x53, x48, 0x0);
+    fiat_p5248_addcarryx_u64(&x56, &x57, x55, x50, 0x0);
+    fiat_p5248_mulx_u64(&x58, &x59, x52, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_mulx_u64(&x60, &x61, x52, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x62, &x63, x52, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x64, &x65, x52, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_addcarryx_u64(&x66, &x67, 0x0, x65, x62);
+    fiat_p5248_addcarryx_u64(&x68, &x69, x67, x63, x60);
+    fiat_p5248_addcarryx_u64(&x70, &x71, x69, x61, x58);
+    fiat_p5248_addcarryx_u64(&x72, &x73, 0x0, x52, x64);
+    fiat_p5248_addcarryx_u64(&x74, &x75, x73, x54, x66);
+    fiat_p5248_addcarryx_u64(&x76, &x77, x75, x56, x68);
+    fiat_p5248_addcarryx_u64(&x78, &x79, x77, (x57 + (x51 + (x43 + x31))), x70);
+    fiat_p5248_addcarryx_u64(&x80, &x81, 0x0, x74, (arg1[3]));
+    fiat_p5248_addcarryx_u64(&x82, &x83, x81, x76, 0x0);
+    fiat_p5248_addcarryx_u64(&x84, &x85, x83, x78, 0x0);
+    fiat_p5248_mulx_u64(&x86, &x87, x80, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_mulx_u64(&x88, &x89, x80, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x90, &x91, x80, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x92, &x93, x80, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_addcarryx_u64(&x94, &x95, 0x0, x93, x90);
+    fiat_p5248_addcarryx_u64(&x96, &x97, x95, x91, x88);
+    fiat_p5248_addcarryx_u64(&x98, &x99, x97, x89, x86);
+    fiat_p5248_addcarryx_u64(&x100, &x101, 0x0, x80, x92);
+    fiat_p5248_addcarryx_u64(&x102, &x103, x101, x82, x94);
+    fiat_p5248_addcarryx_u64(&x104, &x105, x103, x84, x96);
+    fiat_p5248_addcarryx_u64(&x106, &x107, x105, (x85 + (x79 + (x71 + x59))), x98);
+    x108 = (x107 + (x99 + x87));
+    fiat_p5248_subborrowx_u64(&x109, &x110, 0x0, x102, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x111, &x112, x110, x104, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x113, &x114, x112, x106, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x115, &x116, x114, x108, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x117, &x118, x116, 0x0, 0x0);
+    fiat_p5248_cmovznz_u64(&x119, x118, x109, x102);
+    fiat_p5248_cmovznz_u64(&x120, x118, x111, x104);
+    fiat_p5248_cmovznz_u64(&x121, x118, x113, x106);
+    fiat_p5248_cmovznz_u64(&x122, x118, x115, x108);
+    out1[0] = x119;
+    out1[1] = x120;
+    out1[2] = x121;
+    out1[3] = x122;
 }
 
 /*
@@ -1184,300 +1230,305 @@ void fiat_p5248_from_montgomery(fiat_p5248_non_montgomery_domain_field_element o
  *   0 ≤ eval out1 < m
  *
  */
-void fiat_p5248_to_montgomery(fiat_p5248_montgomery_domain_field_element out1, const fiat_p5248_non_montgomery_domain_field_element arg1) {
-  uint64_t x1;
-  uint64_t x2;
-  uint64_t x3;
-  uint64_t x4;
-  uint64_t x5;
-  uint64_t x6;
-  uint64_t x7;
-  uint64_t x8;
-  uint64_t x9;
-  uint64_t x10;
-  uint64_t x11;
-  uint64_t x12;
-  uint64_t x13;
-  fiat_p5248_uint1 x14;
-  uint64_t x15;
-  fiat_p5248_uint1 x16;
-  uint64_t x17;
-  fiat_p5248_uint1 x18;
-  uint64_t x19;
-  uint64_t x20;
-  uint64_t x21;
-  uint64_t x22;
-  uint64_t x23;
-  uint64_t x24;
-  uint64_t x25;
-  uint64_t x26;
-  uint64_t x27;
-  fiat_p5248_uint1 x28;
-  uint64_t x29;
-  fiat_p5248_uint1 x30;
-  uint64_t x31;
-  fiat_p5248_uint1 x32;
-  uint64_t x33;
-  fiat_p5248_uint1 x34;
-  uint64_t x35;
-  fiat_p5248_uint1 x36;
-  uint64_t x37;
-  fiat_p5248_uint1 x38;
-  uint64_t x39;
-  fiat_p5248_uint1 x40;
-  uint64_t x41;
-  uint64_t x42;
-  uint64_t x43;
-  uint64_t x44;
-  uint64_t x45;
-  uint64_t x46;
-  uint64_t x47;
-  uint64_t x48;
-  uint64_t x49;
-  fiat_p5248_uint1 x50;
-  uint64_t x51;
-  fiat_p5248_uint1 x52;
-  uint64_t x53;
-  fiat_p5248_uint1 x54;
-  uint64_t x55;
-  fiat_p5248_uint1 x56;
-  uint64_t x57;
-  fiat_p5248_uint1 x58;
-  uint64_t x59;
-  fiat_p5248_uint1 x60;
-  uint64_t x61;
-  fiat_p5248_uint1 x62;
-  uint64_t x63;
-  uint64_t x64;
-  uint64_t x65;
-  uint64_t x66;
-  uint64_t x67;
-  uint64_t x68;
-  uint64_t x69;
-  uint64_t x70;
-  uint64_t x71;
-  fiat_p5248_uint1 x72;
-  uint64_t x73;
-  fiat_p5248_uint1 x74;
-  uint64_t x75;
-  fiat_p5248_uint1 x76;
-  uint64_t x77;
-  fiat_p5248_uint1 x78;
-  uint64_t x79;
-  fiat_p5248_uint1 x80;
-  uint64_t x81;
-  fiat_p5248_uint1 x82;
-  uint64_t x83;
-  fiat_p5248_uint1 x84;
-  uint64_t x85;
-  uint64_t x86;
-  uint64_t x87;
-  uint64_t x88;
-  uint64_t x89;
-  uint64_t x90;
-  uint64_t x91;
-  uint64_t x92;
-  uint64_t x93;
-  fiat_p5248_uint1 x94;
-  uint64_t x95;
-  fiat_p5248_uint1 x96;
-  uint64_t x97;
-  fiat_p5248_uint1 x98;
-  uint64_t x99;
-  fiat_p5248_uint1 x100;
-  uint64_t x101;
-  fiat_p5248_uint1 x102;
-  uint64_t x103;
-  fiat_p5248_uint1 x104;
-  uint64_t x105;
-  fiat_p5248_uint1 x106;
-  uint64_t x107;
-  uint64_t x108;
-  uint64_t x109;
-  uint64_t x110;
-  uint64_t x111;
-  uint64_t x112;
-  uint64_t x113;
-  uint64_t x114;
-  uint64_t x115;
-  fiat_p5248_uint1 x116;
-  uint64_t x117;
-  fiat_p5248_uint1 x118;
-  uint64_t x119;
-  fiat_p5248_uint1 x120;
-  uint64_t x121;
-  fiat_p5248_uint1 x122;
-  uint64_t x123;
-  fiat_p5248_uint1 x124;
-  uint64_t x125;
-  fiat_p5248_uint1 x126;
-  uint64_t x127;
-  fiat_p5248_uint1 x128;
-  uint64_t x129;
-  uint64_t x130;
-  uint64_t x131;
-  uint64_t x132;
-  uint64_t x133;
-  uint64_t x134;
-  uint64_t x135;
-  uint64_t x136;
-  uint64_t x137;
-  fiat_p5248_uint1 x138;
-  uint64_t x139;
-  fiat_p5248_uint1 x140;
-  uint64_t x141;
-  fiat_p5248_uint1 x142;
-  uint64_t x143;
-  fiat_p5248_uint1 x144;
-  uint64_t x145;
-  fiat_p5248_uint1 x146;
-  uint64_t x147;
-  fiat_p5248_uint1 x148;
-  uint64_t x149;
-  fiat_p5248_uint1 x150;
-  uint64_t x151;
-  uint64_t x152;
-  uint64_t x153;
-  uint64_t x154;
-  uint64_t x155;
-  uint64_t x156;
-  uint64_t x157;
-  uint64_t x158;
-  uint64_t x159;
-  fiat_p5248_uint1 x160;
-  uint64_t x161;
-  fiat_p5248_uint1 x162;
-  uint64_t x163;
-  fiat_p5248_uint1 x164;
-  uint64_t x165;
-  fiat_p5248_uint1 x166;
-  uint64_t x167;
-  fiat_p5248_uint1 x168;
-  uint64_t x169;
-  fiat_p5248_uint1 x170;
-  uint64_t x171;
-  fiat_p5248_uint1 x172;
-  uint64_t x173;
-  uint64_t x174;
-  fiat_p5248_uint1 x175;
-  uint64_t x176;
-  fiat_p5248_uint1 x177;
-  uint64_t x178;
-  fiat_p5248_uint1 x179;
-  uint64_t x180;
-  fiat_p5248_uint1 x181;
-  uint64_t x182;
-  fiat_p5248_uint1 x183;
-  uint64_t x184;
-  uint64_t x185;
-  uint64_t x186;
-  uint64_t x187;
-  x1 = (arg1[1]);
-  x2 = (arg1[2]);
-  x3 = (arg1[3]);
-  x4 = (arg1[0]);
-  fiat_p5248_mulx_u64(&x5, &x6, x4, UINT64_C(0x333333333333333));
-  fiat_p5248_mulx_u64(&x7, &x8, x4, UINT64_C(0x3333333333333333));
-  fiat_p5248_mulx_u64(&x9, &x10, x4, UINT64_C(0x3333333333333333));
-  fiat_p5248_mulx_u64(&x11, &x12, x4, UINT64_C(0x3333333333333d70));
-  fiat_p5248_addcarryx_u64(&x13, &x14, 0x0, x12, x9);
-  fiat_p5248_addcarryx_u64(&x15, &x16, x14, x10, x7);
-  fiat_p5248_addcarryx_u64(&x17, &x18, x16, x8, x5);
-  fiat_p5248_mulx_u64(&x19, &x20, x11, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_mulx_u64(&x21, &x22, x11, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x23, &x24, x11, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x25, &x26, x11, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_addcarryx_u64(&x27, &x28, 0x0, x26, x23);
-  fiat_p5248_addcarryx_u64(&x29, &x30, x28, x24, x21);
-  fiat_p5248_addcarryx_u64(&x31, &x32, x30, x22, x19);
-  fiat_p5248_addcarryx_u64(&x33, &x34, 0x0, x11, x25);
-  fiat_p5248_addcarryx_u64(&x35, &x36, x34, x13, x27);
-  fiat_p5248_addcarryx_u64(&x37, &x38, x36, x15, x29);
-  fiat_p5248_addcarryx_u64(&x39, &x40, x38, x17, x31);
-  fiat_p5248_mulx_u64(&x41, &x42, x1, UINT64_C(0x333333333333333));
-  fiat_p5248_mulx_u64(&x43, &x44, x1, UINT64_C(0x3333333333333333));
-  fiat_p5248_mulx_u64(&x45, &x46, x1, UINT64_C(0x3333333333333333));
-  fiat_p5248_mulx_u64(&x47, &x48, x1, UINT64_C(0x3333333333333d70));
-  fiat_p5248_addcarryx_u64(&x49, &x50, 0x0, x48, x45);
-  fiat_p5248_addcarryx_u64(&x51, &x52, x50, x46, x43);
-  fiat_p5248_addcarryx_u64(&x53, &x54, x52, x44, x41);
-  fiat_p5248_addcarryx_u64(&x55, &x56, 0x0, x35, x47);
-  fiat_p5248_addcarryx_u64(&x57, &x58, x56, x37, x49);
-  fiat_p5248_addcarryx_u64(&x59, &x60, x58, x39, x51);
-  fiat_p5248_addcarryx_u64(&x61, &x62, x60, ((x40 + (x18 + x6)) + (x32 + x20)), x53);
-  fiat_p5248_mulx_u64(&x63, &x64, x55, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_mulx_u64(&x65, &x66, x55, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x67, &x68, x55, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x69, &x70, x55, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_addcarryx_u64(&x71, &x72, 0x0, x70, x67);
-  fiat_p5248_addcarryx_u64(&x73, &x74, x72, x68, x65);
-  fiat_p5248_addcarryx_u64(&x75, &x76, x74, x66, x63);
-  fiat_p5248_addcarryx_u64(&x77, &x78, 0x0, x55, x69);
-  fiat_p5248_addcarryx_u64(&x79, &x80, x78, x57, x71);
-  fiat_p5248_addcarryx_u64(&x81, &x82, x80, x59, x73);
-  fiat_p5248_addcarryx_u64(&x83, &x84, x82, x61, x75);
-  fiat_p5248_mulx_u64(&x85, &x86, x2, UINT64_C(0x333333333333333));
-  fiat_p5248_mulx_u64(&x87, &x88, x2, UINT64_C(0x3333333333333333));
-  fiat_p5248_mulx_u64(&x89, &x90, x2, UINT64_C(0x3333333333333333));
-  fiat_p5248_mulx_u64(&x91, &x92, x2, UINT64_C(0x3333333333333d70));
-  fiat_p5248_addcarryx_u64(&x93, &x94, 0x0, x92, x89);
-  fiat_p5248_addcarryx_u64(&x95, &x96, x94, x90, x87);
-  fiat_p5248_addcarryx_u64(&x97, &x98, x96, x88, x85);
-  fiat_p5248_addcarryx_u64(&x99, &x100, 0x0, x79, x91);
-  fiat_p5248_addcarryx_u64(&x101, &x102, x100, x81, x93);
-  fiat_p5248_addcarryx_u64(&x103, &x104, x102, x83, x95);
-  fiat_p5248_addcarryx_u64(&x105, &x106, x104, ((x84 + (x62 + (x54 + x42))) + (x76 + x64)), x97);
-  fiat_p5248_mulx_u64(&x107, &x108, x99, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_mulx_u64(&x109, &x110, x99, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x111, &x112, x99, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x113, &x114, x99, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_addcarryx_u64(&x115, &x116, 0x0, x114, x111);
-  fiat_p5248_addcarryx_u64(&x117, &x118, x116, x112, x109);
-  fiat_p5248_addcarryx_u64(&x119, &x120, x118, x110, x107);
-  fiat_p5248_addcarryx_u64(&x121, &x122, 0x0, x99, x113);
-  fiat_p5248_addcarryx_u64(&x123, &x124, x122, x101, x115);
-  fiat_p5248_addcarryx_u64(&x125, &x126, x124, x103, x117);
-  fiat_p5248_addcarryx_u64(&x127, &x128, x126, x105, x119);
-  fiat_p5248_mulx_u64(&x129, &x130, x3, UINT64_C(0x333333333333333));
-  fiat_p5248_mulx_u64(&x131, &x132, x3, UINT64_C(0x3333333333333333));
-  fiat_p5248_mulx_u64(&x133, &x134, x3, UINT64_C(0x3333333333333333));
-  fiat_p5248_mulx_u64(&x135, &x136, x3, UINT64_C(0x3333333333333d70));
-  fiat_p5248_addcarryx_u64(&x137, &x138, 0x0, x136, x133);
-  fiat_p5248_addcarryx_u64(&x139, &x140, x138, x134, x131);
-  fiat_p5248_addcarryx_u64(&x141, &x142, x140, x132, x129);
-  fiat_p5248_addcarryx_u64(&x143, &x144, 0x0, x123, x135);
-  fiat_p5248_addcarryx_u64(&x145, &x146, x144, x125, x137);
-  fiat_p5248_addcarryx_u64(&x147, &x148, x146, x127, x139);
-  fiat_p5248_addcarryx_u64(&x149, &x150, x148, ((x128 + (x106 + (x98 + x86))) + (x120 + x108)), x141);
-  fiat_p5248_mulx_u64(&x151, &x152, x143, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_mulx_u64(&x153, &x154, x143, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x155, &x156, x143, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_mulx_u64(&x157, &x158, x143, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_addcarryx_u64(&x159, &x160, 0x0, x158, x155);
-  fiat_p5248_addcarryx_u64(&x161, &x162, x160, x156, x153);
-  fiat_p5248_addcarryx_u64(&x163, &x164, x162, x154, x151);
-  fiat_p5248_addcarryx_u64(&x165, &x166, 0x0, x143, x157);
-  fiat_p5248_addcarryx_u64(&x167, &x168, x166, x145, x159);
-  fiat_p5248_addcarryx_u64(&x169, &x170, x168, x147, x161);
-  fiat_p5248_addcarryx_u64(&x171, &x172, x170, x149, x163);
-  x173 = ((x172 + (x150 + (x142 + x130))) + (x164 + x152));
-  fiat_p5248_subborrowx_u64(&x174, &x175, 0x0, x167, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x176, &x177, x175, x169, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x178, &x179, x177, x171, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x180, &x181, x179, x173, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x182, &x183, x181, 0x0, 0x0);
-  fiat_p5248_cmovznz_u64(&x184, x183, x174, x167);
-  fiat_p5248_cmovznz_u64(&x185, x183, x176, x169);
-  fiat_p5248_cmovznz_u64(&x186, x183, x178, x171);
-  fiat_p5248_cmovznz_u64(&x187, x183, x180, x173);
-  out1[0] = x184;
-  out1[1] = x185;
-  out1[2] = x186;
-  out1[3] = x187;
+void
+fiat_p5248_to_montgomery(fiat_p5248_montgomery_domain_field_element out1,
+                         const fiat_p5248_non_montgomery_domain_field_element arg1)
+{
+    uint64_t x1;
+    uint64_t x2;
+    uint64_t x3;
+    uint64_t x4;
+    uint64_t x5;
+    uint64_t x6;
+    uint64_t x7;
+    uint64_t x8;
+    uint64_t x9;
+    uint64_t x10;
+    uint64_t x11;
+    uint64_t x12;
+    uint64_t x13;
+    fiat_p5248_uint1 x14;
+    uint64_t x15;
+    fiat_p5248_uint1 x16;
+    uint64_t x17;
+    fiat_p5248_uint1 x18;
+    uint64_t x19;
+    uint64_t x20;
+    uint64_t x21;
+    uint64_t x22;
+    uint64_t x23;
+    uint64_t x24;
+    uint64_t x25;
+    uint64_t x26;
+    uint64_t x27;
+    fiat_p5248_uint1 x28;
+    uint64_t x29;
+    fiat_p5248_uint1 x30;
+    uint64_t x31;
+    fiat_p5248_uint1 x32;
+    uint64_t x33;
+    fiat_p5248_uint1 x34;
+    uint64_t x35;
+    fiat_p5248_uint1 x36;
+    uint64_t x37;
+    fiat_p5248_uint1 x38;
+    uint64_t x39;
+    fiat_p5248_uint1 x40;
+    uint64_t x41;
+    uint64_t x42;
+    uint64_t x43;
+    uint64_t x44;
+    uint64_t x45;
+    uint64_t x46;
+    uint64_t x47;
+    uint64_t x48;
+    uint64_t x49;
+    fiat_p5248_uint1 x50;
+    uint64_t x51;
+    fiat_p5248_uint1 x52;
+    uint64_t x53;
+    fiat_p5248_uint1 x54;
+    uint64_t x55;
+    fiat_p5248_uint1 x56;
+    uint64_t x57;
+    fiat_p5248_uint1 x58;
+    uint64_t x59;
+    fiat_p5248_uint1 x60;
+    uint64_t x61;
+    fiat_p5248_uint1 x62;
+    uint64_t x63;
+    uint64_t x64;
+    uint64_t x65;
+    uint64_t x66;
+    uint64_t x67;
+    uint64_t x68;
+    uint64_t x69;
+    uint64_t x70;
+    uint64_t x71;
+    fiat_p5248_uint1 x72;
+    uint64_t x73;
+    fiat_p5248_uint1 x74;
+    uint64_t x75;
+    fiat_p5248_uint1 x76;
+    uint64_t x77;
+    fiat_p5248_uint1 x78;
+    uint64_t x79;
+    fiat_p5248_uint1 x80;
+    uint64_t x81;
+    fiat_p5248_uint1 x82;
+    uint64_t x83;
+    fiat_p5248_uint1 x84;
+    uint64_t x85;
+    uint64_t x86;
+    uint64_t x87;
+    uint64_t x88;
+    uint64_t x89;
+    uint64_t x90;
+    uint64_t x91;
+    uint64_t x92;
+    uint64_t x93;
+    fiat_p5248_uint1 x94;
+    uint64_t x95;
+    fiat_p5248_uint1 x96;
+    uint64_t x97;
+    fiat_p5248_uint1 x98;
+    uint64_t x99;
+    fiat_p5248_uint1 x100;
+    uint64_t x101;
+    fiat_p5248_uint1 x102;
+    uint64_t x103;
+    fiat_p5248_uint1 x104;
+    uint64_t x105;
+    fiat_p5248_uint1 x106;
+    uint64_t x107;
+    uint64_t x108;
+    uint64_t x109;
+    uint64_t x110;
+    uint64_t x111;
+    uint64_t x112;
+    uint64_t x113;
+    uint64_t x114;
+    uint64_t x115;
+    fiat_p5248_uint1 x116;
+    uint64_t x117;
+    fiat_p5248_uint1 x118;
+    uint64_t x119;
+    fiat_p5248_uint1 x120;
+    uint64_t x121;
+    fiat_p5248_uint1 x122;
+    uint64_t x123;
+    fiat_p5248_uint1 x124;
+    uint64_t x125;
+    fiat_p5248_uint1 x126;
+    uint64_t x127;
+    fiat_p5248_uint1 x128;
+    uint64_t x129;
+    uint64_t x130;
+    uint64_t x131;
+    uint64_t x132;
+    uint64_t x133;
+    uint64_t x134;
+    uint64_t x135;
+    uint64_t x136;
+    uint64_t x137;
+    fiat_p5248_uint1 x138;
+    uint64_t x139;
+    fiat_p5248_uint1 x140;
+    uint64_t x141;
+    fiat_p5248_uint1 x142;
+    uint64_t x143;
+    fiat_p5248_uint1 x144;
+    uint64_t x145;
+    fiat_p5248_uint1 x146;
+    uint64_t x147;
+    fiat_p5248_uint1 x148;
+    uint64_t x149;
+    fiat_p5248_uint1 x150;
+    uint64_t x151;
+    uint64_t x152;
+    uint64_t x153;
+    uint64_t x154;
+    uint64_t x155;
+    uint64_t x156;
+    uint64_t x157;
+    uint64_t x158;
+    uint64_t x159;
+    fiat_p5248_uint1 x160;
+    uint64_t x161;
+    fiat_p5248_uint1 x162;
+    uint64_t x163;
+    fiat_p5248_uint1 x164;
+    uint64_t x165;
+    fiat_p5248_uint1 x166;
+    uint64_t x167;
+    fiat_p5248_uint1 x168;
+    uint64_t x169;
+    fiat_p5248_uint1 x170;
+    uint64_t x171;
+    fiat_p5248_uint1 x172;
+    uint64_t x173;
+    uint64_t x174;
+    fiat_p5248_uint1 x175;
+    uint64_t x176;
+    fiat_p5248_uint1 x177;
+    uint64_t x178;
+    fiat_p5248_uint1 x179;
+    uint64_t x180;
+    fiat_p5248_uint1 x181;
+    uint64_t x182;
+    fiat_p5248_uint1 x183;
+    uint64_t x184;
+    uint64_t x185;
+    uint64_t x186;
+    uint64_t x187;
+    x1 = (arg1[1]);
+    x2 = (arg1[2]);
+    x3 = (arg1[3]);
+    x4 = (arg1[0]);
+    fiat_p5248_mulx_u64(&x5, &x6, x4, UINT64_C(0x333333333333333));
+    fiat_p5248_mulx_u64(&x7, &x8, x4, UINT64_C(0x3333333333333333));
+    fiat_p5248_mulx_u64(&x9, &x10, x4, UINT64_C(0x3333333333333333));
+    fiat_p5248_mulx_u64(&x11, &x12, x4, UINT64_C(0x3333333333333d70));
+    fiat_p5248_addcarryx_u64(&x13, &x14, 0x0, x12, x9);
+    fiat_p5248_addcarryx_u64(&x15, &x16, x14, x10, x7);
+    fiat_p5248_addcarryx_u64(&x17, &x18, x16, x8, x5);
+    fiat_p5248_mulx_u64(&x19, &x20, x11, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_mulx_u64(&x21, &x22, x11, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x23, &x24, x11, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x25, &x26, x11, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_addcarryx_u64(&x27, &x28, 0x0, x26, x23);
+    fiat_p5248_addcarryx_u64(&x29, &x30, x28, x24, x21);
+    fiat_p5248_addcarryx_u64(&x31, &x32, x30, x22, x19);
+    fiat_p5248_addcarryx_u64(&x33, &x34, 0x0, x11, x25);
+    fiat_p5248_addcarryx_u64(&x35, &x36, x34, x13, x27);
+    fiat_p5248_addcarryx_u64(&x37, &x38, x36, x15, x29);
+    fiat_p5248_addcarryx_u64(&x39, &x40, x38, x17, x31);
+    fiat_p5248_mulx_u64(&x41, &x42, x1, UINT64_C(0x333333333333333));
+    fiat_p5248_mulx_u64(&x43, &x44, x1, UINT64_C(0x3333333333333333));
+    fiat_p5248_mulx_u64(&x45, &x46, x1, UINT64_C(0x3333333333333333));
+    fiat_p5248_mulx_u64(&x47, &x48, x1, UINT64_C(0x3333333333333d70));
+    fiat_p5248_addcarryx_u64(&x49, &x50, 0x0, x48, x45);
+    fiat_p5248_addcarryx_u64(&x51, &x52, x50, x46, x43);
+    fiat_p5248_addcarryx_u64(&x53, &x54, x52, x44, x41);
+    fiat_p5248_addcarryx_u64(&x55, &x56, 0x0, x35, x47);
+    fiat_p5248_addcarryx_u64(&x57, &x58, x56, x37, x49);
+    fiat_p5248_addcarryx_u64(&x59, &x60, x58, x39, x51);
+    fiat_p5248_addcarryx_u64(&x61, &x62, x60, ((x40 + (x18 + x6)) + (x32 + x20)), x53);
+    fiat_p5248_mulx_u64(&x63, &x64, x55, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_mulx_u64(&x65, &x66, x55, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x67, &x68, x55, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x69, &x70, x55, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_addcarryx_u64(&x71, &x72, 0x0, x70, x67);
+    fiat_p5248_addcarryx_u64(&x73, &x74, x72, x68, x65);
+    fiat_p5248_addcarryx_u64(&x75, &x76, x74, x66, x63);
+    fiat_p5248_addcarryx_u64(&x77, &x78, 0x0, x55, x69);
+    fiat_p5248_addcarryx_u64(&x79, &x80, x78, x57, x71);
+    fiat_p5248_addcarryx_u64(&x81, &x82, x80, x59, x73);
+    fiat_p5248_addcarryx_u64(&x83, &x84, x82, x61, x75);
+    fiat_p5248_mulx_u64(&x85, &x86, x2, UINT64_C(0x333333333333333));
+    fiat_p5248_mulx_u64(&x87, &x88, x2, UINT64_C(0x3333333333333333));
+    fiat_p5248_mulx_u64(&x89, &x90, x2, UINT64_C(0x3333333333333333));
+    fiat_p5248_mulx_u64(&x91, &x92, x2, UINT64_C(0x3333333333333d70));
+    fiat_p5248_addcarryx_u64(&x93, &x94, 0x0, x92, x89);
+    fiat_p5248_addcarryx_u64(&x95, &x96, x94, x90, x87);
+    fiat_p5248_addcarryx_u64(&x97, &x98, x96, x88, x85);
+    fiat_p5248_addcarryx_u64(&x99, &x100, 0x0, x79, x91);
+    fiat_p5248_addcarryx_u64(&x101, &x102, x100, x81, x93);
+    fiat_p5248_addcarryx_u64(&x103, &x104, x102, x83, x95);
+    fiat_p5248_addcarryx_u64(&x105, &x106, x104, ((x84 + (x62 + (x54 + x42))) + (x76 + x64)), x97);
+    fiat_p5248_mulx_u64(&x107, &x108, x99, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_mulx_u64(&x109, &x110, x99, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x111, &x112, x99, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x113, &x114, x99, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_addcarryx_u64(&x115, &x116, 0x0, x114, x111);
+    fiat_p5248_addcarryx_u64(&x117, &x118, x116, x112, x109);
+    fiat_p5248_addcarryx_u64(&x119, &x120, x118, x110, x107);
+    fiat_p5248_addcarryx_u64(&x121, &x122, 0x0, x99, x113);
+    fiat_p5248_addcarryx_u64(&x123, &x124, x122, x101, x115);
+    fiat_p5248_addcarryx_u64(&x125, &x126, x124, x103, x117);
+    fiat_p5248_addcarryx_u64(&x127, &x128, x126, x105, x119);
+    fiat_p5248_mulx_u64(&x129, &x130, x3, UINT64_C(0x333333333333333));
+    fiat_p5248_mulx_u64(&x131, &x132, x3, UINT64_C(0x3333333333333333));
+    fiat_p5248_mulx_u64(&x133, &x134, x3, UINT64_C(0x3333333333333333));
+    fiat_p5248_mulx_u64(&x135, &x136, x3, UINT64_C(0x3333333333333d70));
+    fiat_p5248_addcarryx_u64(&x137, &x138, 0x0, x136, x133);
+    fiat_p5248_addcarryx_u64(&x139, &x140, x138, x134, x131);
+    fiat_p5248_addcarryx_u64(&x141, &x142, x140, x132, x129);
+    fiat_p5248_addcarryx_u64(&x143, &x144, 0x0, x123, x135);
+    fiat_p5248_addcarryx_u64(&x145, &x146, x144, x125, x137);
+    fiat_p5248_addcarryx_u64(&x147, &x148, x146, x127, x139);
+    fiat_p5248_addcarryx_u64(
+        &x149, &x150, x148, ((x128 + (x106 + (x98 + x86))) + (x120 + x108)), x141);
+    fiat_p5248_mulx_u64(&x151, &x152, x143, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_mulx_u64(&x153, &x154, x143, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x155, &x156, x143, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_mulx_u64(&x157, &x158, x143, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_addcarryx_u64(&x159, &x160, 0x0, x158, x155);
+    fiat_p5248_addcarryx_u64(&x161, &x162, x160, x156, x153);
+    fiat_p5248_addcarryx_u64(&x163, &x164, x162, x154, x151);
+    fiat_p5248_addcarryx_u64(&x165, &x166, 0x0, x143, x157);
+    fiat_p5248_addcarryx_u64(&x167, &x168, x166, x145, x159);
+    fiat_p5248_addcarryx_u64(&x169, &x170, x168, x147, x161);
+    fiat_p5248_addcarryx_u64(&x171, &x172, x170, x149, x163);
+    x173 = ((x172 + (x150 + (x142 + x130))) + (x164 + x152));
+    fiat_p5248_subborrowx_u64(&x174, &x175, 0x0, x167, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x176, &x177, x175, x169, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x178, &x179, x177, x171, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x180, &x181, x179, x173, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x182, &x183, x181, 0x0, 0x0);
+    fiat_p5248_cmovznz_u64(&x184, x183, x174, x167);
+    fiat_p5248_cmovznz_u64(&x185, x183, x176, x169);
+    fiat_p5248_cmovznz_u64(&x186, x183, x178, x171);
+    fiat_p5248_cmovznz_u64(&x187, x183, x180, x173);
+    out1[0] = x184;
+    out1[1] = x185;
+    out1[2] = x186;
+    out1[3] = x187;
 }
 
 /*
- * The function fiat_p5248_nonzero outputs a single non-zero word if the input is non-zero and zero otherwise.
+ * The function fiat_p5248_nonzero outputs a single non-zero word if the input is non-zero and zero
+ * otherwise.
  *
  * Preconditions:
  *   0 ≤ eval arg1 < m
@@ -1485,14 +1536,15 @@ void fiat_p5248_to_montgomery(fiat_p5248_montgomery_domain_field_element out1, c
  *   out1 = 0 ↔ eval (from_montgomery arg1) mod m = 0
  *
  * Input Bounds:
- *   arg1: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]]
- * Output Bounds:
- *   out1: [0x0 ~> 0xffffffffffffffff]
+ *   arg1: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff],
+ * [0x0 ~> 0xffffffffffffffff]] Output Bounds: out1: [0x0 ~> 0xffffffffffffffff]
  */
-void fiat_p5248_nonzero(uint64_t* out1, const uint64_t arg1[4]) {
-  uint64_t x1;
-  x1 = ((arg1[0]) | ((arg1[1]) | ((arg1[2]) | (arg1[3]))));
-  *out1 = x1;
+void
+fiat_p5248_nonzero(uint64_t *out1, const uint64_t arg1[4])
+{
+    uint64_t x1;
+    x1 = ((arg1[0]) | ((arg1[1]) | ((arg1[2]) | (arg1[3]))));
+    *out1 = x1;
 }
 
 /*
@@ -1503,28 +1555,35 @@ void fiat_p5248_nonzero(uint64_t* out1, const uint64_t arg1[4]) {
  *
  * Input Bounds:
  *   arg1: [0x0 ~> 0x1]
- *   arg2: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]]
- *   arg3: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]]
- * Output Bounds:
- *   out1: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]]
+ *   arg2: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff],
+ * [0x0 ~> 0xffffffffffffffff]] arg3: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff],
+ * [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]] Output Bounds: out1: [[0x0 ~>
+ * 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~>
+ * 0xffffffffffffffff]]
  */
-void fiat_p5248_selectznz(uint64_t out1[4], fiat_p5248_uint1 arg1, const uint64_t arg2[4], const uint64_t arg3[4]) {
-  uint64_t x1;
-  uint64_t x2;
-  uint64_t x3;
-  uint64_t x4;
-  fiat_p5248_cmovznz_u64(&x1, arg1, (arg2[0]), (arg3[0]));
-  fiat_p5248_cmovznz_u64(&x2, arg1, (arg2[1]), (arg3[1]));
-  fiat_p5248_cmovznz_u64(&x3, arg1, (arg2[2]), (arg3[2]));
-  fiat_p5248_cmovznz_u64(&x4, arg1, (arg2[3]), (arg3[3]));
-  out1[0] = x1;
-  out1[1] = x2;
-  out1[2] = x3;
-  out1[3] = x4;
+void
+fiat_p5248_selectznz(uint64_t out1[4],
+                     fiat_p5248_uint1 arg1,
+                     const uint64_t arg2[4],
+                     const uint64_t arg3[4])
+{
+    uint64_t x1;
+    uint64_t x2;
+    uint64_t x3;
+    uint64_t x4;
+    fiat_p5248_cmovznz_u64(&x1, arg1, (arg2[0]), (arg3[0]));
+    fiat_p5248_cmovznz_u64(&x2, arg1, (arg2[1]), (arg3[1]));
+    fiat_p5248_cmovznz_u64(&x3, arg1, (arg2[2]), (arg3[2]));
+    fiat_p5248_cmovznz_u64(&x4, arg1, (arg2[3]), (arg3[3]));
+    out1[0] = x1;
+    out1[1] = x2;
+    out1[2] = x3;
+    out1[3] = x4;
 }
 
 /*
- * The function fiat_p5248_to_bytes serializes a field element NOT in the Montgomery domain to bytes in little-endian order.
+ * The function fiat_p5248_to_bytes serializes a field element NOT in the Montgomery domain to bytes
+ * in little-endian order.
  *
  * Preconditions:
  *   0 ≤ eval arg1 < m
@@ -1532,167 +1591,174 @@ void fiat_p5248_selectznz(uint64_t out1[4], fiat_p5248_uint1 arg1, const uint64_
  *   out1 = map (λ x, ⌊((eval arg1 mod m) mod 2^(8 * (x + 1))) / 2^(8 * x)⌋) [0..31]
  *
  * Input Bounds:
- *   arg1: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0x7ffffffffffffff]]
- * Output Bounds:
- *   out1: [[0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0x7]]
+ *   arg1: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff],
+ * [0x0 ~> 0x7ffffffffffffff]] Output Bounds: out1: [[0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff],
+ * [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~>
+ * 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff],
+ * [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~>
+ * 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff],
+ * [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0x7]]
  */
-void fiat_p5248_to_bytes(uint8_t out1[32], const uint64_t arg1[4]) {
-  uint64_t x1;
-  uint64_t x2;
-  uint64_t x3;
-  uint64_t x4;
-  uint8_t x5;
-  uint64_t x6;
-  uint8_t x7;
-  uint64_t x8;
-  uint8_t x9;
-  uint64_t x10;
-  uint8_t x11;
-  uint64_t x12;
-  uint8_t x13;
-  uint64_t x14;
-  uint8_t x15;
-  uint64_t x16;
-  uint8_t x17;
-  uint8_t x18;
-  uint8_t x19;
-  uint64_t x20;
-  uint8_t x21;
-  uint64_t x22;
-  uint8_t x23;
-  uint64_t x24;
-  uint8_t x25;
-  uint64_t x26;
-  uint8_t x27;
-  uint64_t x28;
-  uint8_t x29;
-  uint64_t x30;
-  uint8_t x31;
-  uint8_t x32;
-  uint8_t x33;
-  uint64_t x34;
-  uint8_t x35;
-  uint64_t x36;
-  uint8_t x37;
-  uint64_t x38;
-  uint8_t x39;
-  uint64_t x40;
-  uint8_t x41;
-  uint64_t x42;
-  uint8_t x43;
-  uint64_t x44;
-  uint8_t x45;
-  uint8_t x46;
-  uint8_t x47;
-  uint64_t x48;
-  uint8_t x49;
-  uint64_t x50;
-  uint8_t x51;
-  uint64_t x52;
-  uint8_t x53;
-  uint64_t x54;
-  uint8_t x55;
-  uint64_t x56;
-  uint8_t x57;
-  uint64_t x58;
-  uint8_t x59;
-  uint8_t x60;
-  x1 = (arg1[3]);
-  x2 = (arg1[2]);
-  x3 = (arg1[1]);
-  x4 = (arg1[0]);
-  x5 = (uint8_t)(x4 & UINT8_C(0xff));
-  x6 = (x4 >> 8);
-  x7 = (uint8_t)(x6 & UINT8_C(0xff));
-  x8 = (x6 >> 8);
-  x9 = (uint8_t)(x8 & UINT8_C(0xff));
-  x10 = (x8 >> 8);
-  x11 = (uint8_t)(x10 & UINT8_C(0xff));
-  x12 = (x10 >> 8);
-  x13 = (uint8_t)(x12 & UINT8_C(0xff));
-  x14 = (x12 >> 8);
-  x15 = (uint8_t)(x14 & UINT8_C(0xff));
-  x16 = (x14 >> 8);
-  x17 = (uint8_t)(x16 & UINT8_C(0xff));
-  x18 = (uint8_t)(x16 >> 8);
-  x19 = (uint8_t)(x3 & UINT8_C(0xff));
-  x20 = (x3 >> 8);
-  x21 = (uint8_t)(x20 & UINT8_C(0xff));
-  x22 = (x20 >> 8);
-  x23 = (uint8_t)(x22 & UINT8_C(0xff));
-  x24 = (x22 >> 8);
-  x25 = (uint8_t)(x24 & UINT8_C(0xff));
-  x26 = (x24 >> 8);
-  x27 = (uint8_t)(x26 & UINT8_C(0xff));
-  x28 = (x26 >> 8);
-  x29 = (uint8_t)(x28 & UINT8_C(0xff));
-  x30 = (x28 >> 8);
-  x31 = (uint8_t)(x30 & UINT8_C(0xff));
-  x32 = (uint8_t)(x30 >> 8);
-  x33 = (uint8_t)(x2 & UINT8_C(0xff));
-  x34 = (x2 >> 8);
-  x35 = (uint8_t)(x34 & UINT8_C(0xff));
-  x36 = (x34 >> 8);
-  x37 = (uint8_t)(x36 & UINT8_C(0xff));
-  x38 = (x36 >> 8);
-  x39 = (uint8_t)(x38 & UINT8_C(0xff));
-  x40 = (x38 >> 8);
-  x41 = (uint8_t)(x40 & UINT8_C(0xff));
-  x42 = (x40 >> 8);
-  x43 = (uint8_t)(x42 & UINT8_C(0xff));
-  x44 = (x42 >> 8);
-  x45 = (uint8_t)(x44 & UINT8_C(0xff));
-  x46 = (uint8_t)(x44 >> 8);
-  x47 = (uint8_t)(x1 & UINT8_C(0xff));
-  x48 = (x1 >> 8);
-  x49 = (uint8_t)(x48 & UINT8_C(0xff));
-  x50 = (x48 >> 8);
-  x51 = (uint8_t)(x50 & UINT8_C(0xff));
-  x52 = (x50 >> 8);
-  x53 = (uint8_t)(x52 & UINT8_C(0xff));
-  x54 = (x52 >> 8);
-  x55 = (uint8_t)(x54 & UINT8_C(0xff));
-  x56 = (x54 >> 8);
-  x57 = (uint8_t)(x56 & UINT8_C(0xff));
-  x58 = (x56 >> 8);
-  x59 = (uint8_t)(x58 & UINT8_C(0xff));
-  x60 = (uint8_t)(x58 >> 8);
-  out1[0] = x5;
-  out1[1] = x7;
-  out1[2] = x9;
-  out1[3] = x11;
-  out1[4] = x13;
-  out1[5] = x15;
-  out1[6] = x17;
-  out1[7] = x18;
-  out1[8] = x19;
-  out1[9] = x21;
-  out1[10] = x23;
-  out1[11] = x25;
-  out1[12] = x27;
-  out1[13] = x29;
-  out1[14] = x31;
-  out1[15] = x32;
-  out1[16] = x33;
-  out1[17] = x35;
-  out1[18] = x37;
-  out1[19] = x39;
-  out1[20] = x41;
-  out1[21] = x43;
-  out1[22] = x45;
-  out1[23] = x46;
-  out1[24] = x47;
-  out1[25] = x49;
-  out1[26] = x51;
-  out1[27] = x53;
-  out1[28] = x55;
-  out1[29] = x57;
-  out1[30] = x59;
-  out1[31] = x60;
+void
+fiat_p5248_to_bytes(uint8_t out1[32], const uint64_t arg1[4])
+{
+    uint64_t x1;
+    uint64_t x2;
+    uint64_t x3;
+    uint64_t x4;
+    uint8_t x5;
+    uint64_t x6;
+    uint8_t x7;
+    uint64_t x8;
+    uint8_t x9;
+    uint64_t x10;
+    uint8_t x11;
+    uint64_t x12;
+    uint8_t x13;
+    uint64_t x14;
+    uint8_t x15;
+    uint64_t x16;
+    uint8_t x17;
+    uint8_t x18;
+    uint8_t x19;
+    uint64_t x20;
+    uint8_t x21;
+    uint64_t x22;
+    uint8_t x23;
+    uint64_t x24;
+    uint8_t x25;
+    uint64_t x26;
+    uint8_t x27;
+    uint64_t x28;
+    uint8_t x29;
+    uint64_t x30;
+    uint8_t x31;
+    uint8_t x32;
+    uint8_t x33;
+    uint64_t x34;
+    uint8_t x35;
+    uint64_t x36;
+    uint8_t x37;
+    uint64_t x38;
+    uint8_t x39;
+    uint64_t x40;
+    uint8_t x41;
+    uint64_t x42;
+    uint8_t x43;
+    uint64_t x44;
+    uint8_t x45;
+    uint8_t x46;
+    uint8_t x47;
+    uint64_t x48;
+    uint8_t x49;
+    uint64_t x50;
+    uint8_t x51;
+    uint64_t x52;
+    uint8_t x53;
+    uint64_t x54;
+    uint8_t x55;
+    uint64_t x56;
+    uint8_t x57;
+    uint64_t x58;
+    uint8_t x59;
+    uint8_t x60;
+    x1 = (arg1[3]);
+    x2 = (arg1[2]);
+    x3 = (arg1[1]);
+    x4 = (arg1[0]);
+    x5 = (uint8_t)(x4 & UINT8_C(0xff));
+    x6 = (x4 >> 8);
+    x7 = (uint8_t)(x6 & UINT8_C(0xff));
+    x8 = (x6 >> 8);
+    x9 = (uint8_t)(x8 & UINT8_C(0xff));
+    x10 = (x8 >> 8);
+    x11 = (uint8_t)(x10 & UINT8_C(0xff));
+    x12 = (x10 >> 8);
+    x13 = (uint8_t)(x12 & UINT8_C(0xff));
+    x14 = (x12 >> 8);
+    x15 = (uint8_t)(x14 & UINT8_C(0xff));
+    x16 = (x14 >> 8);
+    x17 = (uint8_t)(x16 & UINT8_C(0xff));
+    x18 = (uint8_t)(x16 >> 8);
+    x19 = (uint8_t)(x3 & UINT8_C(0xff));
+    x20 = (x3 >> 8);
+    x21 = (uint8_t)(x20 & UINT8_C(0xff));
+    x22 = (x20 >> 8);
+    x23 = (uint8_t)(x22 & UINT8_C(0xff));
+    x24 = (x22 >> 8);
+    x25 = (uint8_t)(x24 & UINT8_C(0xff));
+    x26 = (x24 >> 8);
+    x27 = (uint8_t)(x26 & UINT8_C(0xff));
+    x28 = (x26 >> 8);
+    x29 = (uint8_t)(x28 & UINT8_C(0xff));
+    x30 = (x28 >> 8);
+    x31 = (uint8_t)(x30 & UINT8_C(0xff));
+    x32 = (uint8_t)(x30 >> 8);
+    x33 = (uint8_t)(x2 & UINT8_C(0xff));
+    x34 = (x2 >> 8);
+    x35 = (uint8_t)(x34 & UINT8_C(0xff));
+    x36 = (x34 >> 8);
+    x37 = (uint8_t)(x36 & UINT8_C(0xff));
+    x38 = (x36 >> 8);
+    x39 = (uint8_t)(x38 & UINT8_C(0xff));
+    x40 = (x38 >> 8);
+    x41 = (uint8_t)(x40 & UINT8_C(0xff));
+    x42 = (x40 >> 8);
+    x43 = (uint8_t)(x42 & UINT8_C(0xff));
+    x44 = (x42 >> 8);
+    x45 = (uint8_t)(x44 & UINT8_C(0xff));
+    x46 = (uint8_t)(x44 >> 8);
+    x47 = (uint8_t)(x1 & UINT8_C(0xff));
+    x48 = (x1 >> 8);
+    x49 = (uint8_t)(x48 & UINT8_C(0xff));
+    x50 = (x48 >> 8);
+    x51 = (uint8_t)(x50 & UINT8_C(0xff));
+    x52 = (x50 >> 8);
+    x53 = (uint8_t)(x52 & UINT8_C(0xff));
+    x54 = (x52 >> 8);
+    x55 = (uint8_t)(x54 & UINT8_C(0xff));
+    x56 = (x54 >> 8);
+    x57 = (uint8_t)(x56 & UINT8_C(0xff));
+    x58 = (x56 >> 8);
+    x59 = (uint8_t)(x58 & UINT8_C(0xff));
+    x60 = (uint8_t)(x58 >> 8);
+    out1[0] = x5;
+    out1[1] = x7;
+    out1[2] = x9;
+    out1[3] = x11;
+    out1[4] = x13;
+    out1[5] = x15;
+    out1[6] = x17;
+    out1[7] = x18;
+    out1[8] = x19;
+    out1[9] = x21;
+    out1[10] = x23;
+    out1[11] = x25;
+    out1[12] = x27;
+    out1[13] = x29;
+    out1[14] = x31;
+    out1[15] = x32;
+    out1[16] = x33;
+    out1[17] = x35;
+    out1[18] = x37;
+    out1[19] = x39;
+    out1[20] = x41;
+    out1[21] = x43;
+    out1[22] = x45;
+    out1[23] = x46;
+    out1[24] = x47;
+    out1[25] = x49;
+    out1[26] = x51;
+    out1[27] = x53;
+    out1[28] = x55;
+    out1[29] = x57;
+    out1[30] = x59;
+    out1[31] = x60;
 }
 
 /*
- * The function fiat_p5248_from_bytes deserializes a field element NOT in the Montgomery domain from bytes in little-endian order.
+ * The function fiat_p5248_from_bytes deserializes a field element NOT in the Montgomery domain from
+ * bytes in little-endian order.
  *
  * Preconditions:
  *   0 ≤ bytes_eval arg1 < m
@@ -1701,135 +1767,141 @@ void fiat_p5248_to_bytes(uint8_t out1[32], const uint64_t arg1[4]) {
  *   0 ≤ eval out1 < m
  *
  * Input Bounds:
- *   arg1: [[0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0x7]]
- * Output Bounds:
- *   out1: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0x7ffffffffffffff]]
+ *   arg1: [[0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~>
+ * 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff],
+ * [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~>
+ * 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff],
+ * [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~> 0xff], [0x0 ~>
+ * 0x7]] Output Bounds: out1: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~>
+ * 0xffffffffffffffff], [0x0 ~> 0x7ffffffffffffff]]
  */
-void fiat_p5248_from_bytes(uint64_t out1[4], const uint8_t arg1[32]) {
-  uint64_t x1;
-  uint64_t x2;
-  uint64_t x3;
-  uint64_t x4;
-  uint64_t x5;
-  uint64_t x6;
-  uint64_t x7;
-  uint8_t x8;
-  uint64_t x9;
-  uint64_t x10;
-  uint64_t x11;
-  uint64_t x12;
-  uint64_t x13;
-  uint64_t x14;
-  uint64_t x15;
-  uint8_t x16;
-  uint64_t x17;
-  uint64_t x18;
-  uint64_t x19;
-  uint64_t x20;
-  uint64_t x21;
-  uint64_t x22;
-  uint64_t x23;
-  uint8_t x24;
-  uint64_t x25;
-  uint64_t x26;
-  uint64_t x27;
-  uint64_t x28;
-  uint64_t x29;
-  uint64_t x30;
-  uint64_t x31;
-  uint8_t x32;
-  uint64_t x33;
-  uint64_t x34;
-  uint64_t x35;
-  uint64_t x36;
-  uint64_t x37;
-  uint64_t x38;
-  uint64_t x39;
-  uint64_t x40;
-  uint64_t x41;
-  uint64_t x42;
-  uint64_t x43;
-  uint64_t x44;
-  uint64_t x45;
-  uint64_t x46;
-  uint64_t x47;
-  uint64_t x48;
-  uint64_t x49;
-  uint64_t x50;
-  uint64_t x51;
-  uint64_t x52;
-  uint64_t x53;
-  uint64_t x54;
-  uint64_t x55;
-  uint64_t x56;
-  uint64_t x57;
-  uint64_t x58;
-  uint64_t x59;
-  uint64_t x60;
-  x1 = ((uint64_t)(arg1[31]) << 56);
-  x2 = ((uint64_t)(arg1[30]) << 48);
-  x3 = ((uint64_t)(arg1[29]) << 40);
-  x4 = ((uint64_t)(arg1[28]) << 32);
-  x5 = ((uint64_t)(arg1[27]) << 24);
-  x6 = ((uint64_t)(arg1[26]) << 16);
-  x7 = ((uint64_t)(arg1[25]) << 8);
-  x8 = (arg1[24]);
-  x9 = ((uint64_t)(arg1[23]) << 56);
-  x10 = ((uint64_t)(arg1[22]) << 48);
-  x11 = ((uint64_t)(arg1[21]) << 40);
-  x12 = ((uint64_t)(arg1[20]) << 32);
-  x13 = ((uint64_t)(arg1[19]) << 24);
-  x14 = ((uint64_t)(arg1[18]) << 16);
-  x15 = ((uint64_t)(arg1[17]) << 8);
-  x16 = (arg1[16]);
-  x17 = ((uint64_t)(arg1[15]) << 56);
-  x18 = ((uint64_t)(arg1[14]) << 48);
-  x19 = ((uint64_t)(arg1[13]) << 40);
-  x20 = ((uint64_t)(arg1[12]) << 32);
-  x21 = ((uint64_t)(arg1[11]) << 24);
-  x22 = ((uint64_t)(arg1[10]) << 16);
-  x23 = ((uint64_t)(arg1[9]) << 8);
-  x24 = (arg1[8]);
-  x25 = ((uint64_t)(arg1[7]) << 56);
-  x26 = ((uint64_t)(arg1[6]) << 48);
-  x27 = ((uint64_t)(arg1[5]) << 40);
-  x28 = ((uint64_t)(arg1[4]) << 32);
-  x29 = ((uint64_t)(arg1[3]) << 24);
-  x30 = ((uint64_t)(arg1[2]) << 16);
-  x31 = ((uint64_t)(arg1[1]) << 8);
-  x32 = (arg1[0]);
-  x33 = (x31 + (uint64_t)x32);
-  x34 = (x30 + x33);
-  x35 = (x29 + x34);
-  x36 = (x28 + x35);
-  x37 = (x27 + x36);
-  x38 = (x26 + x37);
-  x39 = (x25 + x38);
-  x40 = (x23 + (uint64_t)x24);
-  x41 = (x22 + x40);
-  x42 = (x21 + x41);
-  x43 = (x20 + x42);
-  x44 = (x19 + x43);
-  x45 = (x18 + x44);
-  x46 = (x17 + x45);
-  x47 = (x15 + (uint64_t)x16);
-  x48 = (x14 + x47);
-  x49 = (x13 + x48);
-  x50 = (x12 + x49);
-  x51 = (x11 + x50);
-  x52 = (x10 + x51);
-  x53 = (x9 + x52);
-  x54 = (x7 + (uint64_t)x8);
-  x55 = (x6 + x54);
-  x56 = (x5 + x55);
-  x57 = (x4 + x56);
-  x58 = (x3 + x57);
-  x59 = (x2 + x58);
-  x60 = (x1 + x59);
-  out1[0] = x39;
-  out1[1] = x46;
-  out1[2] = x53;
-  out1[3] = x60;
+void
+fiat_p5248_from_bytes(uint64_t out1[4], const uint8_t arg1[32])
+{
+    uint64_t x1;
+    uint64_t x2;
+    uint64_t x3;
+    uint64_t x4;
+    uint64_t x5;
+    uint64_t x6;
+    uint64_t x7;
+    uint8_t x8;
+    uint64_t x9;
+    uint64_t x10;
+    uint64_t x11;
+    uint64_t x12;
+    uint64_t x13;
+    uint64_t x14;
+    uint64_t x15;
+    uint8_t x16;
+    uint64_t x17;
+    uint64_t x18;
+    uint64_t x19;
+    uint64_t x20;
+    uint64_t x21;
+    uint64_t x22;
+    uint64_t x23;
+    uint8_t x24;
+    uint64_t x25;
+    uint64_t x26;
+    uint64_t x27;
+    uint64_t x28;
+    uint64_t x29;
+    uint64_t x30;
+    uint64_t x31;
+    uint8_t x32;
+    uint64_t x33;
+    uint64_t x34;
+    uint64_t x35;
+    uint64_t x36;
+    uint64_t x37;
+    uint64_t x38;
+    uint64_t x39;
+    uint64_t x40;
+    uint64_t x41;
+    uint64_t x42;
+    uint64_t x43;
+    uint64_t x44;
+    uint64_t x45;
+    uint64_t x46;
+    uint64_t x47;
+    uint64_t x48;
+    uint64_t x49;
+    uint64_t x50;
+    uint64_t x51;
+    uint64_t x52;
+    uint64_t x53;
+    uint64_t x54;
+    uint64_t x55;
+    uint64_t x56;
+    uint64_t x57;
+    uint64_t x58;
+    uint64_t x59;
+    uint64_t x60;
+    x1 = ((uint64_t)(arg1[31]) << 56);
+    x2 = ((uint64_t)(arg1[30]) << 48);
+    x3 = ((uint64_t)(arg1[29]) << 40);
+    x4 = ((uint64_t)(arg1[28]) << 32);
+    x5 = ((uint64_t)(arg1[27]) << 24);
+    x6 = ((uint64_t)(arg1[26]) << 16);
+    x7 = ((uint64_t)(arg1[25]) << 8);
+    x8 = (arg1[24]);
+    x9 = ((uint64_t)(arg1[23]) << 56);
+    x10 = ((uint64_t)(arg1[22]) << 48);
+    x11 = ((uint64_t)(arg1[21]) << 40);
+    x12 = ((uint64_t)(arg1[20]) << 32);
+    x13 = ((uint64_t)(arg1[19]) << 24);
+    x14 = ((uint64_t)(arg1[18]) << 16);
+    x15 = ((uint64_t)(arg1[17]) << 8);
+    x16 = (arg1[16]);
+    x17 = ((uint64_t)(arg1[15]) << 56);
+    x18 = ((uint64_t)(arg1[14]) << 48);
+    x19 = ((uint64_t)(arg1[13]) << 40);
+    x20 = ((uint64_t)(arg1[12]) << 32);
+    x21 = ((uint64_t)(arg1[11]) << 24);
+    x22 = ((uint64_t)(arg1[10]) << 16);
+    x23 = ((uint64_t)(arg1[9]) << 8);
+    x24 = (arg1[8]);
+    x25 = ((uint64_t)(arg1[7]) << 56);
+    x26 = ((uint64_t)(arg1[6]) << 48);
+    x27 = ((uint64_t)(arg1[5]) << 40);
+    x28 = ((uint64_t)(arg1[4]) << 32);
+    x29 = ((uint64_t)(arg1[3]) << 24);
+    x30 = ((uint64_t)(arg1[2]) << 16);
+    x31 = ((uint64_t)(arg1[1]) << 8);
+    x32 = (arg1[0]);
+    x33 = (x31 + (uint64_t)x32);
+    x34 = (x30 + x33);
+    x35 = (x29 + x34);
+    x36 = (x28 + x35);
+    x37 = (x27 + x36);
+    x38 = (x26 + x37);
+    x39 = (x25 + x38);
+    x40 = (x23 + (uint64_t)x24);
+    x41 = (x22 + x40);
+    x42 = (x21 + x41);
+    x43 = (x20 + x42);
+    x44 = (x19 + x43);
+    x45 = (x18 + x44);
+    x46 = (x17 + x45);
+    x47 = (x15 + (uint64_t)x16);
+    x48 = (x14 + x47);
+    x49 = (x13 + x48);
+    x50 = (x12 + x49);
+    x51 = (x11 + x50);
+    x52 = (x10 + x51);
+    x53 = (x9 + x52);
+    x54 = (x7 + (uint64_t)x8);
+    x55 = (x6 + x54);
+    x56 = (x5 + x55);
+    x57 = (x4 + x56);
+    x58 = (x3 + x57);
+    x59 = (x2 + x58);
+    x60 = (x1 + x59);
+    out1[0] = x39;
+    out1[1] = x46;
+    out1[2] = x53;
+    out1[3] = x60;
 }
 
 /*
@@ -1840,11 +1912,13 @@ void fiat_p5248_from_bytes(uint64_t out1[4], const uint8_t arg1[32]) {
  *   0 ≤ eval out1 < m
  *
  */
-void fiat_p5248_set_one(fiat_p5248_montgomery_domain_field_element out1) {
-  out1[0] = UINT8_C(0x33);
-  out1[1] = 0x0;
-  out1[2] = 0x0;
-  out1[3] = UINT64_C(0x100000000000000);
+void
+fiat_p5248_set_one(fiat_p5248_montgomery_domain_field_element out1)
+{
+    out1[0] = UINT8_C(0x33);
+    out1[1] = 0x0;
+    out1[2] = 0x0;
+    out1[3] = UINT64_C(0x100000000000000);
 }
 
 /*
@@ -1855,31 +1929,38 @@ void fiat_p5248_set_one(fiat_p5248_montgomery_domain_field_element out1) {
  *   0 ≤ eval out1 < m
  *
  * Output Bounds:
- *   out1: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]]
+ *   out1: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff],
+ * [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]]
  */
-void fiat_p5248_msat(uint64_t out1[5]) {
-  out1[0] = UINT64_C(0xffffffffffffffff);
-  out1[1] = UINT64_C(0xffffffffffffffff);
-  out1[2] = UINT64_C(0xffffffffffffffff);
-  out1[3] = UINT64_C(0x4ffffffffffffff);
-  out1[4] = 0x0;
+void
+fiat_p5248_msat(uint64_t out1[5])
+{
+    out1[0] = UINT64_C(0xffffffffffffffff);
+    out1[1] = UINT64_C(0xffffffffffffffff);
+    out1[2] = UINT64_C(0xffffffffffffffff);
+    out1[3] = UINT64_C(0x4ffffffffffffff);
+    out1[4] = 0x0;
 }
 
 /*
- * The function fiat_p5248_divstep_precomp returns the precomputed value for Bernstein-Yang-inversion (in montgomery form).
+ * The function fiat_p5248_divstep_precomp returns the precomputed value for
+ * Bernstein-Yang-inversion (in montgomery form).
  *
  * Postconditions:
- *   eval (from_montgomery out1) = ⌊(m - 1) / 2⌋^(if ⌊log2 m⌋ + 1 < 46 then ⌊(49 * (⌊log2 m⌋ + 1) + 80) / 17⌋ else ⌊(49 * (⌊log2 m⌋ + 1) + 57) / 17⌋)
- *   0 ≤ eval out1 < m
+ *   eval (from_montgomery out1) = ⌊(m - 1) / 2⌋^(if ⌊log2 m⌋ + 1 < 46 then ⌊(49 * (⌊log2 m⌋ + 1) +
+ * 80) / 17⌋ else ⌊(49 * (⌊log2 m⌋ + 1) + 57) / 17⌋) 0 ≤ eval out1 < m
  *
  * Output Bounds:
- *   out1: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]]
+ *   out1: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff],
+ * [0x0 ~> 0xffffffffffffffff]]
  */
-void fiat_p5248_divstep_precomp(uint64_t out1[4]) {
-  out1[0] = UINT32_C(0x64000000);
-  out1[1] = 0x0;
-  out1[2] = 0x0;
-  out1[3] = 0x0;
+void
+fiat_p5248_divstep_precomp(uint64_t out1[4])
+{
+    out1[0] = UINT32_C(0x64000000);
+    out1[1] = 0x0;
+    out1[2] = 0x0;
+    out1[3] = 0x0;
 }
 
 /*
@@ -1890,261 +1971,278 @@ void fiat_p5248_divstep_precomp(uint64_t out1[4]) {
  *   0 ≤ eval arg5 < m
  * Postconditions:
  *   out1 = (if 0 < arg1 ∧ (twos_complement_eval arg3) is odd then 1 - arg1 else 1 + arg1)
- *   twos_complement_eval out2 = (if 0 < arg1 ∧ (twos_complement_eval arg3) is odd then twos_complement_eval arg3 else twos_complement_eval arg2)
- *   twos_complement_eval out3 = (if 0 < arg1 ∧ (twos_complement_eval arg3) is odd then ⌊(twos_complement_eval arg3 - twos_complement_eval arg2) / 2⌋ else ⌊(twos_complement_eval arg3 + (twos_complement_eval arg3 mod 2) * twos_complement_eval arg2) / 2⌋)
- *   eval (from_montgomery out4) mod m = (if 0 < arg1 ∧ (twos_complement_eval arg3) is odd then (2 * eval (from_montgomery arg5)) mod m else (2 * eval (from_montgomery arg4)) mod m)
- *   eval (from_montgomery out5) mod m = (if 0 < arg1 ∧ (twos_complement_eval arg3) is odd then (eval (from_montgomery arg4) - eval (from_montgomery arg4)) mod m else (eval (from_montgomery arg5) + (twos_complement_eval arg3 mod 2) * eval (from_montgomery arg4)) mod m)
- *   0 ≤ eval out5 < m
- *   0 ≤ eval out5 < m
- *   0 ≤ eval out2 < m
- *   0 ≤ eval out3 < m
+ *   twos_complement_eval out2 = (if 0 < arg1 ∧ (twos_complement_eval arg3) is odd then
+ * twos_complement_eval arg3 else twos_complement_eval arg2) twos_complement_eval out3 = (if 0 <
+ * arg1 ∧ (twos_complement_eval arg3) is odd then ⌊(twos_complement_eval arg3 - twos_complement_eval
+ * arg2) / 2⌋ else ⌊(twos_complement_eval arg3 + (twos_complement_eval arg3 mod 2) *
+ * twos_complement_eval arg2) / 2⌋) eval (from_montgomery out4) mod m = (if 0 < arg1 ∧
+ * (twos_complement_eval arg3) is odd then (2 * eval (from_montgomery arg5)) mod m else (2 * eval
+ * (from_montgomery arg4)) mod m) eval (from_montgomery out5) mod m = (if 0 < arg1 ∧
+ * (twos_complement_eval arg3) is odd then (eval (from_montgomery arg4) - eval (from_montgomery
+ * arg4)) mod m else (eval (from_montgomery arg5) + (twos_complement_eval arg3 mod 2) * eval
+ * (from_montgomery arg4)) mod m) 0 ≤ eval out5 < m 0 ≤ eval out5 < m 0 ≤ eval out2 < m 0 ≤ eval
+ * out3 < m
  *
  * Input Bounds:
  *   arg1: [0x0 ~> 0xffffffffffffffff]
- *   arg2: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]]
- *   arg3: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]]
- *   arg4: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]]
- *   arg5: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]]
- * Output Bounds:
+ *   arg2: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff],
+ * [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]] arg3: [[0x0 ~> 0xffffffffffffffff],
+ * [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~>
+ * 0xffffffffffffffff]] arg4: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~>
+ * 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]] arg5: [[0x0 ~> 0xffffffffffffffff], [0x0 ~>
+ * 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]] Output Bounds:
  *   out1: [0x0 ~> 0xffffffffffffffff]
- *   out2: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]]
- *   out3: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]]
- *   out4: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]]
- *   out5: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]]
+ *   out2: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff],
+ * [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]] out3: [[0x0 ~> 0xffffffffffffffff],
+ * [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~>
+ * 0xffffffffffffffff]] out4: [[0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~>
+ * 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]] out5: [[0x0 ~> 0xffffffffffffffff], [0x0 ~>
+ * 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff], [0x0 ~> 0xffffffffffffffff]]
  */
-void fiat_p5248_divstep(uint64_t* out1, uint64_t out2[5], uint64_t out3[5], uint64_t out4[4], uint64_t out5[4], uint64_t arg1, const uint64_t arg2[5], const uint64_t arg3[5], const uint64_t arg4[4], const uint64_t arg5[4]) {
-  uint64_t x1;
-  fiat_p5248_uint1 x2;
-  fiat_p5248_uint1 x3;
-  uint64_t x4;
-  fiat_p5248_uint1 x5;
-  uint64_t x6;
-  uint64_t x7;
-  uint64_t x8;
-  uint64_t x9;
-  uint64_t x10;
-  uint64_t x11;
-  uint64_t x12;
-  fiat_p5248_uint1 x13;
-  uint64_t x14;
-  fiat_p5248_uint1 x15;
-  uint64_t x16;
-  fiat_p5248_uint1 x17;
-  uint64_t x18;
-  fiat_p5248_uint1 x19;
-  uint64_t x20;
-  fiat_p5248_uint1 x21;
-  uint64_t x22;
-  uint64_t x23;
-  uint64_t x24;
-  uint64_t x25;
-  uint64_t x26;
-  uint64_t x27;
-  uint64_t x28;
-  uint64_t x29;
-  uint64_t x30;
-  uint64_t x31;
-  fiat_p5248_uint1 x32;
-  uint64_t x33;
-  fiat_p5248_uint1 x34;
-  uint64_t x35;
-  fiat_p5248_uint1 x36;
-  uint64_t x37;
-  fiat_p5248_uint1 x38;
-  uint64_t x39;
-  fiat_p5248_uint1 x40;
-  uint64_t x41;
-  fiat_p5248_uint1 x42;
-  uint64_t x43;
-  fiat_p5248_uint1 x44;
-  uint64_t x45;
-  fiat_p5248_uint1 x46;
-  uint64_t x47;
-  fiat_p5248_uint1 x48;
-  uint64_t x49;
-  uint64_t x50;
-  uint64_t x51;
-  uint64_t x52;
-  uint64_t x53;
-  fiat_p5248_uint1 x54;
-  uint64_t x55;
-  fiat_p5248_uint1 x56;
-  uint64_t x57;
-  fiat_p5248_uint1 x58;
-  uint64_t x59;
-  fiat_p5248_uint1 x60;
-  uint64_t x61;
-  uint64_t x62;
-  fiat_p5248_uint1 x63;
-  uint64_t x64;
-  fiat_p5248_uint1 x65;
-  uint64_t x66;
-  fiat_p5248_uint1 x67;
-  uint64_t x68;
-  fiat_p5248_uint1 x69;
-  uint64_t x70;
-  uint64_t x71;
-  uint64_t x72;
-  uint64_t x73;
-  fiat_p5248_uint1 x74;
-  uint64_t x75;
-  uint64_t x76;
-  uint64_t x77;
-  uint64_t x78;
-  uint64_t x79;
-  uint64_t x80;
-  fiat_p5248_uint1 x81;
-  uint64_t x82;
-  fiat_p5248_uint1 x83;
-  uint64_t x84;
-  fiat_p5248_uint1 x85;
-  uint64_t x86;
-  fiat_p5248_uint1 x87;
-  uint64_t x88;
-  fiat_p5248_uint1 x89;
-  uint64_t x90;
-  uint64_t x91;
-  uint64_t x92;
-  uint64_t x93;
-  uint64_t x94;
-  fiat_p5248_uint1 x95;
-  uint64_t x96;
-  fiat_p5248_uint1 x97;
-  uint64_t x98;
-  fiat_p5248_uint1 x99;
-  uint64_t x100;
-  fiat_p5248_uint1 x101;
-  uint64_t x102;
-  fiat_p5248_uint1 x103;
-  uint64_t x104;
-  fiat_p5248_uint1 x105;
-  uint64_t x106;
-  fiat_p5248_uint1 x107;
-  uint64_t x108;
-  fiat_p5248_uint1 x109;
-  uint64_t x110;
-  fiat_p5248_uint1 x111;
-  uint64_t x112;
-  fiat_p5248_uint1 x113;
-  uint64_t x114;
-  uint64_t x115;
-  uint64_t x116;
-  uint64_t x117;
-  uint64_t x118;
-  uint64_t x119;
-  uint64_t x120;
-  uint64_t x121;
-  uint64_t x122;
-  uint64_t x123;
-  uint64_t x124;
-  uint64_t x125;
-  uint64_t x126;
-  fiat_p5248_addcarryx_u64(&x1, &x2, 0x0, (~arg1), 0x1);
-  x3 = (fiat_p5248_uint1)((fiat_p5248_uint1)(x1 >> 63) & (fiat_p5248_uint1)((arg3[0]) & 0x1));
-  fiat_p5248_addcarryx_u64(&x4, &x5, 0x0, (~arg1), 0x1);
-  fiat_p5248_cmovznz_u64(&x6, x3, arg1, x4);
-  fiat_p5248_cmovznz_u64(&x7, x3, (arg2[0]), (arg3[0]));
-  fiat_p5248_cmovznz_u64(&x8, x3, (arg2[1]), (arg3[1]));
-  fiat_p5248_cmovznz_u64(&x9, x3, (arg2[2]), (arg3[2]));
-  fiat_p5248_cmovznz_u64(&x10, x3, (arg2[3]), (arg3[3]));
-  fiat_p5248_cmovznz_u64(&x11, x3, (arg2[4]), (arg3[4]));
-  fiat_p5248_addcarryx_u64(&x12, &x13, 0x0, 0x1, (~(arg2[0])));
-  fiat_p5248_addcarryx_u64(&x14, &x15, x13, 0x0, (~(arg2[1])));
-  fiat_p5248_addcarryx_u64(&x16, &x17, x15, 0x0, (~(arg2[2])));
-  fiat_p5248_addcarryx_u64(&x18, &x19, x17, 0x0, (~(arg2[3])));
-  fiat_p5248_addcarryx_u64(&x20, &x21, x19, 0x0, (~(arg2[4])));
-  fiat_p5248_cmovznz_u64(&x22, x3, (arg3[0]), x12);
-  fiat_p5248_cmovznz_u64(&x23, x3, (arg3[1]), x14);
-  fiat_p5248_cmovznz_u64(&x24, x3, (arg3[2]), x16);
-  fiat_p5248_cmovznz_u64(&x25, x3, (arg3[3]), x18);
-  fiat_p5248_cmovznz_u64(&x26, x3, (arg3[4]), x20);
-  fiat_p5248_cmovznz_u64(&x27, x3, (arg4[0]), (arg5[0]));
-  fiat_p5248_cmovznz_u64(&x28, x3, (arg4[1]), (arg5[1]));
-  fiat_p5248_cmovznz_u64(&x29, x3, (arg4[2]), (arg5[2]));
-  fiat_p5248_cmovznz_u64(&x30, x3, (arg4[3]), (arg5[3]));
-  fiat_p5248_addcarryx_u64(&x31, &x32, 0x0, x27, x27);
-  fiat_p5248_addcarryx_u64(&x33, &x34, x32, x28, x28);
-  fiat_p5248_addcarryx_u64(&x35, &x36, x34, x29, x29);
-  fiat_p5248_addcarryx_u64(&x37, &x38, x36, x30, x30);
-  fiat_p5248_subborrowx_u64(&x39, &x40, 0x0, x31, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x41, &x42, x40, x33, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x43, &x44, x42, x35, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x45, &x46, x44, x37, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x47, &x48, x46, x38, 0x0);
-  x49 = (arg4[3]);
-  x50 = (arg4[2]);
-  x51 = (arg4[1]);
-  x52 = (arg4[0]);
-  fiat_p5248_subborrowx_u64(&x53, &x54, 0x0, 0x0, x52);
-  fiat_p5248_subborrowx_u64(&x55, &x56, x54, 0x0, x51);
-  fiat_p5248_subborrowx_u64(&x57, &x58, x56, 0x0, x50);
-  fiat_p5248_subborrowx_u64(&x59, &x60, x58, 0x0, x49);
-  fiat_p5248_cmovznz_u64(&x61, x60, 0x0, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_addcarryx_u64(&x62, &x63, 0x0, x53, x61);
-  fiat_p5248_addcarryx_u64(&x64, &x65, x63, x55, x61);
-  fiat_p5248_addcarryx_u64(&x66, &x67, x65, x57, x61);
-  fiat_p5248_addcarryx_u64(&x68, &x69, x67, x59, (x61 & UINT64_C(0x4ffffffffffffff)));
-  fiat_p5248_cmovznz_u64(&x70, x3, (arg5[0]), x62);
-  fiat_p5248_cmovznz_u64(&x71, x3, (arg5[1]), x64);
-  fiat_p5248_cmovznz_u64(&x72, x3, (arg5[2]), x66);
-  fiat_p5248_cmovznz_u64(&x73, x3, (arg5[3]), x68);
-  x74 = (fiat_p5248_uint1)(x22 & 0x1);
-  fiat_p5248_cmovznz_u64(&x75, x74, 0x0, x7);
-  fiat_p5248_cmovznz_u64(&x76, x74, 0x0, x8);
-  fiat_p5248_cmovznz_u64(&x77, x74, 0x0, x9);
-  fiat_p5248_cmovznz_u64(&x78, x74, 0x0, x10);
-  fiat_p5248_cmovznz_u64(&x79, x74, 0x0, x11);
-  fiat_p5248_addcarryx_u64(&x80, &x81, 0x0, x22, x75);
-  fiat_p5248_addcarryx_u64(&x82, &x83, x81, x23, x76);
-  fiat_p5248_addcarryx_u64(&x84, &x85, x83, x24, x77);
-  fiat_p5248_addcarryx_u64(&x86, &x87, x85, x25, x78);
-  fiat_p5248_addcarryx_u64(&x88, &x89, x87, x26, x79);
-  fiat_p5248_cmovznz_u64(&x90, x74, 0x0, x27);
-  fiat_p5248_cmovznz_u64(&x91, x74, 0x0, x28);
-  fiat_p5248_cmovznz_u64(&x92, x74, 0x0, x29);
-  fiat_p5248_cmovznz_u64(&x93, x74, 0x0, x30);
-  fiat_p5248_addcarryx_u64(&x94, &x95, 0x0, x70, x90);
-  fiat_p5248_addcarryx_u64(&x96, &x97, x95, x71, x91);
-  fiat_p5248_addcarryx_u64(&x98, &x99, x97, x72, x92);
-  fiat_p5248_addcarryx_u64(&x100, &x101, x99, x73, x93);
-  fiat_p5248_subborrowx_u64(&x102, &x103, 0x0, x94, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x104, &x105, x103, x96, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x106, &x107, x105, x98, UINT64_C(0xffffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x108, &x109, x107, x100, UINT64_C(0x4ffffffffffffff));
-  fiat_p5248_subborrowx_u64(&x110, &x111, x109, x101, 0x0);
-  fiat_p5248_addcarryx_u64(&x112, &x113, 0x0, x6, 0x1);
-  x114 = ((x80 >> 1) | ((x82 << 63) & UINT64_C(0xffffffffffffffff)));
-  x115 = ((x82 >> 1) | ((x84 << 63) & UINT64_C(0xffffffffffffffff)));
-  x116 = ((x84 >> 1) | ((x86 << 63) & UINT64_C(0xffffffffffffffff)));
-  x117 = ((x86 >> 1) | ((x88 << 63) & UINT64_C(0xffffffffffffffff)));
-  x118 = ((x88 & UINT64_C(0x8000000000000000)) | (x88 >> 1));
-  fiat_p5248_cmovznz_u64(&x119, x48, x39, x31);
-  fiat_p5248_cmovznz_u64(&x120, x48, x41, x33);
-  fiat_p5248_cmovznz_u64(&x121, x48, x43, x35);
-  fiat_p5248_cmovznz_u64(&x122, x48, x45, x37);
-  fiat_p5248_cmovznz_u64(&x123, x111, x102, x94);
-  fiat_p5248_cmovznz_u64(&x124, x111, x104, x96);
-  fiat_p5248_cmovznz_u64(&x125, x111, x106, x98);
-  fiat_p5248_cmovznz_u64(&x126, x111, x108, x100);
-  *out1 = x112;
-  out2[0] = x7;
-  out2[1] = x8;
-  out2[2] = x9;
-  out2[3] = x10;
-  out2[4] = x11;
-  out3[0] = x114;
-  out3[1] = x115;
-  out3[2] = x116;
-  out3[3] = x117;
-  out3[4] = x118;
-  out4[0] = x119;
-  out4[1] = x120;
-  out4[2] = x121;
-  out4[3] = x122;
-  out5[0] = x123;
-  out5[1] = x124;
-  out5[2] = x125;
-  out5[3] = x126;
+void
+fiat_p5248_divstep(uint64_t *out1,
+                   uint64_t out2[5],
+                   uint64_t out3[5],
+                   uint64_t out4[4],
+                   uint64_t out5[4],
+                   uint64_t arg1,
+                   const uint64_t arg2[5],
+                   const uint64_t arg3[5],
+                   const uint64_t arg4[4],
+                   const uint64_t arg5[4])
+{
+    uint64_t x1;
+    fiat_p5248_uint1 x2;
+    fiat_p5248_uint1 x3;
+    uint64_t x4;
+    fiat_p5248_uint1 x5;
+    uint64_t x6;
+    uint64_t x7;
+    uint64_t x8;
+    uint64_t x9;
+    uint64_t x10;
+    uint64_t x11;
+    uint64_t x12;
+    fiat_p5248_uint1 x13;
+    uint64_t x14;
+    fiat_p5248_uint1 x15;
+    uint64_t x16;
+    fiat_p5248_uint1 x17;
+    uint64_t x18;
+    fiat_p5248_uint1 x19;
+    uint64_t x20;
+    fiat_p5248_uint1 x21;
+    uint64_t x22;
+    uint64_t x23;
+    uint64_t x24;
+    uint64_t x25;
+    uint64_t x26;
+    uint64_t x27;
+    uint64_t x28;
+    uint64_t x29;
+    uint64_t x30;
+    uint64_t x31;
+    fiat_p5248_uint1 x32;
+    uint64_t x33;
+    fiat_p5248_uint1 x34;
+    uint64_t x35;
+    fiat_p5248_uint1 x36;
+    uint64_t x37;
+    fiat_p5248_uint1 x38;
+    uint64_t x39;
+    fiat_p5248_uint1 x40;
+    uint64_t x41;
+    fiat_p5248_uint1 x42;
+    uint64_t x43;
+    fiat_p5248_uint1 x44;
+    uint64_t x45;
+    fiat_p5248_uint1 x46;
+    uint64_t x47;
+    fiat_p5248_uint1 x48;
+    uint64_t x49;
+    uint64_t x50;
+    uint64_t x51;
+    uint64_t x52;
+    uint64_t x53;
+    fiat_p5248_uint1 x54;
+    uint64_t x55;
+    fiat_p5248_uint1 x56;
+    uint64_t x57;
+    fiat_p5248_uint1 x58;
+    uint64_t x59;
+    fiat_p5248_uint1 x60;
+    uint64_t x61;
+    uint64_t x62;
+    fiat_p5248_uint1 x63;
+    uint64_t x64;
+    fiat_p5248_uint1 x65;
+    uint64_t x66;
+    fiat_p5248_uint1 x67;
+    uint64_t x68;
+    fiat_p5248_uint1 x69;
+    uint64_t x70;
+    uint64_t x71;
+    uint64_t x72;
+    uint64_t x73;
+    fiat_p5248_uint1 x74;
+    uint64_t x75;
+    uint64_t x76;
+    uint64_t x77;
+    uint64_t x78;
+    uint64_t x79;
+    uint64_t x80;
+    fiat_p5248_uint1 x81;
+    uint64_t x82;
+    fiat_p5248_uint1 x83;
+    uint64_t x84;
+    fiat_p5248_uint1 x85;
+    uint64_t x86;
+    fiat_p5248_uint1 x87;
+    uint64_t x88;
+    fiat_p5248_uint1 x89;
+    uint64_t x90;
+    uint64_t x91;
+    uint64_t x92;
+    uint64_t x93;
+    uint64_t x94;
+    fiat_p5248_uint1 x95;
+    uint64_t x96;
+    fiat_p5248_uint1 x97;
+    uint64_t x98;
+    fiat_p5248_uint1 x99;
+    uint64_t x100;
+    fiat_p5248_uint1 x101;
+    uint64_t x102;
+    fiat_p5248_uint1 x103;
+    uint64_t x104;
+    fiat_p5248_uint1 x105;
+    uint64_t x106;
+    fiat_p5248_uint1 x107;
+    uint64_t x108;
+    fiat_p5248_uint1 x109;
+    uint64_t x110;
+    fiat_p5248_uint1 x111;
+    uint64_t x112;
+    fiat_p5248_uint1 x113;
+    uint64_t x114;
+    uint64_t x115;
+    uint64_t x116;
+    uint64_t x117;
+    uint64_t x118;
+    uint64_t x119;
+    uint64_t x120;
+    uint64_t x121;
+    uint64_t x122;
+    uint64_t x123;
+    uint64_t x124;
+    uint64_t x125;
+    uint64_t x126;
+    fiat_p5248_addcarryx_u64(&x1, &x2, 0x0, (~arg1), 0x1);
+    x3 = (fiat_p5248_uint1)((fiat_p5248_uint1)(x1 >> 63) & (fiat_p5248_uint1)((arg3[0]) & 0x1));
+    fiat_p5248_addcarryx_u64(&x4, &x5, 0x0, (~arg1), 0x1);
+    fiat_p5248_cmovznz_u64(&x6, x3, arg1, x4);
+    fiat_p5248_cmovznz_u64(&x7, x3, (arg2[0]), (arg3[0]));
+    fiat_p5248_cmovznz_u64(&x8, x3, (arg2[1]), (arg3[1]));
+    fiat_p5248_cmovznz_u64(&x9, x3, (arg2[2]), (arg3[2]));
+    fiat_p5248_cmovznz_u64(&x10, x3, (arg2[3]), (arg3[3]));
+    fiat_p5248_cmovznz_u64(&x11, x3, (arg2[4]), (arg3[4]));
+    fiat_p5248_addcarryx_u64(&x12, &x13, 0x0, 0x1, (~(arg2[0])));
+    fiat_p5248_addcarryx_u64(&x14, &x15, x13, 0x0, (~(arg2[1])));
+    fiat_p5248_addcarryx_u64(&x16, &x17, x15, 0x0, (~(arg2[2])));
+    fiat_p5248_addcarryx_u64(&x18, &x19, x17, 0x0, (~(arg2[3])));
+    fiat_p5248_addcarryx_u64(&x20, &x21, x19, 0x0, (~(arg2[4])));
+    fiat_p5248_cmovznz_u64(&x22, x3, (arg3[0]), x12);
+    fiat_p5248_cmovznz_u64(&x23, x3, (arg3[1]), x14);
+    fiat_p5248_cmovznz_u64(&x24, x3, (arg3[2]), x16);
+    fiat_p5248_cmovznz_u64(&x25, x3, (arg3[3]), x18);
+    fiat_p5248_cmovznz_u64(&x26, x3, (arg3[4]), x20);
+    fiat_p5248_cmovznz_u64(&x27, x3, (arg4[0]), (arg5[0]));
+    fiat_p5248_cmovznz_u64(&x28, x3, (arg4[1]), (arg5[1]));
+    fiat_p5248_cmovznz_u64(&x29, x3, (arg4[2]), (arg5[2]));
+    fiat_p5248_cmovznz_u64(&x30, x3, (arg4[3]), (arg5[3]));
+    fiat_p5248_addcarryx_u64(&x31, &x32, 0x0, x27, x27);
+    fiat_p5248_addcarryx_u64(&x33, &x34, x32, x28, x28);
+    fiat_p5248_addcarryx_u64(&x35, &x36, x34, x29, x29);
+    fiat_p5248_addcarryx_u64(&x37, &x38, x36, x30, x30);
+    fiat_p5248_subborrowx_u64(&x39, &x40, 0x0, x31, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x41, &x42, x40, x33, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x43, &x44, x42, x35, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x45, &x46, x44, x37, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x47, &x48, x46, x38, 0x0);
+    x49 = (arg4[3]);
+    x50 = (arg4[2]);
+    x51 = (arg4[1]);
+    x52 = (arg4[0]);
+    fiat_p5248_subborrowx_u64(&x53, &x54, 0x0, 0x0, x52);
+    fiat_p5248_subborrowx_u64(&x55, &x56, x54, 0x0, x51);
+    fiat_p5248_subborrowx_u64(&x57, &x58, x56, 0x0, x50);
+    fiat_p5248_subborrowx_u64(&x59, &x60, x58, 0x0, x49);
+    fiat_p5248_cmovznz_u64(&x61, x60, 0x0, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_addcarryx_u64(&x62, &x63, 0x0, x53, x61);
+    fiat_p5248_addcarryx_u64(&x64, &x65, x63, x55, x61);
+    fiat_p5248_addcarryx_u64(&x66, &x67, x65, x57, x61);
+    fiat_p5248_addcarryx_u64(&x68, &x69, x67, x59, (x61 & UINT64_C(0x4ffffffffffffff)));
+    fiat_p5248_cmovznz_u64(&x70, x3, (arg5[0]), x62);
+    fiat_p5248_cmovznz_u64(&x71, x3, (arg5[1]), x64);
+    fiat_p5248_cmovznz_u64(&x72, x3, (arg5[2]), x66);
+    fiat_p5248_cmovznz_u64(&x73, x3, (arg5[3]), x68);
+    x74 = (fiat_p5248_uint1)(x22 & 0x1);
+    fiat_p5248_cmovznz_u64(&x75, x74, 0x0, x7);
+    fiat_p5248_cmovznz_u64(&x76, x74, 0x0, x8);
+    fiat_p5248_cmovznz_u64(&x77, x74, 0x0, x9);
+    fiat_p5248_cmovznz_u64(&x78, x74, 0x0, x10);
+    fiat_p5248_cmovznz_u64(&x79, x74, 0x0, x11);
+    fiat_p5248_addcarryx_u64(&x80, &x81, 0x0, x22, x75);
+    fiat_p5248_addcarryx_u64(&x82, &x83, x81, x23, x76);
+    fiat_p5248_addcarryx_u64(&x84, &x85, x83, x24, x77);
+    fiat_p5248_addcarryx_u64(&x86, &x87, x85, x25, x78);
+    fiat_p5248_addcarryx_u64(&x88, &x89, x87, x26, x79);
+    fiat_p5248_cmovznz_u64(&x90, x74, 0x0, x27);
+    fiat_p5248_cmovznz_u64(&x91, x74, 0x0, x28);
+    fiat_p5248_cmovznz_u64(&x92, x74, 0x0, x29);
+    fiat_p5248_cmovznz_u64(&x93, x74, 0x0, x30);
+    fiat_p5248_addcarryx_u64(&x94, &x95, 0x0, x70, x90);
+    fiat_p5248_addcarryx_u64(&x96, &x97, x95, x71, x91);
+    fiat_p5248_addcarryx_u64(&x98, &x99, x97, x72, x92);
+    fiat_p5248_addcarryx_u64(&x100, &x101, x99, x73, x93);
+    fiat_p5248_subborrowx_u64(&x102, &x103, 0x0, x94, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x104, &x105, x103, x96, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x106, &x107, x105, x98, UINT64_C(0xffffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x108, &x109, x107, x100, UINT64_C(0x4ffffffffffffff));
+    fiat_p5248_subborrowx_u64(&x110, &x111, x109, x101, 0x0);
+    fiat_p5248_addcarryx_u64(&x112, &x113, 0x0, x6, 0x1);
+    x114 = ((x80 >> 1) | ((x82 << 63) & UINT64_C(0xffffffffffffffff)));
+    x115 = ((x82 >> 1) | ((x84 << 63) & UINT64_C(0xffffffffffffffff)));
+    x116 = ((x84 >> 1) | ((x86 << 63) & UINT64_C(0xffffffffffffffff)));
+    x117 = ((x86 >> 1) | ((x88 << 63) & UINT64_C(0xffffffffffffffff)));
+    x118 = ((x88 & UINT64_C(0x8000000000000000)) | (x88 >> 1));
+    fiat_p5248_cmovznz_u64(&x119, x48, x39, x31);
+    fiat_p5248_cmovznz_u64(&x120, x48, x41, x33);
+    fiat_p5248_cmovznz_u64(&x121, x48, x43, x35);
+    fiat_p5248_cmovznz_u64(&x122, x48, x45, x37);
+    fiat_p5248_cmovznz_u64(&x123, x111, x102, x94);
+    fiat_p5248_cmovznz_u64(&x124, x111, x104, x96);
+    fiat_p5248_cmovznz_u64(&x125, x111, x106, x98);
+    fiat_p5248_cmovznz_u64(&x126, x111, x108, x100);
+    *out1 = x112;
+    out2[0] = x7;
+    out2[1] = x8;
+    out2[2] = x9;
+    out2[3] = x10;
+    out2[4] = x11;
+    out3[0] = x114;
+    out3[1] = x115;
+    out3[2] = x116;
+    out3[3] = x117;
+    out3[4] = x118;
+    out4[0] = x119;
+    out4[1] = x120;
+    out4[2] = x121;
+    out4[3] = x122;
+    out5[0] = x123;
+    out5[1] = x124;
+    out5[2] = x125;
+    out5[3] = x126;
 }
 
 /* End of autogenerated content */
@@ -2155,100 +2253,54 @@ void fiat_p5248_divstep(uint64_t* out1, uint64_t out2[5], uint64_t out3[5], uint
 
 #include <fp.h>
 
-const uint64_t p[NWORDS_FIELD] = { 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x4ffffffffffffff };
-const uint64_t ZERO[NWORDS_FIELD] = {
-	0, 0, 0, 0
-};
-const uint64_t ONE[NWORDS_FIELD] = {
-	0x0000000000000033,
-	0x0000000000000000,
-	0x0000000000000000,
-	0x0100000000000000
-};
+const uint64_t p[NWORDS_FIELD] = { 0xffffffffffffffff,
+                                   0xffffffffffffffff,
+                                   0xffffffffffffffff,
+                                   0x4ffffffffffffff };
+const uint64_t ZERO[NWORDS_FIELD] = { 0, 0, 0, 0 };
+const uint64_t ONE[NWORDS_FIELD] = { 0x0000000000000033,
+                                     0x0000000000000000,
+                                     0x0000000000000000,
+                                     0x0100000000000000 };
 
-void fp_add(fp_t* out, const fp_t* a, const fp_t* b) {
+void
+fp_add(fp_t *out, const fp_t *a, const fp_t *b)
+{
     fiat_p5248_add(*out, *a, *b);
 }
 
-void fp_sub(fp_t* out, const fp_t* a, const fp_t* b) {
+void
+fp_sub(fp_t *out, const fp_t *a, const fp_t *b)
+{
     fiat_p5248_sub(*out, *a, *b);
 }
 
-void fp_sqr(fp_t* out, const fp_t* a) {
+void
+fp_sqr(fp_t *out, const fp_t *a)
+{
     fiat_p5248_square(*out, *a);
 }
 
-void fp_mul(fp_t* out, const fp_t* a, const fp_t* b) {
+void
+fp_mul(fp_t *out, const fp_t *a, const fp_t *b)
+{
     fiat_p5248_mul(*out, *a, *b);
 }
 
-void fp_tomont(fp_t* out, const fp_t* a) {
+void
+fp_tomont(fp_t *out, const fp_t *a)
+{
     fiat_p5248_to_montgomery(*out, *a);
 }
 
-void fp_frommont(fp_t* out, const fp_t* a) {
+void
+fp_frommont(fp_t *out, const fp_t *a)
+{
     fiat_p5248_from_montgomery(*out, *a);
 }
 
-void fp_mont_setone(fp_t* out) {
+void
+fp_mont_setone(fp_t *out)
+{
     fiat_p5248_set_one(*out);
 }
-
-/*
-CAUTION: HAZARDOUS MATERIALS
-
-The following tables are constants used for torsion basis generation. All values have already been converted into Montgomery
-form, and so if the internal API for the field changes, these values may also need to change
-
-NQR_TABLE:
-    is a table of 20 values all of which are not squares in GF(p^2) with modulus x^2 + 1 and prime p = 5*2**248 - 1
-Z_NQR_TABLE:
-    is a table of 20 values for which the value is a square and (value - 1) is not a square in the field GF(p^2) 
-    with modulus x^2 + 1 and prime p = 5*2**248 - 1 
-*/
-
-const uint64_t NQR_TABLE[20][2][NWORDS_FIELD] = {
-    {{0xD79D529B2DD58744, 0xD3411D68DF181489, 0xC9E1ED24451A63AD, 0x025F87E62FE3C539}, {0xA5975731B068466B, 0x52046D01C46E4C61, 0xDCE9E28E58A80160, 0x0261AAF78311C5AE}},
-    {{0x0E6A024EA4503262, 0x5190912777311F71, 0x8EB85BC3AC5F9702, 0x03DCA14E130C1AAB}, {0xD5CEEBB8EE1FAF65, 0x1C3427038C9F767C, 0x0924BDD76AFE7979, 0x03D48A9212A29F39}},
-    {{0x5E811F355E7DBB4A, 0x3D22B2502135811A, 0x7D37635280CA238C, 0x00F0BD396DA777F4}, {0x3811BF126F111957, 0x65B6AFBAE6EF0EEF, 0x79B06A08C5779191, 0x02A68C0E60659080}},
-    {{0x60874A127BCB51DD, 0xD8E89FA1633B9A8E, 0x9CB4C4C37991A9AF, 0x02689A703E4A0277}, {0xD1575D9EED835634, 0x316BD254FBEADF9F, 0x700D12636A701239, 0x01BB44C9C53CC72E}},
-    {{0xDE52250706A3DE1D, 0x19832EFE0CE1B018, 0xD8F8EAF624BDBB3D, 0x0150FCCCD15EBEB2}, {0x582EF2F55BB7C536, 0xB6613515D8233D01, 0x0E4144CC346AB3D6, 0x03D0614DD22CF21E}},
-    {{0x5ED5111A7C58D23E, 0x93FB2107C1B31496, 0x1A0F5E36622BA614, 0x02A769A468E38518}, {0x81AD3CA10011BFDC, 0xF661CF9A369612A4, 0x3F3620178903660D, 0x016027C14F273E5C}},
-    {{0xAD1DFA971D40E696, 0x6A1A475CDB7A8245, 0x2F9A6E90C5B6D88B, 0x0086B68756C4588E}, {0x4296599EB1C5F9AF, 0x22EC1AA4613AF693, 0x9F2D2D048047F975, 0x02FDEA4728AEB163}},
-    {{0x213469CECCF23114, 0x1060A84F970954B5, 0x2C78F4737E09AB18, 0x048A4F9446B25BA7}, {0x75C90430872CC6D0, 0x1EE78C48B0F07A94, 0x72FDF7203015AC24, 0x03E6EF1DFCEAF978}},
-    {{0x857D645C406F4D32, 0xAD11D93ABB4B9FA6, 0xB501525C6069D8E7, 0x01838E7E5DCE8161}, {0x8E3EA655567C3D69, 0x0A6C22577CD93373, 0xBAD286A80E122524, 0x035A62C2E4457A42}},
-    {{0x5705BE913508D784, 0xABACF1EC1ECF7350, 0xBA206371790005FB, 0x01C42951F68EB6AF}, {0x415E2613E59AECC1, 0x9BA371492C116484, 0xF435C3539765A167, 0x00D303BC18F4F95D}},
-    {{0x40A6CAA7ED2CA710, 0x6F6FBD87203C1AE2, 0x96A57897B3D5D716, 0x00CAB4E28FA872A6}, {0x259C20FD3F755E95, 0xEFE89B19BE7D933C, 0xCBAC857CE54F2877, 0x03F9FFA018D683DE}},
-    {{0xE300278584FA889D, 0x071D74F413388E21, 0xF6024900509632E3, 0x02542EA82ED08B4A}, {0xB222756871492878, 0xCA2ACC9D0EFF06AF, 0x088DDA4A4FD53661, 0x0059E27A9B18C6A0}},
-    {{0x825F83E5978D47B8, 0x3AAE6F358C56B70A, 0x16A013FB97EA4D46, 0x033D96D383A01920}, {0x697E5CFA6D794BEB, 0xE30AB1D4206FAED2, 0x4856786BBF175880, 0x0044887541DF9430}},
-    {{0x68A6BA2011B5087B, 0xFF877D82FE3548E9, 0xF5FC5E016D42FA12, 0x0467F3DFBFC50B5D}, {0x7CCA15CA1607AECA, 0xAB71852734A29B9C, 0x9919FF91A32BE585, 0x0408D6979F7C9812}},
-    {{0xBA3F4CF1DDC8DD7B, 0x6B59B8B512BD7A8E, 0x64EDE6BDD2FEBF98, 0x0444B585F9D88ACB}, {0x5B50BED3D167CCF2, 0x0D383A4217837CF7, 0x84EC734848AFD580, 0x00EDB45A99B3DCD1}},
-    {{0x6CEF4D6616B6DE5D, 0xBF794773A154C753, 0xF2CE06963929BEF2, 0x02EBE095969AF014}, {0xD587AD6CBB5AB4AA, 0x3417F99E28BA67D0, 0x74E6F5A14EB8E7BD, 0x03042CE5AB494A3E}},
-    {{0xE071760697F2B7DB, 0x2B29D69C1669C627, 0xBED20542FC68BC98, 0x02B8DC22A3F74A1D}, {0x0C54F2B915024155, 0x9A28E4B30CF43B83, 0xFA26E4E7F43F39E4, 0x017CD5A53A16B363}},
-    {{0xF66B090E03C74978, 0xE3379A190D081E81, 0xFF03C161FF538E7F, 0x034D5097027078A2}, {0x36CB99358808FD22, 0xF3E17C3EDEE70D1B, 0xB76A2643E0AE9ECF, 0x02FD556CA0BB489C}},
-    {{0xC4E781B564FC3372, 0x98D83790DB4A10E7, 0xFB54DA62093A5120, 0x0253B6028B18E114}, {0xCA17FD29DD0A0CBB, 0x7D7538566E282F35, 0xF3D61A28034991F6, 0x04AA30374A64AE7B}},
-    {{0xD573B3168F378A04, 0x44DF508E999D2249, 0x0BB9F32AA012ECD2, 0x00E9622238488D5D}, {0xD8AD7CBFD04EC933, 0xC4C5DECF64A8BFE0, 0x9BE611EF2DE8421A, 0x046B0407DADCAACA}},
-};
-
-const uint64_t Z_NQR_TABLE[20][2][NWORDS_FIELD] = {
-    {{0xE163104B8C955FE5, 0x6E74A3F16600C0E2, 0xEB36AD6E3BF23D0A, 0x02C6C2ABD743B695}, {0x18BBEA0ED19572EF, 0x05956DDA26C2B1D7, 0xE96DEA307617B70E, 0x010FDA4043D24C07}},
-    {{0xD01C09994BE5FD04, 0x28F5B080E7EC165F, 0x238AAE66B4F62FDA, 0x03762A6DAAC5002E}, {0xC0A2406503787419, 0x36BEDB1502531F59, 0x45E49A9F88DC2E1A, 0x0351699BA159EF17}},
-    {{0x067CCB7203FFE696, 0x84381E8913B39671, 0xA94117CD96B1BC4B, 0x02B4731A7B31C7AA}, {0xA397B2917DF0112D, 0x8A0655B4731C6401, 0x7FFD6EF665B21913, 0x00C071D8C6F51BCD}},
-    {{0x9D011911A0B9B553, 0x6289F5F0B9206DB4, 0x9527ACAB82590D8B, 0x01A3AC9A3F7CB985}, {0x0005938EA1855B31, 0x9A6DB02B018E9108, 0x4A8F5595C1B11D16, 0x01383DB6C01FCA79}},
-    {{0x157DE916212CC8E8, 0x45979967D442DFA7, 0x32262D1D488F4368, 0x03595745F4E84B93}, {0x0B170146BD07303D, 0xE1C89F94CBC10791, 0x1DD359F9915B1734, 0x032CFECF470A8A72}},
-    {{0x5B9A8CF60874D474, 0xC4DC6B630995A4D6, 0x90726993E4011012, 0x02EFC608252127C8}, {0xDC1ED0C2BFE5DD8C, 0xCBEEDED58382D793, 0x7DE995C91504EF69, 0x0215D25C489C4F25}},
-    {{0xB1E2933AD4544166, 0xD5E37302990A35DB, 0x1BF14C96D3F8ED18, 0x0133F37BD9DC01C6}, {0x957110FC3AC92431, 0xB4EC21066371DC7C, 0xEC8C6F5DBA4A7B83, 0x04BF69D5F1C22D60}},
-    {{0x4023C4DF3F3AD785, 0x5C278E339D6EEB5D, 0x3D702554EEB1A891, 0x0273EC769B63114A}, {0xF1D11E4F0DF3BAF6, 0xE42F7D76D3576070, 0x767903EE8DB8B828, 0x02B32C48ACF03878}},
-    {{0x4512D062F9EEE551, 0x1157BFA169D37AE3, 0x0C5E15D2355770EA, 0x00DD2C83CA7B2DB0}, {0x4CB87A91ECE7E9E7, 0x3EBE403E5957A284, 0xEAE2308D11BC0E09, 0x02FD9B95AA57BA61}},
-    {{0x56234818F4DB7F1B, 0x0E640687DC3E82DE, 0xD60AEAF1FF989E22, 0x00612701102ED552}, {0x575A4F89C81C1EF5, 0xF197A92A6AF0E61D, 0x82CF32EB6C4CC434, 0x007CCF08DCD0E5CF}},
-    {{0xB4C361570C9F60E9, 0xB7E07EDFD33AD98F, 0x0498041C7B4B4994, 0x01E2CE69231D301F}, {0x1CC6B479823ACA2E, 0x86E4C727B16DBA61, 0xA636F605001FC8BA, 0x03AEFA11B6B21E78}},
-    {{0x65166510D615FBF9, 0x7D27F65B20A53877, 0x659BC903F0F451F9, 0x044BA48CB284F333}, {0xC0D6D8D0F26A00AD, 0x9184894568F3B85C, 0x3AB432F56CE37413, 0x02599A3C52D80613}},
-    {{0x1BDF776EAAF8441E, 0x20B2868293C3F2EF, 0xE5C3F1660C9B7C82, 0x00E7A4A4D5FD400B}, {0x52D730AB4B0DDD7F, 0x5F4504E48A8CF66A, 0x38710AF77D521E2A, 0x036BBE147FB618CA}},
-    {{0x7AB105A891E776A1, 0x5936AB29CCD08111, 0xFC4E8E5DD517FF69, 0x02A1542DD3B5FC42}, {0x0D13FC3AA6C62882, 0xA8C3DB4819B39853, 0x171707D850E6A9BD, 0x01640D826B0DD1FB}},
-    {{0x0DE09B2E611B1F45, 0xA1AD5338584F766D, 0xE80499DEAC81F6D0, 0x01D197A560EC57ED}, {0x3483CD479FA76962, 0x75ADA53E2A8F1698, 0x46C492BD364EA23B, 0x01B9E35195BDA6FD}},
-    {{0xE1D7F65B515D4D39, 0x6F81DEA0D7AA9D0A, 0x1565CB4D168202BD, 0x0474DAA1E688C451}, {0x11AF3004AF79A7FA, 0x8B8F14E00EB39028, 0x6C2743E45573C62F, 0x04F7060F42999B8F}},
-    {{0xFBD393ACD171415B, 0xD594EFAC07682F8F, 0x0701A5844DC7970B, 0x0247CCBF02E957F4}, {0xE75603B97C6CEFC5, 0xFC0A9EC0B1F04734, 0xD69F1E40BCCD1CBF, 0x048ECD95551C53E5}},
-    {{0xFA29206905641163, 0x5B9D43693BB14BDA, 0x5517F1A307DCCB46, 0x027E5D2B05C2DC09}, {0x5013DE983A801BCC, 0x70CACC800221FB39, 0x6747684236EC7485, 0x0138C52BE83FF435}},
-    {{0x21CB6AD42458DCE5, 0xDE864E48385426F3, 0xD9C9C15C3E383444, 0x02D37CFA988E99D0}, {0x723FF85F5BA7C940, 0xAF2E06B0F1DC2A07, 0x47BCBF212EC4671E, 0x03CA3F3FD0F69329}},
-    {{0xD51CCAF091138758, 0xCE5017334A4D0D41, 0xB8D21552EBE65AE7, 0x04BCBA0A13C5CFD2}, {0x4D935E8ABC5BBFA7, 0x7A910B4AED1A48B5, 0x240499CF828389A7, 0x031F10ACAFC9FEEA}},
-};

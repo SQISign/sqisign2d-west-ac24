@@ -3,13 +3,15 @@
 #include "internal.h"
 
 // RED(k,l) sub-algorithm
-static void RED(ibz_mat_4x4_t basis, mpf_t u[4][4], mpz_t H[4][4], int k, int l) {
+static void
+RED(ibz_mat_4x4_t basis, mpf_t u[4][4], mpz_t H[4][4], int k, int l)
+{
     mpf_t tmp, tmp2;
     mpz_t q, tmpz;
     mpf_init_set_d(tmp, 0.5);
     mpf_init(tmp2);
     mpz_init(q);
-    mpz_init(tmpz); 
+    mpz_init(tmpz);
 
     // if |u_{k,l}| <= 0.5, terminate
     mpf_abs(tmp2, u[k][l]);
@@ -38,7 +40,7 @@ static void RED(ibz_mat_4x4_t basis, mpf_t u[4][4], mpz_t H[4][4], int k, int l)
     mpf_sub(u[k][l], u[k][l], tmp2);
 
     // forall_i \in 1..l-1: u_{k,i} = u_{k,i} - q*u_{l,i}
-    for (int i = 0; i <= l-1; ++i) {
+    for (int i = 0; i <= l - 1; ++i) {
         mpf_mul(tmp, tmp2, u[l][i]);
         mpf_sub(u[k][i], u[k][i], tmp);
     }
@@ -51,7 +53,15 @@ end:
 }
 
 // SWAP(k) sub-algorithm
-static void SWAP(ibz_mat_4x4_t basis, mpf_t u[4][4], mpz_t H[4][4], mpf_t B[4], mpf_t bStar[4][4], int k, int kmax) {
+static void
+SWAP(ibz_mat_4x4_t basis,
+     mpf_t u[4][4],
+     mpz_t H[4][4],
+     mpf_t B[4],
+     mpf_t bStar[4][4],
+     int k,
+     int kmax)
+{
     mpf_t tmp, tmp2, tmp3, u_tmp, B_tmp, b[4];
     mpf_init(tmp);
     mpf_init(tmp2);
@@ -65,18 +75,18 @@ static void SWAP(ibz_mat_4x4_t basis, mpf_t u[4][4], mpz_t H[4][4], mpf_t B[4], 
 
     // swap b_k and b_{k-1}
     for (int i = 0; i < 4; ++i) {
-        mpz_swap(basis[k][i], basis[k-1][i]);
+        mpz_swap(basis[k][i], basis[k - 1][i]);
     }
 
     // swap H_k and H_{k-1}
     for (int i = 0; i < 4; ++i) {
-        mpz_swap(H[k][i], H[k-1][i]);
+        mpz_swap(H[k][i], H[k - 1][i]);
     }
 
     if (k > 1) {
         // swap u_{k,j} and u_{k-1,j}
         for (int j = 0; j <= k - 2; ++j) {
-            mpf_swap(u[k][j], u[k-1][j]);
+            mpf_swap(u[k][j], u[k - 1][j]);
         }
     }
 
@@ -85,25 +95,25 @@ static void SWAP(ibz_mat_4x4_t basis, mpf_t u[4][4], mpz_t H[4][4], mpf_t B[4], 
 
     // B = B_k + u^2*B_{k-1}
     mpf_mul(B_tmp, u_tmp, u_tmp);
-    mpf_mul(B_tmp, B_tmp, B[k-1]);
+    mpf_mul(B_tmp, B_tmp, B[k - 1]);
     mpf_add(B_tmp, B[k], B_tmp);
 
     // u_{k,k-1} = u*B_{k-1} / B
-    mpf_mul(tmp, u_tmp, B[k-1]);
-    mpf_div(u[k][k-1], tmp, B_tmp);
+    mpf_mul(tmp, u_tmp, B[k - 1]);
+    mpf_div(u[k][k - 1], tmp, B_tmp);
 
     // b = bSTAR_{k-1}
     for (int i = 0; i < 4; ++i) {
-        mpf_set(b[i], bStar[k-1][i]);
+        mpf_set(b[i], bStar[k - 1][i]);
     }
     // bSTAR_{k-1}=bSTAR_k+u*b
     for (int i = 0; i < 4; ++i) {
         mpf_mul(tmp, u_tmp, b[i]);
-        mpf_add(bStar[k-1][i], bStar[k][i], tmp);
+        mpf_add(bStar[k - 1][i], bStar[k][i], tmp);
     }
     // bSTAR_k = -u_{k,k-1}*bSTAR_k+(B_k/B)*b
     mpf_div(tmp2, B[k], B_tmp); // B_k/B
-    mpf_neg(tmp, u[k][k-1]);
+    mpf_neg(tmp, u[k][k - 1]);
     for (int i = 0; i < 4; ++i) {
         mpf_mul(bStar[k][i], tmp, bStar[k][i]);
         mpf_mul(tmp3, tmp2, b[i]);
@@ -111,23 +121,23 @@ static void SWAP(ibz_mat_4x4_t basis, mpf_t u[4][4], mpz_t H[4][4], mpf_t B[4], 
     }
 
     // B_k = B_{k-1}*B_k/B
-    mpf_mul(B[k], B[k-1], B[k]);
+    mpf_mul(B[k], B[k - 1], B[k]);
     mpf_div(B[k], B[k], B_tmp);
 
     // B_{k-1} = B
-    mpf_set(B[k-1], B_tmp);
+    mpf_set(B[k - 1], B_tmp);
 
-    for (int i = k+1; i <= kmax; ++i) {
+    for (int i = k + 1; i <= kmax; ++i) {
         // t = u_{i,k}
         mpf_set(tmp, u[i][k]);
 
         // u_{i,k} = u_{i,k-1} - u*t
         mpf_mul(u[i][k], u_tmp, tmp);
-        mpf_sub(u[i][k], u[i][k-1], u[i][k]);
+        mpf_sub(u[i][k], u[i][k - 1], u[i][k]);
 
         // u_{i,k-1} = t + u_{k,k-1}*u_{i,k}
-        mpf_mul(tmp2, u[k][k-1], u[i][k]);
-        mpf_add(u[i][k-1], tmp, tmp2);
+        mpf_mul(tmp2, u[k][k - 1], u[i][k]);
+        mpf_add(u[i][k - 1], tmp, tmp2);
     }
 
     mpf_clear(tmp);
@@ -138,11 +148,17 @@ static void SWAP(ibz_mat_4x4_t basis, mpf_t u[4][4], mpz_t H[4][4], mpf_t B[4], 
     for (int i = 0; i < 4; ++i) {
         mpf_clear(b[i]);
     }
-
 }
 
 // m1[0]*m2[0] + m1[1]*m2[1] + q*(m1[2]*m2[2] + m1[3]*m2[3])
-static void dotproduct_row(mpz_t* mul, const ibz_mat_4x4_t m1, const ibz_mat_4x4_t m2, const ibz_t *q, int m1j, int m2j) {
+static void
+dotproduct_row(mpz_t *mul,
+               const ibz_mat_4x4_t m1,
+               const ibz_mat_4x4_t m2,
+               const ibz_t *q,
+               int m1j,
+               int m2j)
+{
     mpz_set_ui(*mul, 0);
     mpz_t tmp1, tmp2;
     mpz_init(tmp1);
@@ -162,7 +178,14 @@ static void dotproduct_row(mpz_t* mul, const ibz_mat_4x4_t m1, const ibz_mat_4x4
     mpz_clear(tmp2);
 }
 
-static void dotproduct_zr_row(mpf_t* mul, const ibz_mat_4x4_t m1, const mpf_t m2[4][4], const ibz_t *q, int m1j, int m2j) {
+static void
+dotproduct_zr_row(mpf_t *mul,
+                  const ibz_mat_4x4_t m1,
+                  const mpf_t m2[4][4],
+                  const ibz_t *q,
+                  int m1j,
+                  int m2j)
+{
     mpf_set_d(*mul, 0);
     mpf_t tmp1, tmp2;
     mpf_init(tmp1);
@@ -170,12 +193,12 @@ static void dotproduct_zr_row(mpf_t* mul, const ibz_mat_4x4_t m1, const mpf_t m2
     for (int i = 0; i < 2; ++i) {
         mpf_set_z(tmp1, m1[m1j][i]);
         mpf_mul(tmp1, tmp1, m2[m2j][i]);
-        mpf_add(*mul, *mul, tmp1); 
+        mpf_add(*mul, *mul, tmp1);
     }
     for (int i = 2; i < 4; ++i) {
         mpf_set_z(tmp1, m1[m1j][i]);
         mpf_mul(tmp1, tmp1, m2[m2j][i]);
-        mpf_add(tmp2, tmp2, tmp1); 
+        mpf_add(tmp2, tmp2, tmp1);
     }
     mpf_set_z(tmp1, *q);
     mpf_mul(tmp2, tmp2, tmp1);
@@ -185,7 +208,14 @@ static void dotproduct_zr_row(mpf_t* mul, const ibz_mat_4x4_t m1, const mpf_t m2
     mpf_clear(tmp2);
 }
 
-static void dotproduct_rr_row(mpf_t* mul, const mpf_t m1[4][4], const mpf_t m2[4][4], const ibz_t *q, int m1j, int m2j) {
+static void
+dotproduct_rr_row(mpf_t *mul,
+                  const mpf_t m1[4][4],
+                  const mpf_t m2[4][4],
+                  const ibz_t *q,
+                  int m1j,
+                  int m2j)
+{
     mpf_set_ui(*mul, 0);
     mpf_t tmp1, tmp2;
     mpf_init(tmp1);
@@ -206,30 +236,39 @@ static void dotproduct_rr_row(mpf_t* mul, const mpf_t m1[4][4], const mpf_t m2[4
     mpf_clear(tmp2);
 }
 
-static void mul_row(mpf_t mul[4][4], const mpf_t* a, const mpf_t m[4][4], int j) {
+static void
+mul_row(mpf_t mul[4][4], const mpf_t *a, const mpf_t m[4][4], int j)
+{
     for (int i = 0; i < 4; ++i) {
         mpf_mul(mul[j][i], *a, m[j][i]);
     }
 }
 
-static void add_row(ibz_mat_4x4_t add, const ibz_mat_4x4_t a, const ibz_mat_4x4_t b, int j, int aj, int bj) {
+static void
+add_row(ibz_mat_4x4_t add, const ibz_mat_4x4_t a, const ibz_mat_4x4_t b, int j, int aj, int bj)
+{
     for (int i = 0; i < 4; ++i) {
         mpz_add(add[j][i], a[aj][i], b[bj][i]);
     }
 }
 
-static void sub_row(mpf_t add[4][4], const mpf_t a[4][4], const mpf_t b[4][4], int j, int aj, int bj) {
+static void
+sub_row(mpf_t add[4][4], const mpf_t a[4][4], const mpf_t b[4][4], int j, int aj, int bj)
+{
     for (int i = 0; i < 4; ++i) {
         mpf_sub(add[j][i], a[aj][i], b[bj][i]);
     }
 }
 
 /// @brief LLL reduction on 4-dimensional lattice
-/// Implements Algorithm 2.6.3 from Henri Cohen's "A Course in Computational Algebraic Number Theory"
-/// @param red 
-/// @param lattice 
-/// @return 
-int quat_lattice_lll(ibz_mat_4x4_t *red, const quat_lattice_t *lattice, const ibz_t *q, int precision) {
+/// Implements Algorithm 2.6.3 from Henri Cohen's "A Course in Computational Algebraic Number
+/// Theory"
+/// @param red
+/// @param lattice
+/// @return
+int
+quat_lattice_lll(ibz_mat_4x4_t *red, const quat_lattice_t *lattice, const ibz_t *q, int precision)
+{
     if (precision != 0)
         mpf_set_default_prec(precision);
     int ret = 0;
@@ -280,7 +319,7 @@ int quat_lattice_lll(ibz_mat_4x4_t *red, const quat_lattice_t *lattice, const ib
             for (int i = 0; i < 4; ++i) {
                 mpf_set_z(bStar[k][i], basis[k][i]);
             }
-            for (int j = 0; j <= k-1; ++j) {
+            for (int j = 0; j <= k - 1; ++j) {
                 // bStar_k = b_k -> already done initially -> todo: check if that's ok
                 // nop
                 // u_{k,j} = b_k*bSTAR_j/B_j
@@ -299,14 +338,14 @@ int quat_lattice_lll(ibz_mat_4x4_t *red, const quat_lattice_t *lattice, const ib
             }
         }
 
-        while(1) {
+        while (1) {
             // Step 3: Test LLL condition
             RED(basis, u, H, k, k - 1);
             // If B_k < (0.75 - u_{k,k-1}^2)*B_{k-1}
-            mpf_mul(tmp, u[k][k-1], u[k][k-1]);
+            mpf_mul(tmp, u[k][k - 1], u[k][k - 1]);
             mpf_set_d(cnst, 0.99);
             mpf_sub(tmp, cnst, tmp);
-            mpf_mul(tmp, tmp, B[k-1]);
+            mpf_mul(tmp, tmp, B[k - 1]);
             if (mpf_cmp(B[k], tmp) < 0) {
                 SWAP(basis, u, H, B, bStar, k, kmax);
                 k = (k - 1 > 1 ? k - 1 : 1);

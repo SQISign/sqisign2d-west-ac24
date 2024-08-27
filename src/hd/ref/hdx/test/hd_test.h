@@ -1,5 +1,5 @@
 #ifndef HD_TESTS_H
-#define HD_TESTS_H 
+#define HD_TESTS_H
 
 #include <klpt.h>
 #include <quaternion.h>

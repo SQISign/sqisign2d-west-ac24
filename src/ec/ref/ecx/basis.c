@@ -1,13 +1,15 @@
-#include "isog.h"
+#include "ec.h"
 #include "fp2.h"
+#include "isog.h"
+#include "gf_constants.h"
 
-
-static void xTPL(ec_point_t* Q, const ec_point_t* P, const ec_point_t* A3)
+static void
+xTPL(ec_point_t *Q, const ec_point_t *P, const ec_point_t *A3)
 {
     /* ----------------------------------------------------------------------------- *
      * Differential point tripling given the montgomery coefficient A3 = (A+2C:A-2C)
      * ----------------------------------------------------------------------------- */
-     
+
     fp2_t t0, t1, t2, t3, t4;
     fp2_sub(&t0, &P->x, &P->z);
     fp2_sqr(&t2, &t0);
@@ -33,17 +35,19 @@ static void xTPL(ec_point_t* Q, const ec_point_t* P, const ec_point_t* A3)
     fp2_mul(&Q->z, &t1, &t0);
 }
 
-int ec_is_on_curve(const ec_curve_t* curve, const ec_point_t* P){
+int
+ec_is_on_curve(const ec_curve_t *curve, const ec_point_t *P)
+{
 
     fp2_t t0, t1, t2;
 
     // Check if xz*(C^2x^2+zACx+z^2C^2) is a square
-    fp2_mul(&t0, &curve->C, &P->x); 
-    fp2_mul(&t1, &t0, &P->z);       
-    fp2_mul(&t1, &t1, &curve->A);   
-    fp2_mul(&t2, &curve->C, &P->z); 
-    fp2_sqr(&t0, &t0);              
-    fp2_sqr(&t2, &t2);              
+    fp2_mul(&t0, &curve->C, &P->x);
+    fp2_mul(&t1, &t0, &P->z);
+    fp2_mul(&t1, &t1, &curve->A);
+    fp2_mul(&t2, &curve->C, &P->z);
+    fp2_sqr(&t0, &t0);
+    fp2_sqr(&t2, &t2);
     fp2_add(&t0, &t0, &t1);
     fp2_add(&t0, &t0, &t2);
     fp2_mul(&t0, &t0, &P->x);
@@ -51,33 +55,36 @@ int ec_is_on_curve(const ec_curve_t* curve, const ec_point_t* P){
     return fp2_is_square(&t0);
 }
 
-static void difference_point(ec_point_t* PQ, const ec_point_t* P, const ec_point_t* Q, const ec_curve_t* curve){
+static void
+difference_point(ec_point_t *PQ, const ec_point_t *P, const ec_point_t *Q, const ec_curve_t *curve)
+{
     // Given P,Q in affine x-only, computes a deterministic choice for (P-Q)
     // The points must be normalized to z=1 and the curve to C=1
 
     fp2_t t0, t1, t2, t3;
-    
-    fp2_sub(&PQ->z, &P->x, &Q->x);  // P - Q
-    fp2_mul(&t2, &P->x, &Q->x);     // P*Q
+
+    fp2_sub(&PQ->z, &P->x, &Q->x); // P - Q
+    fp2_mul(&t2, &P->x, &Q->x);    // P*Q
     fp2_set_one(&t1);
-    fp2_sub(&t3, &t2, &t1);         // P*Q-1
-    fp2_mul(&t0, &PQ->z, &t3);      // (P-Q)*(P*Q-1)
-    fp2_sqr(&PQ->z, &PQ->z);        // (P-Q)^2
-    fp2_sqr(&t0, &t0);              // (P-Q)^2*(P*Q-1)^2
-    fp2_add(&t1, &t2, &t1);         // P*Q+1
-    fp2_add(&t3, &P->x, &Q->x);     // P+Q
-    fp2_mul(&t1, &t1, &t3);         // (P+Q)*(P*Q+1)
-    fp2_mul(&t2, &t2, &curve->A);   // A*P*Q
-    fp2_add(&t2, &t2, &t2);         // 2*A*P*Q
-    fp2_add(&t1, &t1, &t2);         // (P+Q)*(P*Q+1) + 2*A*P*Q
-    fp2_sqr(&t2, &t1);              // ((P+Q)*(P*Q+1) + 2*A*P*Q)^2
-    fp2_sub(&t0, &t2, &t0);         // ((P+Q)*(P*Q+1) + 2*A*P*Q)^2 - (P-Q)^2*(P*Q-1)^2
+    fp2_sub(&t3, &t2, &t1);       // P*Q-1
+    fp2_mul(&t0, &PQ->z, &t3);    // (P-Q)*(P*Q-1)
+    fp2_sqr(&PQ->z, &PQ->z);      // (P-Q)^2
+    fp2_sqr(&t0, &t0);            // (P-Q)^2*(P*Q-1)^2
+    fp2_add(&t1, &t2, &t1);       // P*Q+1
+    fp2_add(&t3, &P->x, &Q->x);   // P+Q
+    fp2_mul(&t1, &t1, &t3);       // (P+Q)*(P*Q+1)
+    fp2_mul(&t2, &t2, &curve->A); // A*P*Q
+    fp2_add(&t2, &t2, &t2);       // 2*A*P*Q
+    fp2_add(&t1, &t1, &t2);       // (P+Q)*(P*Q+1) + 2*A*P*Q
+    fp2_sqr(&t2, &t1);            // ((P+Q)*(P*Q+1) + 2*A*P*Q)^2
+    fp2_sub(&t0, &t2, &t0);       // ((P+Q)*(P*Q+1) + 2*A*P*Q)^2 - (P-Q)^2*(P*Q-1)^2
     fp2_sqrt(&t0);
     fp2_add(&PQ->x, &t0, &t1);
 }
 
-
-void ec_curve_to_basis_2_to_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int *hint){
+void
+ec_curve_to_basis_2_to_hint(ec_basis_t *PQ2, ec_curve_t *curve, int f, int *hint)
+{
     fp2_t x, t0, t1, t2;
     ec_point_t P, Q, Q2, P2;
 
@@ -86,10 +93,10 @@ void ec_curve_to_basis_2_to_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int *h
 
     fp2_set_one(&x);
 
-    int count=0; 
+    int count = 0;
 
     // Find P
-    while(1){
+    while (1) {
         count++;
         fp_add(&(x.im), &(x.re), &(x.im));
 
@@ -101,35 +108,34 @@ void ec_curve_to_basis_2_to_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int *h
         fp2_mul(&t1, &t1, &x);
         fp2_add(&t1, &t1, &t0);
         fp2_mul(&t1, &t1, &x);
-        if(fp2_is_square(&t1)){
+        if (fp2_is_square(&t1)) {
             fp2_copy(&P.x, &x);
             fp2_set_one(&P.z);
-        }
-        else
+        } else
             continue;
 
         // Clear odd factors from the order
         xMULv2(&P, &P, p_cofactor_for_2f, P_COFACTOR_FOR_2F_BITLENGTH, &curve->A24);
         // clear the power of two
-        for (int i=0;i<POWER_OF_2-f;i++) {
-            xDBLv2_normalized(&P,&P,&curve->A24);
+        for (int i = 0; i < POWER_OF_2 - f; i++) {
+            xDBLv2_normalized(&P, &P, &curve->A24);
         }
 
         // Check if point has order 2^f
         copy_point(&P2, &P);
-        for(int i = 0; i < f - 1; i++)
+        for (int i = 0; i < f - 1; i++)
             xDBLv2_normalized(&P2, &P2, &curve->A24);
-        if(ec_is_zero(&P2))
+        if (ec_is_zero(&P2))
             continue;
         else
             break;
     }
-    
-    hint[0]=count;
+
+    hint[0] = count;
 
     count = 0;
     // Find Q
-    while(1){
+    while (1) {
         count++;
         fp_add(&(x.im), &(x.re), &(x.im));
 
@@ -141,37 +147,35 @@ void ec_curve_to_basis_2_to_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int *h
         fp2_mul(&t1, &t1, &x);
         fp2_add(&t1, &t1, &t0);
         fp2_mul(&t1, &t1, &x);
-        if(fp2_is_square(&t1)){
+        if (fp2_is_square(&t1)) {
             fp2_copy(&Q.x, &x);
             fp2_set_one(&Q.z);
-        }
-        else
+        } else
             continue;
 
         // Clear odd factors from the order
         xMULv2(&Q, &Q, p_cofactor_for_2f, P_COFACTOR_FOR_2F_BITLENGTH, &curve->A24);
         // clear the power of two
-        for (int i=0;i<POWER_OF_2-f;i++) {
-            xDBLv2_normalized(&Q,&Q,&curve->A24);
+        for (int i = 0; i < POWER_OF_2 - f; i++) {
+            xDBLv2_normalized(&Q, &Q, &curve->A24);
         }
 
         // Check if point has order 2^f
         copy_point(&Q2, &Q);
-        for(int i = 0; i < f - 1; i++)
+        for (int i = 0; i < f - 1; i++)
             xDBLv2_normalized(&Q2, &Q2, &curve->A24);
-        if(ec_is_zero(&Q2))
+        if (ec_is_zero(&Q2))
             continue;
 
         // Check if point is orthogonal to P
-        if(is_point_equal(&P2, &Q2))
+        if (is_point_equal(&P2, &Q2))
             continue;
         else
             break;
     }
 
+    hint[1] = count;
 
-    hint[1]=count;
-     
     // Normalize points
     ec_curve_t E;
     ec_curve_init(&E);
@@ -197,8 +201,9 @@ void ec_curve_to_basis_2_to_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int *h
     copy_point(&PQ2->Q, &Q);
 }
 
-
-void ec_curve_to_basis_2_from_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int *hint){
+void
+ec_curve_to_basis_2_from_hint(ec_basis_t *PQ2, ec_curve_t *curve, int f, int *hint)
+{
     fp2_t x, t0, t1, t2;
     ec_point_t P, Q;
 
@@ -207,26 +212,24 @@ void ec_curve_to_basis_2_from_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int 
 
     fp2_set_one(&x);
 
-    int count=0; 
+    int count = 0;
 
-    for (int i=0;i<hint[0];i++) {
+    for (int i = 0; i < hint[0]; i++) {
         fp_add(&(x.im), &(x.re), &(x.im));
     }
     fp2_copy(&P.x, &x);
     fp2_set_one(&P.z);
 
-    // getting the actual point 
+    // getting the actual point
     // Clear odd factors from the order
     xMULv2(&P, &P, p_cofactor_for_2f, P_COFACTOR_FOR_2F_BITLENGTH, &curve->A24);
     // clear the power of two
-    for (int i=0;i<POWER_OF_2-f;i++) {
-        xDBLv2_normalized(&P,&P,&curve->A24);
-    
+    for (int i = 0; i < POWER_OF_2 - f; i++) {
+        xDBLv2_normalized(&P, &P, &curve->A24);
     }
-    // second point 
+    // second point
 
-
-    for (int i=0;i<hint[1];i++) {
+    for (int i = 0; i < hint[1]; i++) {
         fp_add(&(x.im), &(x.re), &(x.im));
     }
 
@@ -236,10 +239,10 @@ void ec_curve_to_basis_2_from_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int 
     // Clear odd factors from the order
     xMULv2(&Q, &Q, p_cofactor_for_2f, P_COFACTOR_FOR_2F_BITLENGTH, &curve->A24);
     // clear the power of two
-    for (int i=0;i<POWER_OF_2-f;i++) {
-        xDBLv2_normalized(&Q,&Q,&curve->A24);
+    for (int i = 0; i < POWER_OF_2 - f; i++) {
+        xDBLv2_normalized(&Q, &Q, &curve->A24);
     }
-     
+
     // Normalize points
     ec_curve_t E;
     ec_curve_init(&E);
@@ -265,7 +268,9 @@ void ec_curve_to_basis_2_from_hint(ec_basis_t *PQ2, ec_curve_t *curve,int f,int 
     copy_point(&PQ2->Q, &Q);
 }
 
-void ec_curve_to_basis_2(ec_basis_t *PQ2, ec_curve_t *curve,int f){
+void
+ec_curve_to_basis_2(ec_basis_t *PQ2, ec_curve_t *curve, int f)
+{
     fp2_t x, t0, t1, t2;
     ec_point_t P, Q, Q2, P2;
 
@@ -275,7 +280,7 @@ void ec_curve_to_basis_2(ec_basis_t *PQ2, ec_curve_t *curve,int f){
     fp2_set_one(&x);
 
     // Find P
-    while(1){
+    while (1) {
         fp_add(&(x.im), &(x.re), &(x.im));
 
         // Check if point is rational
@@ -286,32 +291,31 @@ void ec_curve_to_basis_2(ec_basis_t *PQ2, ec_curve_t *curve,int f){
         fp2_mul(&t1, &t1, &x);
         fp2_add(&t1, &t1, &t0);
         fp2_mul(&t1, &t1, &x);
-        if(fp2_is_square(&t1)){
+        if (fp2_is_square(&t1)) {
             fp2_copy(&P.x, &x);
             fp2_set_one(&P.z);
-        }
-        else
+        } else
             continue;
 
         // Clear odd factors from the order
         xMULv2(&P, &P, p_cofactor_for_2f, P_COFACTOR_FOR_2F_BITLENGTH, &curve->A24);
         // clear the power of two
-        for (int i=0;i<POWER_OF_2-f;i++) {
-            xDBLv2_normalized(&P,&P,&curve->A24);
+        for (int i = 0; i < POWER_OF_2 - f; i++) {
+            xDBLv2_normalized(&P, &P, &curve->A24);
         }
 
         // Check if point has order 2^f
         copy_point(&P2, &P);
-        for(int i = 0; i < f - 1; i++)
+        for (int i = 0; i < f - 1; i++)
             xDBLv2_normalized(&P2, &P2, &curve->A24);
-        if(ec_is_zero(&P2))
+        if (ec_is_zero(&P2))
             continue;
         else
             break;
     }
-    
+
     // Find Q
-    while(1){
+    while (1) {
         fp_add(&(x.im), &(x.re), &(x.im));
 
         // Check if point is rational
@@ -322,29 +326,28 @@ void ec_curve_to_basis_2(ec_basis_t *PQ2, ec_curve_t *curve,int f){
         fp2_mul(&t1, &t1, &x);
         fp2_add(&t1, &t1, &t0);
         fp2_mul(&t1, &t1, &x);
-        if(fp2_is_square(&t1)){
+        if (fp2_is_square(&t1)) {
             fp2_copy(&Q.x, &x);
             fp2_set_one(&Q.z);
-        }
-        else
+        } else
             continue;
 
         // Clear odd factors from the order
         xMULv2(&Q, &Q, p_cofactor_for_2f, P_COFACTOR_FOR_2F_BITLENGTH, &curve->A24);
         // clear the power of two
-        for (int i=0;i<POWER_OF_2-f;i++) {
-            xDBLv2_normalized(&Q,&Q,&curve->A24);
+        for (int i = 0; i < POWER_OF_2 - f; i++) {
+            xDBLv2_normalized(&Q, &Q, &curve->A24);
         }
 
         // Check if point has order 2^f
         copy_point(&Q2, &Q);
-        for(int i = 0; i < f - 1; i++)
+        for (int i = 0; i < f - 1; i++)
             xDBLv2_normalized(&Q2, &Q2, &curve->A24);
-        if(ec_is_zero(&Q2))
+        if (ec_is_zero(&Q2))
             continue;
 
         // Check if point is orthogonal to P
-        if(is_point_equal(&P2, &Q2))
+        if (is_point_equal(&P2, &Q2))
             continue;
         else
             break;
@@ -375,8 +378,9 @@ void ec_curve_to_basis_2(ec_basis_t *PQ2, ec_curve_t *curve,int f){
     copy_point(&PQ2->Q, &Q);
 }
 
-
-void ec_complete_basis_2(ec_basis_t* PQ2, const ec_curve_t* curve, const ec_point_t* P){
+void
+ec_complete_basis_2(ec_basis_t *PQ2, const ec_curve_t *curve, const ec_point_t *P)
+{
 
     fp2_t x, t0, t1, t2;
     ec_point_t Q, Q2, P2, A24;
@@ -388,12 +392,12 @@ void ec_complete_basis_2(ec_basis_t* PQ2, const ec_curve_t* curve, const ec_poin
 
     // Point of order 2 generated by P
     copy_point(&P2, P);
-    for(int i = 0; i < POWER_OF_2 - 1; i++)
+    for (int i = 0; i < POWER_OF_2 - 1; i++)
         xDBLv2(&P2, &P2, &A24);
 
     // Find Q
     fp2_set_one(&x);
-    while(1){
+    while (1) {
         fp_add(&(x.im), &(x.re), &(x.im));
 
         // Check if point is rational
@@ -404,11 +408,10 @@ void ec_complete_basis_2(ec_basis_t* PQ2, const ec_curve_t* curve, const ec_poin
         fp2_mul(&t1, &t1, &x);
         fp2_add(&t1, &t1, &t0);
         fp2_mul(&t1, &t1, &x);
-        if(fp2_is_square(&t1)){
+        if (fp2_is_square(&t1)) {
             fp2_copy(&Q.x, &x);
             fp2_set_one(&Q.z);
-        }
-        else
+        } else
             continue;
 
         // Clear odd factors from the order
@@ -416,13 +419,13 @@ void ec_complete_basis_2(ec_basis_t* PQ2, const ec_curve_t* curve, const ec_poin
 
         // Check if point has order 2^f
         copy_point(&Q2, &Q);
-        for(int i = 0; i < POWER_OF_2 - 1; i++)
+        for (int i = 0; i < POWER_OF_2 - 1; i++)
             xDBLv2(&Q2, &Q2, &A24);
-        if(ec_is_zero(&Q2))
+        if (ec_is_zero(&Q2))
             continue;
 
         // Check if point is orthogonal to P
-        if(is_point_equal(&P2, &Q2))
+        if (is_point_equal(&P2, &Q2))
             continue;
         else
             break;
@@ -454,7 +457,9 @@ void ec_complete_basis_2(ec_basis_t* PQ2, const ec_curve_t* curve, const ec_poin
     copy_point(&PQ2->Q, &Q);
 }
 
-void ec_curve_to_basis_3(ec_basis_t* PQ3, const ec_curve_t* curve){
+void
+ec_curve_to_basis_3(ec_basis_t *PQ3, const ec_curve_t *curve)
+{
 
     fp2_t x, t0, t1, t2;
     ec_point_t P, Q, Q3, P3, A24, A3;
@@ -471,7 +476,7 @@ void ec_curve_to_basis_3(ec_basis_t* PQ3, const ec_curve_t* curve){
     fp2_set_one(&x);
 
     // Find P
-    while(1){
+    while (1) {
         fp_add(&(x.im), &(x.re), &(x.im));
 
         // Check if point is rational
@@ -482,11 +487,10 @@ void ec_curve_to_basis_3(ec_basis_t* PQ3, const ec_curve_t* curve){
         fp2_mul(&t1, &t1, &x);
         fp2_add(&t1, &t1, &t0);
         fp2_mul(&t1, &t1, &x);
-        if(fp2_is_square(&t1)){
+        if (fp2_is_square(&t1)) {
             fp2_copy(&P.x, &x);
             fp2_set_one(&P.z);
-        }
-        else
+        } else
             continue;
 
         // Clear non-3 factors from the order
@@ -494,16 +498,16 @@ void ec_curve_to_basis_3(ec_basis_t* PQ3, const ec_curve_t* curve){
 
         // Check if point has order 3^g
         copy_point(&P3, &P);
-        for(int i = 0; i < POWER_OF_3 - 1; i++)
+        for (int i = 0; i < POWER_OF_3 - 1; i++)
             xTPL(&P3, &P3, &A3);
-        if(ec_is_zero(&P3))
+        if (ec_is_zero(&P3))
             continue;
         else
             break;
     }
-    
+
     // Find Q
-    while(1){
+    while (1) {
         fp_add(&(x.im), &(x.re), &(x.im));
 
         // Check if point is rational
@@ -514,11 +518,10 @@ void ec_curve_to_basis_3(ec_basis_t* PQ3, const ec_curve_t* curve){
         fp2_mul(&t1, &t1, &x);
         fp2_add(&t1, &t1, &t0);
         fp2_mul(&t1, &t1, &x);
-        if(fp2_is_square(&t1)){
+        if (fp2_is_square(&t1)) {
             fp2_copy(&Q.x, &x);
             fp2_set_one(&Q.z);
-        }
-        else
+        } else
             continue;
 
         // Clear non-3 factors from the order
@@ -526,16 +529,16 @@ void ec_curve_to_basis_3(ec_basis_t* PQ3, const ec_curve_t* curve){
 
         // Check if point has order 3^g
         copy_point(&Q3, &Q);
-        for(int i = 0; i < POWER_OF_3 - 1; i++)
+        for (int i = 0; i < POWER_OF_3 - 1; i++)
             xTPL(&Q3, &Q3, &A3);
-        if(ec_is_zero(&Q3))
+        if (ec_is_zero(&Q3))
             continue;
 
         // Check if point is orthogonal to P
-        if(is_point_equal(&P3, &Q3))
+        if (is_point_equal(&P3, &Q3))
             continue;
         xDBLv2(&P3, &P3, &A24);
-        if(is_point_equal(&P3, &Q3))
+        if (is_point_equal(&P3, &Q3))
             continue;
         else
             break;
@@ -566,7 +569,9 @@ void ec_curve_to_basis_3(ec_basis_t* PQ3, const ec_curve_t* curve){
     copy_point(&PQ3->Q, &Q);
 }
 
-void ec_curve_to_basis_6(ec_basis_t* PQ6, const ec_curve_t* curve){
+void
+ec_curve_to_basis_6(ec_basis_t *PQ6, const ec_curve_t *curve)
+{
 
     fp2_t x, t0, t1, t2;
     ec_point_t P, Q, Q6, P6, R, T, A24, A3;
@@ -583,7 +588,7 @@ void ec_curve_to_basis_6(ec_basis_t* PQ6, const ec_curve_t* curve){
     fp2_set_one(&x);
 
     // Find P
-    while(1){
+    while (1) {
         fp_add(&(x.im), &(x.re), &(x.im));
 
         // Check if point is rational
@@ -594,11 +599,10 @@ void ec_curve_to_basis_6(ec_basis_t* PQ6, const ec_curve_t* curve){
         fp2_mul(&t1, &t1, &x);
         fp2_add(&t1, &t1, &t0);
         fp2_mul(&t1, &t1, &x);
-        if(fp2_is_square(&t1)){
+        if (fp2_is_square(&t1)) {
             fp2_copy(&P.x, &x);
             fp2_set_one(&P.z);
-        }
-        else
+        } else
             continue;
 
         // Clear non-2 factors and non-3 factors from the order
@@ -606,11 +610,11 @@ void ec_curve_to_basis_6(ec_basis_t* PQ6, const ec_curve_t* curve){
 
         // Check if point has order 2^f*3^g
         copy_point(&P6, &P);
-        for(int i = 0; i < POWER_OF_2 - 1; i++)
+        for (int i = 0; i < POWER_OF_2 - 1; i++)
             xDBLv2(&P6, &P6, &A24);
-        for(int i = 0; i < POWER_OF_3 - 1; i++)
+        for (int i = 0; i < POWER_OF_3 - 1; i++)
             xTPL(&P6, &P6, &A3);
-        if(ec_is_zero(&P6))
+        if (ec_is_zero(&P6))
             continue;
         xDBLv2(&T, &P6, &A24);
         if (ec_is_zero(&T))
@@ -622,7 +626,7 @@ void ec_curve_to_basis_6(ec_basis_t* PQ6, const ec_curve_t* curve){
     }
 
     // Find Q
-    while(1){
+    while (1) {
         fp_add(&(x.im), &(x.re), &(x.im));
 
         // Check if point is rational
@@ -633,11 +637,10 @@ void ec_curve_to_basis_6(ec_basis_t* PQ6, const ec_curve_t* curve){
         fp2_mul(&t1, &t1, &x);
         fp2_add(&t1, &t1, &t0);
         fp2_mul(&t1, &t1, &x);
-        if(fp2_is_square(&t1)){
+        if (fp2_is_square(&t1)) {
             fp2_copy(&Q.x, &x);
             fp2_set_one(&Q.z);
-        }
-        else
+        } else
             continue;
 
         // Clear non-6 factors from the order
@@ -645,11 +648,11 @@ void ec_curve_to_basis_6(ec_basis_t* PQ6, const ec_curve_t* curve){
 
         // Check first if point has order 2^f*3^g
         copy_point(&Q6, &Q);
-        for(int i = 0; i < POWER_OF_2 - 1; i++)
+        for (int i = 0; i < POWER_OF_2 - 1; i++)
             xDBLv2(&Q6, &Q6, &A24);
-        for(int i = 0; i < POWER_OF_3 - 1; i++)
+        for (int i = 0; i < POWER_OF_3 - 1; i++)
             xTPL(&Q6, &Q6, &A3);
-        if(ec_is_zero(&Q6))
+        if (ec_is_zero(&Q6))
             continue;
         xDBLv2(&T, &Q6, &A24);
         if (ec_is_zero(&T))
@@ -661,11 +664,11 @@ void ec_curve_to_basis_6(ec_basis_t* PQ6, const ec_curve_t* curve){
         // Check if point P is independent from point Q
         xTPL(&R, &P6, &A3);
         xTPL(&T, &Q6, &A3);
-        if(is_point_equal(&R, &T))
+        if (is_point_equal(&R, &T))
             continue;
         xDBLv2(&R, &P6, &A24);
         xDBLv2(&T, &Q6, &A24);
-        if(is_point_equal(&R, &T))
+        if (is_point_equal(&R, &T))
             continue;
         break;
     }
@@ -695,7 +698,6 @@ void ec_curve_to_basis_6(ec_basis_t* PQ6, const ec_curve_t* curve){
     copy_point(&PQ6->Q, &Q);
 }
 
-
 // New methods for basis generation using Entangled / ApresSQI like
 // methods. Finds a point of full order with square checking, then
 // finds the point of desired order by clearing cofactors. Not need
@@ -703,17 +705,18 @@ void ec_curve_to_basis_6(ec_basis_t* PQ6, const ec_curve_t* curve){
 //
 // This also allows a faster method for completing a torsion basis
 // as if we know a point P is above (0 : 0) or not, we can directly
-// compute the point Q orthogonal to this one using 
+// compute the point Q orthogonal to this one using
 // ec_curve_to_point_2f_above_montgomery or
 // ec_curve_to_point_2f_not_above_montgomery
 
-/// Finds a point of order k * 2^n where n is the largest power of two 
+/// Finds a point of order k * 2^n where n is the largest power of two
 /// dividing (p+1).
-/// The x-coordinate is picked such that the point (0 : 0) is always 
+/// The x-coordinate is picked such that the point (0 : 0) is always
 /// the point of order two below the point.
 
 static int
-ec_curve_to_point_2f_above_montgomery(ec_point_t *P, const ec_curve_t *curve){
+ec_curve_to_point_2f_above_montgomery(ec_point_t *P, const ec_curve_t *curve)
+{
     fp_t one;
     fp_set_one(&one);
 
@@ -739,11 +742,11 @@ ec_curve_to_point_2f_above_montgomery(ec_point_t *P, const ec_curve_t *curve){
 
     int hint = 0;
     fp2_t z1, z2;
-    for(;;) {
+    for (;;) {
         // collect z2-value from table, we have 20 chances
         // and expect to be correct 50% of the time.
-        if (hint < 20){
-            z2 = *(fp2_t*)Z_NQR_TABLE[hint];
+        if (hint < 20) {
+            z2 = Z_NQR_TABLE[hint];
         }
         // Fallback method for when we're unlucky
         else {
@@ -753,41 +756,39 @@ ec_curve_to_point_2f_above_montgomery(ec_point_t *P, const ec_curve_t *curve){
                 fp_set_small(&z1.re, hint - 2);
                 fp_set_small(&z2.re, hint - 1);
             }
-            
+
             // Look for z2 = i + hint with z2 a square and
             // z2 - 1 not a square.
-            for(;;){
-                // Set z2 = i + hint and z1 = z2 - 1      
+            for (;;) {
+                // Set z2 = i + hint and z1 = z2 - 1
                 // TODO: we could swap z1 and z2 on failure
-                // and save one addition      
+                // and save one addition
                 fp_add(&z1.re, &z1.re, &one);
                 fp_add(&z2.re, &z2.re, &one);
 
                 // Now check whether z2 is a square and z1 is not
-                if (fp2_is_square(&z2) && !fp2_is_square(&z1)){
+                if (fp2_is_square(&z2) && !fp2_is_square(&z1)) {
                     break;
-                }
-                else{
+                } else {
                     hint += 1;
                 }
             }
         }
-        
+
         // Compute x-coordinate
         fp2_mul(&x, &z2, &alpha);
 
         // Find a point on curve with x a NQR
-        fp2_add(&t0, &x, &a);           // x + (A/C)
-        fp2_mul(&t0, &t0, &x);          // x^2 + (A/C)*x
-        fp_add(&t0.re, &t0.re, &one);   // x^2 + (A/C)*x + 1
-        fp2_mul(&t0, &t0, &x);          // x^3 + (A/C)*x^2 + x 
+        fp2_add(&t0, &x, &a);         // x + (A/C)
+        fp2_mul(&t0, &t0, &x);        // x^2 + (A/C)*x
+        fp_add(&t0.re, &t0.re, &one); // x^2 + (A/C)*x + 1
+        fp2_mul(&t0, &t0, &x);        // x^3 + (A/C)*x^2 + x
 
-        if(fp2_is_square(&t0)){
+        if (fp2_is_square(&t0)) {
             fp2_copy(&P->x, &x);
             fp2_set_one(&P->z);
             break;
-        }
-        else{
+        } else {
             hint += 1;
         }
     }
@@ -795,11 +796,12 @@ ec_curve_to_point_2f_above_montgomery(ec_point_t *P, const ec_curve_t *curve){
     return hint;
 }
 
-/// Finds a point of order k * 2^n where n is the largest power of two 
+/// Finds a point of order k * 2^n where n is the largest power of two
 /// dividing (p+1) using a hint such that z2 = i + hint above the point
 /// (0 : 0).
 static void
-ec_curve_to_point_2f_above_montgomery_from_hint(ec_point_t *P, const ec_curve_t *curve, int hint){
+ec_curve_to_point_2f_above_montgomery_from_hint(ec_point_t *P, const ec_curve_t *curve, int hint)
+{
     fp2_t x, four;
     fp2_t a, d, alpha;
 
@@ -823,14 +825,14 @@ ec_curve_to_point_2f_above_montgomery_from_hint(ec_point_t *P, const ec_curve_t 
     // With 1/2^20 chance we can use the table look up
     fp2_t z1, z2;
     if (hint < 20) {
-        z2 = *(fp2_t*)Z_NQR_TABLE[hint];
+        z2 = Z_NQR_TABLE[hint];
     }
-     // Otherwise we create this using the form i + hint
-    else{
+    // Otherwise we create this using the form i + hint
+    else {
         fp_set_small(&z2.re, hint);
         fp_set_one(&z2.im);
     }
-    
+
     // fp_set_small(&z2.re, hint);
     // fp_set_one(&z2.im);
     fp2_mul(&x, &z2, &alpha);
@@ -840,27 +842,28 @@ ec_curve_to_point_2f_above_montgomery_from_hint(ec_point_t *P, const ec_curve_t 
     fp2_set_one(&P->z);
 }
 
-/// Finds a point of order k * 2^n where n is the largest power of two 
+/// Finds a point of order k * 2^n where n is the largest power of two
 /// dividing (p+1).
-/// The x-coordinate is picked such that the point (0 : 0) is never the 
+/// The x-coordinate is picked such that the point (0 : 0) is never the
 /// point of order two.
 static int
-ec_curve_to_point_2f_not_above_montgomery(ec_point_t *P, const ec_curve_t *curve){
+ec_curve_to_point_2f_not_above_montgomery(ec_point_t *P, const ec_curve_t *curve)
+{
     int hint = 0;
     fp_t one;
     fp2_t x, t, t0, t1;
 
-    for(;;) {
+    for (;;) {
         // For each guess of an x, we expect it to be a point 1/2
         // the time, so our table look up will work with failure 2^20
-        if (hint < 20){
-            x = *(fp2_t*)NQR_TABLE[hint];
+        if (hint < 20) {
+            x = NQR_TABLE[hint];
         }
 
         // Fallback method in case we do not find a value!
         // For the cases where we are unlucky, we try points of the form
         // x = hint + i
-        else{
+        else {
             // When we first hit this loop, set x to be i + (hint - 1)
             // NOTE: we do hint -1 as we add one before checking a square
             //       in the below loop
@@ -871,15 +874,14 @@ ec_curve_to_point_2f_not_above_montgomery(ec_point_t *P, const ec_curve_t *curve
             }
 
             // Now we find a t which is a NQR of the form i + hint
-            for(;;){
+            for (;;) {
                 // Increase the real part by one until a NQR is found
                 // TODO: could be made faster by adding one rather
                 // than setting each time, but this is OK for now.
                 fp_add(&x.re, &x.re, &one);
-                if (!fp2_is_square(&x)){
+                if (!fp2_is_square(&x)) {
                     break;
-                }
-                else{
+                } else {
                     hint += 1;
                 }
             }
@@ -888,18 +890,17 @@ ec_curve_to_point_2f_not_above_montgomery(ec_point_t *P, const ec_curve_t *curve
         // Now we have x which is a NQR -- is it on the curve?
         // Note: the below method saves two multiplications compared
         // to old method
-        fp2_mul(&t0, &x,  &curve->C);    // t0 = x*C
-        fp2_add(&t1, &t0, &curve->A);    // C*x + A
-        fp2_mul(&t1, &t1, &x);           // C*x^2 + A*x
-        fp2_add(&t1, &t1, &curve->C);    // C*x^2 + A*x + C
-        fp2_mul(&t1, &t1, &t0);          // C^2*x^3 + A*C*x^2 + C^2*x = C^2*y^2
+        fp2_mul(&t0, &x, &curve->C);  // t0 = x*C
+        fp2_add(&t1, &t0, &curve->A); // C*x + A
+        fp2_mul(&t1, &t1, &x);        // C*x^2 + A*x
+        fp2_add(&t1, &t1, &curve->C); // C*x^2 + A*x + C
+        fp2_mul(&t1, &t1, &t0);       // C^2*x^3 + A*C*x^2 + C^2*x = C^2*y^2
 
-        if(fp2_is_square(&t1)){
+        if (fp2_is_square(&t1)) {
             fp2_copy(&P->x, &x);
             fp2_set_one(&P->z);
             break;
-        }
-        else{
+        } else {
             hint += 1;
         }
     }
@@ -907,17 +908,20 @@ ec_curve_to_point_2f_not_above_montgomery(ec_point_t *P, const ec_curve_t *curve
     return hint;
 }
 
-/// Finds a point of order k * 2^n where n is the largest power of two 
+/// Finds a point of order k * 2^n where n is the largest power of two
 /// dividing (p+1) using a hint such that z2 = i + hint not above
 /// the point (0 : 0).
 static void
-ec_curve_to_point_2f_not_above_montgomery_from_hint(ec_point_t *P, const ec_curve_t *curve, int hint){
+ec_curve_to_point_2f_not_above_montgomery_from_hint(ec_point_t *P,
+                                                    const ec_curve_t *curve,
+                                                    int hint)
+{
     fp2_t x;
 
-    // If we got lucky (1/2^20) then we just grab an x-value 
+    // If we got lucky (1/2^20) then we just grab an x-value
     // from the table
-    if (hint < 20){
-        x = *(fp2_t*)NQR_TABLE[hint];
+    if (hint < 20) {
+        x = NQR_TABLE[hint];
     }
     // Otherwise, we find points of the form
     // i + hint
@@ -932,12 +936,13 @@ ec_curve_to_point_2f_not_above_montgomery_from_hint(ec_point_t *P, const ec_curv
 
 // Helper function to construct normalised basis given E[N] = <P, Q>
 static inline void
-normalise_points_for_basis(ec_basis_t *PQ2, const ec_curve_t *curve, ec_point_t *P, ec_point_t *Q){
+normalise_points_for_basis(ec_basis_t *PQ2, const ec_curve_t *curve, ec_point_t *P, ec_point_t *Q)
+{
     // Normalize points
     fp2_t t0, t1;
     ec_curve_t E;
     ec_curve_init(&E);
-    
+
     fp2_mul(&t0, &P->z, &Q->z);
     fp2_mul(&t1, &t0, &curve->C);
     fp2_inv(&t1);
@@ -962,12 +967,13 @@ normalise_points_for_basis(ec_basis_t *PQ2, const ec_curve_t *curve, ec_point_t 
 // Helper function which given a point of order k*2^n with n maximal
 // and k odd, computes a point of order 2^f
 static inline void
-clear_cofactor_for_maximal_even_order(ec_point_t *P, const ec_curve_t *curve, int f){
+clear_cofactor_for_maximal_even_order(ec_point_t *P, const ec_curve_t *curve, int f)
+{
     // clear out the odd cofactor to get a point of order 2^n
     xMULv2(P, P, p_cofactor_for_2f, P_COFACTOR_FOR_2F_BITLENGTH, &curve->A24);
-    
+
     // clear the power of two to get a point of order 2^f
-    for (int i=0; i < POWER_OF_2 - f; i++) {
+    for (int i = 0; i < POWER_OF_2 - f; i++) {
         xDBLv2_normalized(P, P, &curve->A24);
     }
 }
@@ -1036,7 +1042,8 @@ ec_curve_to_basis_2f_from_hint(ec_basis_t *PQ2, ec_curve_t *curve, int f, int *h
 }
 
 /// Given a point R in E[2^f] compute E[2^f] = <P, Q> with Q above (0 : 0)
-void ec_complete_basis_2f(ec_basis_t* PQ2, ec_curve_t* curve, const ec_point_t* R, int f)
+void
+ec_complete_basis_2f(ec_basis_t *PQ2, ec_curve_t *curve, const ec_point_t *R, int f)
 {
     ec_point_t R2, P, Q;
 
@@ -1046,7 +1053,7 @@ void ec_complete_basis_2f(ec_basis_t* PQ2, ec_curve_t* curve, const ec_point_t* 
 
     // Compute the point of order two beneath R
     copy_point(&R2, R);
-    for(int i = 0; i < f - 1; i++){
+    for (int i = 0; i < f - 1; i++) {
         xDBLv2(&R2, &R2, &curve->A24);
     }
 
@@ -1059,19 +1066,18 @@ void ec_complete_basis_2f(ec_basis_t* PQ2, ec_curve_t* curve, const ec_point_t* 
         // clear out the odd cofactor to get a point of order 2^f
         clear_cofactor_for_maximal_even_order(&P, curve, f);
 
-
         copy_point(&Q, R);
     }
     // Otherwise, we set P = R and find Q above (0 : 0)
-    else{
+    else {
         copy_point(&P, R);
-        
+
         // Set Q to be the point above (0 : 0)
         ec_curve_to_point_2f_above_montgomery(&Q, curve);
 
         // clear out the odd cofactor to get a point of order 2^f
         clear_cofactor_for_maximal_even_order(&Q, curve, f);
     }
-    
+
     normalise_points_for_basis(PQ2, curve, &P, &Q);
 }
