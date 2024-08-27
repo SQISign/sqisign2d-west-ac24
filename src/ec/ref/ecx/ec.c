@@ -4,11 +4,27 @@
 #include <stdio.h>
 
 void
+ec_normalize_point(ec_point_t *P)
+{
+    fp2_inv(&P->z);
+    fp2_mul(&P->x, &P->x, &P->z);
+    fp2_set_one(&(P->z));
+}
+
+void
+ec_normalize_curve(ec_curve_t *E)
+{
+    fp2_inv(&E->C);
+    fp2_mul(&E->A, &E->A, &E->C);
+    fp2_set_one(&E->C);
+}
+
+void
 ec_curve_normalize_A24(ec_curve_t *E)
 {
     if (E->is_A24_computed_and_normalized == 0) {
         AC_to_A24(&E->A24, E);
-        ec_normalize(&E->A24);
+        ec_normalize_point(&E->A24);
         E->is_A24_computed_and_normalized = 1;
     }
 }
@@ -82,7 +98,7 @@ xDBL(ec_point_t *Q, ec_point_t const *P, ec_point_t const *AC)
 }
 
 void
-xDBLv2(ec_point_t *Q, ec_point_t const *P, ec_point_t const *A24)
+xDBL_A24(ec_point_t *Q, ec_point_t const *P, ec_point_t const *A24)
 {
     // This version receives the coefficient value A24 = (A+2C:4C)
     fp2_t t0, t1, t2;
@@ -100,7 +116,7 @@ xDBLv2(ec_point_t *Q, ec_point_t const *P, ec_point_t const *A24)
 }
 
 void
-xDBLv2_normalized(ec_point_t *Q, ec_point_t const *P, ec_point_t const *A24)
+xDBL_A24_normalized(ec_point_t *Q, ec_point_t const *P, ec_point_t const *A24)
 {
     // This version receives the coefficient value A24 = (A+2C/4C:1)
     fp2_t t0, t1, t2;
@@ -242,14 +258,6 @@ copy_point(ec_point_t *P, ec_point_t const *Q)
 {
     fp2_copy(&(P->x), &(Q->x));
     fp2_copy(&(P->z), &(Q->z));
-}
-
-void
-ec_normalize(ec_point_t *P)
-{
-    fp2_inv(&P->z);
-    fp2_mul(&P->x, &P->x, &P->z);
-    fp2_set_one(&(P->z));
 }
 
 void
@@ -425,7 +433,7 @@ xDBLMUL(ec_point_t *S,
         select_point(&T[0], &R[0], &R[1], maskk);
         maskk = 0 - (h >> 1);
         select_point(&T[0], &T[0], &R[2], maskk);
-        xDBLv2_normalized(&T[0], &T[0], &A24);
+        xDBL_A24_normalized(&T[0], &T[0], &A24);
 
         maskk = 0 - r[2 * i + 1]; // in {0, 1}
         select_point(&T[1], &R[0], &R[1], maskk);
@@ -568,7 +576,7 @@ xDBLMUL_bounded(ec_point_t *S,
 
         if (apply) {
             select_point(&T[0], &T[0], &R[2], maskk);
-            xDBLv2_normalized(&T[0], &T[0], &A24);
+            xDBL_A24_normalized(&T[0], &T[0], &A24);
         }
 
         maskk = 0 - r[2 * i + 1]; // in {0, 1}
@@ -1846,9 +1854,9 @@ ec_dbl_iter(ec_point_t *res, int n, ec_curve_t *curve, const ec_point_t *P)
         // then it's probably worth it to normalize
         if (n > 50) {
             ec_curve_normalize_A24(curve);
-            xDBLv2(res, P, &curve->A24);
+            xDBL_A24(res, P, &curve->A24);
             for (int i = 0; i < n - 1; i++) {
-                xDBLv2(res, res, &curve->A24);
+                xDBL_A24(res, res, &curve->A24);
             }
         } else {
 

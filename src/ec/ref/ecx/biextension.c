@@ -30,7 +30,7 @@ A24_from_AC(ec_point_t *A24, ec_point_t const *AC)
     fp2_add(&A24->z, &AC->z, &AC->z);
     fp2_add(&A24->x, &AC->x, &A24->z);
     fp2_add(&A24->z, &A24->z, &A24->z); //(A+2C: 4C)
-    ec_normalize(A24);
+    ec_normalize_point(A24);
 }
 
 // this is exactly like xDBLv2, except we use the fact that P is normalised
@@ -222,10 +222,10 @@ monodromy2(fp2_t *r,
 void
 to_cubical(ec_point_t *Q, ec_point_t *P)
 {
-    // ec_normalize(A24);
-    ec_normalize(P);
-    ec_normalize(Q);
-    // ec_normalize(PQ);
+    // ec_normalize_point(A24);
+    ec_normalize_point(P);
+    ec_normalize_point(Q);
+    // ec_normalize_point(PQ);
 }
 
 // Normalize the points and also store 1/x(P), 1/x(Q)
@@ -233,10 +233,10 @@ void
 to_cubical_i(ec_point_t *P, ec_point_t *Q, fp2_t *ixP, fp2_t *ixQ)
 {
     /*
-    //ec_normalize(A24);
-    ec_normalize(P);
-    ec_normalize(Q);
-    //ec_normalize(PQ);
+    //ec_normalize_point(A24);
+    ec_normalize_point(P);
+    ec_normalize_point(Q);
+    //ec_normalize_point(PQ);
     fp2_copy(ixP, &P->x);
     fp2_inv(ixP);
     fp2_copy(ixQ, &Q->x);
