@@ -24,4 +24,3 @@ fp_inv(fp_t *x)
 {
     (void)gf65376_invert(x, x);
 }
-

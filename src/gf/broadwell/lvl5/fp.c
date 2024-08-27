@@ -26,4 +26,3 @@ fp_inv(fp_t *x)
     fp_t tmp = *x;
     (void)gf27500_invert(x, &tmp);
 }
-

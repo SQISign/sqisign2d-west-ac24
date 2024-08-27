@@ -2304,4 +2304,3 @@ fp_mont_setone(fp_t *out)
 {
     fiat_p5248_set_one(*out);
 }
-

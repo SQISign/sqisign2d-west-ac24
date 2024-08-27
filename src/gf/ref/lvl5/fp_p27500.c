@@ -6178,4 +6178,3 @@ fp_mont_setone(fp_t *out)
 {
     fiat_p27500_set_one(*out);
 }
-

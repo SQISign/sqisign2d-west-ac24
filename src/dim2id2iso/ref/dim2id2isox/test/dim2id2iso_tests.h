@@ -19,11 +19,9 @@
  * @{
  */
 
-
 int dim2id2iso_test_dimid2iso();
 
 /** @}
  */
-
 
 #endif
