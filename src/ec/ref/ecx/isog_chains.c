@@ -1,23 +1,6 @@
+#include "ec.h"
 #include "isog.h"
 #include <assert.h>
-// #include <intbig.h>
-
-void
-ec_eval_even_nonzero(ec_curve_t *image,
-                     const ec_isog_even_t *phi,
-                     ec_point_t *points,
-                     unsigned short length)
-{
-    ec_point_t Q4, A24;
-    copy_point(&Q4, &phi->kernel);
-    AC_to_A24(&A24, &phi->curve);
-    for (int i = 0; i < phi->length - 2; i++)
-        xDBLv2(&Q4, &Q4, &A24);
-    xisog_4(&A24, Q4);
-    xeval_4(points, points, length);
-    xeval_4(&Q4, &phi->kernel, 1);
-    ec_eval_even_strategy(image, points, length, &A24, &Q4, phi->length - 2);
-}
 
 // since we use degree 4 isogeny steps, we need to handle the odd case with care
 static void
@@ -29,8 +12,9 @@ ec_eval_even_strategy(ec_curve_t *image,
                       const int isog_len)
 {
 
+    ec_kps4_t kps;
+
     uint8_t log2_of_e, tmp;
-    fp2_t t0;
     digit_t e_half = (isog_len) >> 1;
     for (tmp = e_half, log2_of_e = 0; tmp > 0; tmp >>= 1, ++log2_of_e)
         ;
@@ -46,16 +30,14 @@ ec_eval_even_strategy(ec_curve_t *image,
         current = 0;      // Number of points being carried
     int XDBLs[log2_of_e]; // Number of doubles performed
 
-    if (isog_len > 50) {
-        ec_normalize(A24);
-    }
-
-    // if the length is long enough we normalize the first step
+    // If walk length is odd, we start with a 2-isogeny
     int is_odd = isog_len % 2;
 
-    // If walk length is odd, we start with a 2-isogeny
+    // if the length is long enough we normalize the first step
+    // TODO: should we normalise throughout the chain too? This only
+    // helps for the first step
     if (isog_len > 50) {
-        ec_normalize(A24);
+        ec_normalize_point(A24);
     }
 
     // Chain of 4-isogenies
@@ -69,16 +51,20 @@ ec_eval_even_strategy(ec_curve_t *image,
             // if we copied from the very first element, then we perform one additional doubling
             if (is_odd && current == 1) {
                 if (j == 0) {
-                    xDBLv2_normalized(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current], A24);
+                    assert(fp2_is_one(&A24->z));
+                    xDBL_A24_normalized(
+                        &SPLITTING_POINTS[current], &SPLITTING_POINTS[current], A24);
                 } else {
-                    xDBLv2(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current], A24);
+                    xDBL_A24(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current], A24);
                 }
             }
             for (i = 0; i < 2 * STRATEGY4[TORSION_PLUS_EVEN_POWER - isog_len][strategy]; i++)
                 if (j == 0) {
-                    xDBLv2_normalized(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current], A24);
+                    assert(fp2_is_one(&A24->z));
+                    xDBL_A24_normalized(
+                        &SPLITTING_POINTS[current], &SPLITTING_POINTS[current], A24);
                 } else {
-                    xDBLv2(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current], A24);
+                    xDBL_A24(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current], A24);
                 }
             XDBLs[current] = STRATEGY4[TORSION_PLUS_EVEN_POWER - isog_len]
                                       [strategy]; // The number of doublings performed is saved
@@ -89,36 +75,43 @@ ec_eval_even_strategy(ec_curve_t *image,
         if (j == 0) {
             assert(current > 0);
             ec_point_t T;
-            xDBLv2_normalized(&T, &SPLITTING_POINTS[current], A24);
+            assert(fp2_is_one(&A24->z));
+            xDBL_A24_normalized(&T, &SPLITTING_POINTS[current], A24);
             if (fp2_is_zero(&T.x)) {
-                xisog_4_singular(A24, SPLITTING_POINTS[current], *A24);
+                xisog_4_singular(&kps, A24, SPLITTING_POINTS[current], *A24);
                 xeval_4_singular(
-                    SPLITTING_POINTS, SPLITTING_POINTS, current, SPLITTING_POINTS[current]);
-                xeval_4_singular(points, points, points_len, SPLITTING_POINTS[current]);
+                    SPLITTING_POINTS, SPLITTING_POINTS, current, SPLITTING_POINTS[current], &kps);
+
+                // Evaluate points
+                if (points_len)
+                    xeval_4_singular(points, points, points_len, SPLITTING_POINTS[current], &kps);
             } else {
-                xisog_4(A24, SPLITTING_POINTS[current]);
-                xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current);
-                xeval_4(points, points, points_len);
+                xisog_4(&kps, A24, SPLITTING_POINTS[current]);
+                xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current, &kps);
+
+                // Evaluate points
+                if (points_len)
+                    xeval_4(points, points, points_len, &kps);
             }
         } else {
             if (is_odd && current == 0) {
-                xDBLv2(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current], A24);
+                xDBL_A24(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current], A24);
             }
 #ifndef NDEBUG
             // printf("%d \n",current);
             assert(!fp2_is_zero(&SPLITTING_POINTS[current].z));
             ec_point_t test;
             copy_point(&test, &SPLITTING_POINTS[current]);
-            xDBLv2(&test, &test, A24);
+            xDBL_A24(&test, &test, A24);
             assert(!fp2_is_zero(&test.z));
-            xDBLv2(&test, &test, A24);
+            xDBL_A24(&test, &test, A24);
             assert(fp2_is_zero(&test.z));
-
 #endif
             // Evaluate 4-isogeny
-            xisog_4(A24, SPLITTING_POINTS[current]);
-            xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current);
-            xeval_4(points, points, points_len);
+            xisog_4(&kps, A24, SPLITTING_POINTS[current]);
+            xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, current, &kps);
+            if (points_len)
+                xeval_4(points, points, points_len, &kps);
         }
 
         BLOCK -= XDBLs[current];
@@ -129,27 +122,30 @@ ec_eval_even_strategy(ec_curve_t *image,
     if (is_odd) {
         current = 1;
         copy_point(&SPLITTING_POINTS[1], &SPLITTING_POINTS[0]);
-        xDBLv2(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current], A24);
+        xDBL_A24(&SPLITTING_POINTS[current], &SPLITTING_POINTS[current], A24);
     }
-    xisog_4(A24, SPLITTING_POINTS[current]);
-    xeval_4(points, points, points_len);
+    xisog_4(&kps, A24, SPLITTING_POINTS[current]);
+    if (points_len)
+        xeval_4(points, points, points_len, &kps);
 
     // current-=1;
     // final 2-isogeny
     if (is_odd) {
-        xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, 1);
+        xeval_4(SPLITTING_POINTS, SPLITTING_POINTS, 1, &kps);
 
 #ifndef NDEBUG
         assert(!fp2_is_zero(&SPLITTING_POINTS[0].z));
         ec_point_t test;
         copy_point(&test, &SPLITTING_POINTS[0]);
-        xDBLv2(&test, &test, A24);
+        xDBL_A24(&test, &test, A24);
         assert(fp2_is_zero(&test.z));
 
 #endif
 
-        xisog_2(A24, SPLITTING_POINTS[0]);
-        xeval_2(points, points, points_len);
+        ec_kps2_t kps;
+        xisog_2(&kps, A24, SPLITTING_POINTS[0]);
+        if (points_len)
+            xeval_2(points, points, points_len, &kps);
     }
 
     // Output curve in the form (A:C)
@@ -158,26 +154,14 @@ ec_eval_even_strategy(ec_curve_t *image,
     // TODO:
     // The curve does not have A24 normalised though
     // should we normalise it here, or do it later?
-    image->is_A24_computed_and_normalized = 0;
+    image->is_A24_computed_and_normalized = false;
 }
 
 void
-ec_eval_even(ec_curve_t *image,
-             const ec_isog_even_t *phi,
-             ec_point_t *points,
-             unsigned short length)
+ec_eval_even(ec_curve_t *image, ec_isog_even_t *phi, ec_point_t *points, unsigned short length)
 {
-
-    ec_curve_t E;
-    ec_point_t Q4, Q, A24;
-    copy_curve(&E, &phi->curve);
-    copy_point(&Q4, &phi->kernel);
-    copy_point(&Q, &phi->kernel);
-    // AC_to_A24(&A24, &phi->curve);
-    ec_curve_normalize_A24(&E);
-    copy_point(&A24, &E.A24);
-
-    ec_eval_even_strategy(image, points, length, &A24, &Q, phi->length);
+    ec_curve_normalize_A24(&phi->curve);
+    ec_eval_even_strategy(image, points, length, &phi->curve.A24, &phi->kernel, phi->length);
 }
 
 // naive implementation
@@ -192,6 +176,8 @@ ec_eval_small_chain(ec_curve_t *image,
     ec_point_t A24;
     AC_to_A24(&A24, image);
 
+    ec_kps2_t kps;
+
     ec_point_t small_K, big_K;
     copy_point(&big_K, kernel);
 
@@ -199,18 +185,18 @@ ec_eval_small_chain(ec_curve_t *image,
         copy_point(&small_K, &big_K);
         // small_K = big_K;
         for (int j = 0; j < len - i - 1; j++) {
-            xDBLv2(&small_K, &small_K, &A24);
+            xDBL_A24(&small_K, &small_K, &A24);
         }
         if (fp2_is_zero(&small_K.x)) {
             ec_point_t B24;
-            xisog_2_singular(&B24, A24);
-            xeval_2_singular(&big_K, &big_K, 1);
-            xeval_2_singular(points, points, len_points);
+            xisog_2_singular(&kps, &B24, A24);
+            xeval_2_singular(&big_K, &big_K, 1, &kps);
+            xeval_2_singular(points, points, len_points, &kps);
             copy_point(&A24, &B24);
         } else {
-            xisog_2(&A24, small_K);
-            xeval_2(&big_K, &big_K, 1);
-            xeval_2(points, points, len_points);
+            xisog_2(&kps, &A24, small_K);
+            xeval_2(&big_K, &big_K, 1, &kps);
+            xeval_2(points, points, len_points, &kps);
         }
     }
     A24_to_AC(image, &A24);
@@ -218,60 +204,8 @@ ec_eval_small_chain(ec_curve_t *image,
     // TODO:
     // The curve does not have A24 normalised though
     // should we normalise it here, or do it later?
-    image->is_A24_computed_and_normalized = 0;
+    image->is_A24_computed_and_normalized = false;
 }
-
-// // void eval_walk_rec(proj *A, proj *K, long len, bool advance, proj *P, long stacklen) {
-// void ec_eval_even_rec(ec_point_t *A24, ec_point_t *K, long len, bool advance, ec_point_t *P,long
-// stacklen) {
-
-//   if (len == 0)
-//     return;
-//   if (len == 1) {
-//     xisog_2(A24,*K);
-//     xeval_2(K,P,stacklen);
-//     // push points
-//     // for (int i = 0; i < stacklen; i++)
-//     //   two_isog(K, P+i);
-
-//     // push curve
-//     // fp2_sq2(&A->z, &K->z);
-//     // fp2_sq2(&A->x, &K->x);
-//     // fp2_add2(&A->x, &A->x);
-//     // fp2_sub3(&A->x, &A->z, &A->x);
-//     // fp2_add2(&A->x, &A->x);
-//   } else {
-//     long right = len / 2;
-//     long left = len - right;
-//     P[stacklen] = *K;
-//     for (int i = 0; i < left; i++) {
-//         xDBLv2(K, K,A24);
-//     }
-
-//     ec_eval_even_rec(A24, K, right, advance, P, stacklen+1);
-//     K[right*advance] = P[stacklen];
-//     ec_eval_even_rec(A24, K+right*advance, left, advance, P, stacklen);
-//   }
-// }
-
-// // void ec_eval_ev(const two_walk *phi, proj *B, proj *P, long cardinality) {
-// void ec_eval_even(ec_curve_t* image, const ec_isog_even_t* phi,
-//     ec_point_t* points, unsigned short length){
-//   *image = phi->curve;
-//   ec_point_t K = phi->kernel;
-//   long log, len = phi->length;
-//   for (log = 0; len > 1; len >>= 1) log++;
-//   ec_point_t stack[length+log];
-//   for (int i = 0; i < length; ++i) {
-//     stack[i] = points[i];
-//   }
-//   ec_point_t A24;
-//     AC_to_A24(&A24, image);
-//   ec_eval_even_rec(&A24, &K, phi->length, false, stack, length);
-//   for (int i = 0; i < length; ++i) {
-//     points[i] = stack[i];
-//   }
-// }
 
 void
 ec_eval_three_rec(ec_point_t *A24,
@@ -294,7 +228,6 @@ ec_eval_three_rec(ec_point_t *A24,
         for (int j = 0; j < length; j++)
             xeval(&points[j], 0, points[j], *A24);
         copy_point(A24, &B24);
-        kps_clear(0);
         return;
     }
 
@@ -302,17 +235,6 @@ ec_eval_three_rec(ec_point_t *A24,
     long left = length_path - right;
 
     copy_point(&(stack[length_stack]), ker);
-
-    // ibz_t pow;
-    // ibz_init(&pow);
-
-    // ibz_set(&pow, 3);
-    // ibz_pow(&pow, &pow, left);
-
-    // digit_t digits[NWORDS_FIELD];
-    // ibz_to_digits(digits, &pow);
-
-    // xMULv2(ker, ker, digits, ibz_bitsize(&pow), A24);
 
     for (int j = 0; j < left; j++)
         xMULv2(ker, ker, &(TORSION_ODD_PRIMES[0]), p_plus_minus_bitlength[0], A24);
@@ -384,7 +306,6 @@ ec_eval_odd(ec_curve_t *image, const ec_isog_odd_t *phi, ec_point_t *points, uns
             for (j = 0; j < length; j++)
                 xeval(&points[j], i, points[j], A24);
             copy_point(&A24, &B24);
-            kps_clear(i);
         }
     }
 
@@ -406,7 +327,6 @@ ec_eval_odd(ec_curve_t *image, const ec_isog_odd_t *phi, ec_point_t *points, uns
             for (j = 0; j < length; j++)
                 xeval(&points[j], i, points[j], A24);
             copy_point(&A24, &B24);
-            kps_clear(i);
         }
     }
 
@@ -478,16 +398,6 @@ ec_isomorphism(ec_isom_t *isom, const ec_curve_t *from, const ec_curve_t *to)
     fp2_mul(&t4, &t4, &to->C);
     fp2_mul(&t0, &to->A, &from->C);
     fp2_sub(&isom->Nz, &t0, &t4);
-}
-
-void
-ec_iso_inv(ec_isom_t *isom)
-{
-    fp2_t tmp;
-    fp2_copy(&tmp, &isom->D);
-    fp2_copy(&isom->D, &isom->Nx);
-    fp2_copy(&isom->Nx, &tmp);
-    fp2_neg(&isom->Nz, &isom->Nz);
 }
 
 void

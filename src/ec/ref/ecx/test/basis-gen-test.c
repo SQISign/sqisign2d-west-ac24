@@ -42,8 +42,8 @@ inner_test_generated_basis(ec_basis_t *basis, ec_curve_t *curve, unsigned int n,
 
     // Double points to get point of order 2
     for (i = 0; i < n - 1; i++) {
-        xDBLv2(&P, &P, &curve->A24);
-        xDBLv2(&Q, &Q, &curve->A24);
+        xDBL_A24(&P, &P, &curve->A24);
+        xDBL_A24(&Q, &Q, &curve->A24);
     }
     if (ec_is_zero(&P)) {
         printf("Point P generated does not have full order, new = %d\n", new);
@@ -64,8 +64,8 @@ inner_test_generated_basis(ec_basis_t *basis, ec_curve_t *curve, unsigned int n,
     }
 
     // This should give the identity
-    xDBLv2(&P, &P, &curve->A24);
-    xDBLv2(&Q, &Q, &curve->A24);
+    xDBL_A24(&P, &P, &curve->A24);
+    xDBL_A24(&Q, &Q, &curve->A24);
     if (!ec_is_zero(&P)) {
         printf("Point P generated does not have order exactly 2^n, new = %d\n", new);
         PASSED = 0;

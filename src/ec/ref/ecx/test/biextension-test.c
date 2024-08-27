@@ -48,7 +48,7 @@ dbl_2e(ec_point_t *R, uint64_t e, ec_point_t const *P, ec_point_t const *A24)
 {
     copy_point(R, P);
     for (uint64_t i = 0; i < e; i++) {
-        xDBLv2(R, R, A24);
+        xDBL_A24(R, R, A24);
     }
 }
 
@@ -111,8 +111,8 @@ biextension_test(uint64_t bench)
     fp2_inv(&r2);
     assert(fp2_is_equal(&r1, &r2));
 
-    xDBLv2(&PP, &P, &A24);
-    xDBLv2(&QQ, &Q, &A24);
+    xDBL_A24(&PP, &P, &A24);
+    xDBL_A24(&QQ, &Q, &A24);
     xADD(&PPQ, &PQ, &P, &Q);
     xADD(&PQQ, &PQ, &Q, &P);
 

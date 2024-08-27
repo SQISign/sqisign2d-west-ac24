@@ -11,7 +11,7 @@ void copy_point(ec_point_t *P, ec_point_t const *Q);
 void swap_points(ec_point_t *P, ec_point_t *Q, const digit_t option);
 void ec_point_init(ec_point_t *P);
 void ec_curve_init(ec_curve_t *E);
-void xDBLv2(ec_point_t *Q, ec_point_t const *P, ec_point_t const *A24);
+void xDBL_A24(ec_point_t *Q, ec_point_t const *P, ec_point_t const *A24);
 void xDBLADD(ec_point_t *R,
              ec_point_t *S,
              ec_point_t const *P,

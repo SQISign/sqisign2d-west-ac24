@@ -471,7 +471,7 @@ protocols_sign(signature_t *sig,
     fp2_t w0, w1, w0_test;
     ec_point_t A24;
     AC_to_A24(&A24, &CURVE_E0);
-    ec_normalize(&A24);
+    ec_normalize_point(&A24);
     weil(&w0, TORSION_PLUS_EVEN_POWER, &bas_ref.P, &bas_ref.Q, &bas_ref.PmQ, &A24);
     weil(&w1, TORSION_PLUS_EVEN_POWER, &bas_test.P, &bas_test.Q, &bas_test.PmQ, &sk->curve.A24);
     digit_t scal[NWORDS_ORDER] = { 0 };

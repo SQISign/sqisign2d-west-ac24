@@ -1,6 +1,4 @@
 set(SOURCE_FILES_EC_${SVARIANT_UPPER}_REF
-    ${ECX_DIR}/poly-mul.c
-    ${ECX_DIR}/poly-redc.c
     ${ECX_DIR}/ec.c
     ${ECX_DIR}/kps.c
     ${ECX_DIR}/xisog.c
