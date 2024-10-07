@@ -221,9 +221,7 @@ sample_response(quat_alg_elem_t *x,
     ibz_init(&bound);
     ibz_vec_4_init(&vec);
 
-    // TODO make this a proper constant
-    int err = quat_lattice_lll(
-        &lll, lattice, &(QUATALG_PINFTY.p), 500 * (ibz_bitsize(&QUATALG_PINFTY.p) / 120));
+    int err = quat_lattice_lll(&lll, lattice, &(QUATALG_PINFTY.p));
     assert(!err);
 
     // The shortest vector found by lll is our response

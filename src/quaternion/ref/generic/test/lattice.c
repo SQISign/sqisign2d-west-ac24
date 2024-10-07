@@ -642,7 +642,7 @@ quat_test_lattice_lll()
     quat_lattice_hnf(&lat);
 
     ibz_set(&q, 103);
-    res = res || quat_lattice_lll(&red, &lat, &q, 10);
+    res = res || quat_lattice_lll(&red, &lat, &q);
     // test lll reduced
     ibz_set(&num, 3);
     ibz_set(&denom, 4);

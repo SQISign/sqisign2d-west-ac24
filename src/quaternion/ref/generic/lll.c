@@ -267,10 +267,8 @@ sub_row(mpf_t add[4][4], const mpf_t a[4][4], const mpf_t b[4][4], int j, int aj
 /// @param lattice
 /// @return
 int
-quat_lattice_lll(ibz_mat_4x4_t *red, const quat_lattice_t *lattice, const ibz_t *q, int precision)
+quat_lattice_lll(ibz_mat_4x4_t *red, const quat_lattice_t *lattice, const ibz_t *q)
 {
-    if (precision != 0)
-        mpf_set_default_prec(precision);
     int ret = 0;
     ibz_mat_4x4_t basis;
     mpf_t bStar[4][4];
@@ -281,6 +279,20 @@ quat_lattice_lll(ibz_mat_4x4_t *red, const quat_lattice_t *lattice, const ibz_t 
     mpf_t u[4][4];
     mpz_t H[4][4]; // -> I_4
     mpf_t B[4];
+
+    // Upper bound on log(determinant)
+    int logdet = 0;
+    for (int i = 0; i < 4; i++) {
+      int max = 0;
+      for (int j = 0; j < 4; j++) {
+	int s = ibz_bitsize(&lattice->basis[i][j]);
+	max = s > max ? s : max;
+      }
+      logdet += max;
+    }
+    // Set fp precision
+    mpf_set_default_prec(2*logdet);
+    
     mpf_init(tmp);
     mpz_init(tmp_z);
     mpf_init(cnst);
@@ -377,236 +389,3 @@ err:
     ibz_mat_4x4_finalize(&basis);
     return ret;
 }
-
-#if 0
-// double versions
-
-// RED(k,l) sub-algorithm
-static void RED_dbl(int basis[4][4], double u[4][4], int H[4][4], int k, int l) {
-
-    // if |u_{k,l}| <= 0.5, terminate
-    if (fabs(u[k][l]) <= 0.5)
-        return;
-
-    // q <- floor(0.5 + u_{k,l})
-    int q = (int)floor(0.5 + u[k][l]);
-
-    // b_k = b_k - q*b_l
-    for (int i = 0; i < 4; ++i) {
-        basis[k][i] = basis[k][i] - q*basis[l][i];
-    }
-
-    // H_k = H_k - q*H_l
-    for (int i = 0; i < 4; ++i) {
-        H[k][i] = H[k][i] - q*H[l][i];
-    }
-
-    // u_{k,l} = u_{k,l}-q
-    u[k][l] = u[k][l] - q;
-
-    // forall_i \in 1..l-1: u_{k,i} = u_{k,i} - q*u_{l,i}
-    for (int i = 0; i <= l-1; ++i) { // check: of i < l - 1
-        u[k][i] = u[k][i] - q*u[l][i];
-    }
-
-}
-
-// SWAP(k) sub-algorithm
-static void SWAP_dbl(int basis[4][4], double u[4][4], int H[4][4], double B[4], double bStar[4][4], int k, int kmax) {
-    double b[4] = {0};
-
-    // swap b_k and b_{k-1}
-    for (int i = 0; i < 4; ++i) {
-        int tmp = basis[k][i];
-        basis[k][i] = basis[k-1][i];
-        basis[k-1][i] = tmp;
-    }
-
-    // swap H_k and H_{k-1}
-    for (int i = 0; i < 4; ++i) {
-        int tmp = H[k][i];
-        H[k][i] = H[k-1][i];
-        H[k-1][i] = tmp;
-    }
-
-    if (k > 1) {
-        // swap u_{k,j} and u_{k-1,j}
-        for (int j = 0; j <= k - 2; ++j) {
-            double tmp = u[k][j];
-            u[k][j] = u[k-1][j];
-            u[k-1][j] = tmp;
-        }
-    }
-
-    // u = u_{k,k-1}
-    double u_tmp = u[k][k-1];
-
-    // B = B_k + u^2*B_{k-1}
-    double B_tmp = B[k] + u_tmp*u_tmp*B[k-1];
-
-    // u_{k,k-1} = u*B_{k-1} / B
-    u[k][k-1] = u_tmp * B[k-1] / B_tmp;
-
-    // b = bSTAR_{k-1}
-    for (int i = 0; i < 4; ++i) {
-        b[i] = bStar[k-1][i];
-    }
-    // bSTAR_{k-1}=bSTAR_k+u*b
-    for (int i = 0; i < 4; ++i) {
-        bStar[k-1][i] = bStar[k][i]+u_tmp*b[i];
-    }
-    // bSTAR_k = -u_{k,k-1}*bSTAR_k+(B_k/B)*b
-    for (int i = 0; i < 4; ++i) {
-        bStar[k][i] = (-u[k][k-1]) * bStar[k][i] + (B[k]/B_tmp)*b[i];
-    }
-
-    // B_k = B_{k-1}*B_k/B
-    B[k] = B[k-1]*B[k]/B_tmp;
-
-    // B_{k-1} = B
-    B[k-1] = B_tmp;
-
-    for (int i = k+1; i < kmax; ++i) {
-        double t = u[i][k];
-        // u_{i,k} = u_{i,k-1} - u*t
-        u[i][k] = u[i][k-1] - u_tmp*t;
-
-        // u_{i,k-1} = t + u_{k,k-1}*u_{i,k}
-        u[i][k-1] = t + u[k][k-1] * u[i][k];
-    }
-}
-
-static void dotproduct_row_dbl(int* mul, const int m1[4][4], const int m2[4][4], int m1j, int m2j) {
-    *mul = 0;
-    for (int i = 0; i < 4; ++i) {
-        *mul = *mul + m1[m1j][i]*m2[m2j][i];
-    }
-}
-
-static void dotproduct_zr_row_dbl(double* mul, const int m1[4][4], const double m2[4][4], int m1j, int m2j) {
-    *mul = 0;
-    for (int i = 0; i < 4; ++i) {
-        *mul = *mul + (double)m1[m1j][i]*m2[m2j][i];
-    }
-}
-
-static void dotproduct_rr_row_dbl(double* mul, const double m1[4][4], const double m2[4][4], int m1j, int m2j) {
-    *mul = 0;
-    for (int i = 0; i < 4; ++i) {
-        *mul = *mul + m1[m1j][i]*m2[m2j][i];
-    }
-}
-
-static void mul_row_dbl(double mul[4][4], const double* a, const double m[4][4], int j) {
-    for (int i = 0; i < 4; ++i) {
-        mul[j][i] = *a * m[j][i];
-    }
-}
-
-static void add_row_dbl(int add[4][4], const int a[4][4], const int b[4][4], int j, int aj, int bj) {
-    for (int i = 0; i < 4; ++i) {
-        add[j][i] = a[aj][i] +b[bj][i];
-    }
-}
-
-static void sub_row_dbl(double add[4][4], double a[4][4], double b[4][4], int j, int aj, int bj) {
-    for (int i = 0; i < 4; ++i) {
-        add[j][i] = a[aj][i] -b[bj][i];
-    }
-}
-
-/// @brief LLL reduction on 4-dimensional lattice
-/// Implements Algorithm 2.6.3 from Henri Cohen's "A Course in Computational Algebraic Number Theory"
-/// @param red 
-/// @param lattice 
-/// @return 
-int quat_lattice_lll_dbl(int red[4][4], const int lattice[4][4]) {
-    int ret = 0;
-    int basis[4][4];
-    double bStar[4][4];
-    double bStar_tmp[4][4];
-
-    double u[4][4];
-    int H[4][4]; // -> I_4
-    double B[4] = { 0 };
-
-    for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < 4; ++j) {
-            basis[i][j] = lattice[i][j];
-            u[i][j] = 0;
-            bStar[i][j] = 0;
-            bStar_tmp[i][j] = 0;
-            if (i == j)
-                H[i][j] = 1;
-            else
-                H[i][j] = 0;
-        }
-    }
-    int k = 1, kmax = 0;
-    // bStar_1 = b_1
-    for (int i = 0; i < 4; ++i)
-        bStar[0][i] = basis[0][i];
-
-    // B_1 = b_1 * b_1
-    int btmp = 0;
-    dotproduct_row_dbl(&btmp, basis, basis, 0, 0);
-    B[0] = (double) btmp;
-
-    while (k < 4) {
-        // Step 2: Incremental Gram-Schmidt
-        // if (k <= kmax) -> we can omit..
-        if (k > kmax) {
-            kmax = k;
-            for (int i = 0; i < 4; ++i) {
-
-                bStar[k][i] = (double)basis[k][i];
-            }
-            for (int j = 0; j <= k-1; ++j) {
-                // bStar_k = b_k -> already done initially -> todo: check if that's ok
-                // nop
-
-                // u_{k,j} = b_k*bSTAR_j/B_j
-                dotproduct_zr_row_dbl(&u[k][j], basis, bStar, k, j);
-                u[k][j] = u[k][j] / B[j];
-
-                // bStar_k = bStar_k - u_{k,j}*bStar_j
-                mul_row_dbl(bStar_tmp, &u[k][j], bStar, j);
-                sub_row_dbl(bStar, bStar, bStar_tmp, k, k, j);
-            }
-            // B_k = bStar_k*bStar_k
-            dotproduct_rr_row_dbl(&B[k], bStar, bStar, k, k);
-            if (B[k] == 0) {
-                // b_i did not form a basis, terminate with error
-                ret = -1;
-                goto err;
-            }
-        }
-
-        while(1) {
-            // Step 3: Test LLL condition
-            RED_dbl(basis, u, H, k, k - 1);
-            // If B_k < (0.75 - u_{k,k-1}^2)*B_{k-1}
-            double temp = (0.75 - u[k][k-1]*u[k][k-1])*B[k-1];
-            if (B[k] < temp) {
-                SWAP_dbl(basis, u, H, B, bStar, k, kmax);
-                k = (k - 1 > 1 ? k - 1 : 1);
-            } else {
-                for (int l = k - 2; l >= 0; --l) { // TODO: or should it be k - 1 ? or k >= 2?
-                    RED_dbl(basis, u, H, k, l);
-                }
-                k++;
-                break;
-            }
-        }
-    }
-
-    for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < 4; ++j) {
-            red[i][j] = basis[i][j];
-        }
-    }
-
-err:
-    return ret;
-}
-#endif

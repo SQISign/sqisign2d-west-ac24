@@ -122,7 +122,7 @@ sample_response(quat_alg_elem_t *x,
 
     ibz_pow(&norm_bound, &ibz_const_two, SQIsign2D_response_heuristic_bound);
 
-    int err = quat_lattice_lll(&lll, lattice, &(QUATALG_PINFTY.p), 1000);
+    int err = quat_lattice_lll(&lll, lattice, &(QUATALG_PINFTY.p));
     assert(!err);
     // The shortest vector found by lll is a candidate
 

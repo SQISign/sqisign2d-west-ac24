@@ -349,7 +349,7 @@ quat_lideal_isom(quat_alg_elem_t *iso,
 
     quat_lattice_right_transporter(&trans, &I1->lattice, &I2->lattice, alg);
 
-    int err = quat_lattice_lll(&lll, &trans, &alg->p, 0);
+    int err = quat_lattice_lll(&lll, &trans, &alg->p);
     assert(!err);
     // The shortest vector found by lll is a candidate
     for (int i = 0; i < 4; i++)
@@ -384,7 +384,7 @@ quat_lideal_reduce_basis(ibz_mat_4x4_t *reduced,
 {
     ibz_mat_4x4_t prod;
     ibz_mat_4x4_init(&prod);
-    quat_lattice_lll(reduced, &(lideal->lattice), &(alg->p), 0);
+    quat_lattice_lll(reduced, &(lideal->lattice), &(alg->p));
     ibz_mat_4x4_transpose(&prod, reduced);
     ibz_mat_4x4_mul(&prod, &prod, &(alg->gram));
     ibz_mat_4x4_mul(gram, &prod, reduced);

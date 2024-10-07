@@ -553,7 +553,7 @@ quat_test_randomized_lattice_lll()
         // set other parameter
         ibz_set(&q, rand_q % 1024);
         // reduce
-        res = res || quat_lattice_lll(&red, &lat, &q, 0);
+        res = res || quat_lattice_lll(&red, &lat, &q);
         // test lll reduced
         res = res || !quat_dim4_lll_verify(&red, &coeff, &q);
         // test lattice equality

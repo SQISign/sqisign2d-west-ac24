@@ -172,7 +172,7 @@ sample_response(quat_alg_elem_t *x,
     ibz_init(&denom_gram);
     ibz_init(&norm);
 
-    int err = quat_lattice_lll(&lll, lattice, &(QUATALG_PINFTY.p), 1000);
+    int err = quat_lattice_lll(&lll, lattice, &(QUATALG_PINFTY.p));
     assert(!err);
     // The shortest vector found by lll is a candidate
 

@@ -1008,13 +1008,10 @@ void quat_connecting_ideal(quat_left_ideal_t *connecting_ideal,
  * @param red Output: LLL reduced basis
  * @param lattice lattice with 4-dimensional basis
  * @param q parameter q for non-standard basis
- * @param precision floating-point precision for LLL algorithm, if 0 is provided a default precision
- * is taken
  */
 int quat_lattice_lll(ibz_mat_4x4_t *red,
                      const quat_lattice_t *lattice,
-                     const ibz_t *q,
-                     int precision);
+                     const ibz_t *q);
 
 void from_1ijk_to_O0basis(ibz_vec_4_t *vec, const quat_alg_elem_t *el);
 
