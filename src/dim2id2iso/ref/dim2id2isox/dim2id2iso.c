@@ -614,10 +614,6 @@ find_uv(ibz_t *u,
             break;
         }
     }
-    if (!found) {
-        // printf("NOT Found after %d attempts and %d deg one hit out of %d
-        // \n",index*(index-1)/2,count,index*(index-1)/2);
-    }
     // printf("Number of missed attemtps by considering only 2^248 : %d \n ",cnt_missed);
     // printf("Number of missed attempts by not removing power of 2 from v : %d
     // \n",second_cnt_missed); clock_print(tot_cor,"cornacchias :"); clock_print(tot_ops,"all other

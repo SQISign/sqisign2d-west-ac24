@@ -161,6 +161,7 @@ dim2id2iso_test_find_uv()
     int exp = TORSION_PLUS_EVEN_POWER;
     ibz_pow(&target, &ibz_const_two, exp);
 
+    found = 0;
     int num_rerun = 0;
     while (!found && num_rerun < 3) {
         found = find_uv(&u,
@@ -177,7 +178,6 @@ dim2id2iso_test_find_uv()
                         num_rerun);
         num_rerun++;
     }
-
     // assert(found);
     if (!found) {
         printf("not found \n");
