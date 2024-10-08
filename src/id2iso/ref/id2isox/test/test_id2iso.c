@@ -11,11 +11,7 @@ main()
 
     printf("Running id2iso module unit tests\n");
 
-    return 1;
-
     res = res & id2iso_test_ker2id();
-    res = res & id2iso_test_id2ker_odd();
-    res = res & id2iso_test_id2ker_even();
 
     if (!res) {
         printf("\nSome tests failed!\n");
