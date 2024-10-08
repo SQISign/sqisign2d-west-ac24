@@ -3,6 +3,10 @@
 This library is a C implementation of SQIsign2D-West
 <https://eprint.iacr.org/2024/760>
 
+© 2024, The Isogeny Gringos  
+(Andrea Basso, Pierrick Dartois, Luca De Feo, Antonin Leroux,
+Luciano Maino, Giacomo Pope, Damien Robert and Benjamin Wesolowski)
+
 Based on the following codes:
 - SQIsign, https://sqisign.org
 - SQIsignHD, https://github.com/Pierrick-Dartois/SQISignHD-lib
