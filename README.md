@@ -1,6 +1,7 @@
 # SQIsign2D-West
 
-This library is a C implementation of SQIsign2D-West.
+This library is a C implementation of SQIsign2D-West
+<https://eprint.iacr.org/2024/760>
 
 Based on the following codes:
 - SQIsign, https://sqisign.org
@@ -14,7 +15,7 @@ Based on the following codes:
 
 ## Build and check
 
-For a generic build
+For the development build
 
 - `mkdir -p build`
 - `cd build`
@@ -22,7 +23,14 @@ For a generic build
 - `make`
 - `make test`
 
-Warning: at the moment not all tests pass. The main code works, though.
+Besides building and executing the test suite, these commands build
+six executables in `build/test`:
+
+- `sqisign2d_lvl[1,3,5]` executing in a loop a keygen-sign-verify
+  cycle of the main signature scheme;
+- `sqisign2d_heuristic_lvl[1,3,5]` executing in a loop a
+  keygen-sign-verify cycle of the *heuristic* variant of the scheme
+  described in the appendices.
 
 ### Test and benchmark the signature
 
@@ -37,7 +45,14 @@ To reproduce the experiments of the paper, create the following builds
 - `make`
 - `cd ..`
 
-Then each build directory will contain a folder `test` with six executables: one per NIST level and rigourous / heuristic variant. Run them like this:
+`build-ref` contains the pure-C build with finite field arithmetic
+based on [Fiat-Crypto](https://github.com/mit-plv/fiat-crypto/),
+`build-broadwell` contains the build with finite field arithmetic
+optimized for x86_64 platforms.
+
+Each build directory contains a folder `test` with six executables:
+one per NIST level and rigourous / heuristic variant. Run them like
+this:
 
 - `./build-ref/test/sqisign2d_lvl1`
 - `./build-ref/test/sqisign2d_heuristic_lvl1`
@@ -53,8 +68,10 @@ An optimised executable can be built by running
 ### SQISIGN_BUILD_TYPE
 
 Specifies the build type for which SQIsign is built. The currently supported flags are:
-- `ref`, which builds the plain C reference implementation based on Fiat-Crypto.
-- `broadwell`, which builds an additional implementation with GF optimized code for the Intel Broadwell architecture.
+- `ref`, which builds the plain C reference implementation based on
+  [Fiat-Crypto](https://github.com/mit-plv/fiat-crypto/).
+- `broadwell`, which builds an additional implementation with GF
+  optimized code for the x86_64 architecture.
 
 ### ENABLE_GMP_BUILD
 
@@ -87,4 +104,3 @@ Third party code is used in some test and common code files:
 - `src/common/aes_c.c`; MIT: "Copyright (c) 2016 Thomas Pornin <pornin@bolet.org>"
 - `src/common/fips202.c`: Public Domain
 - `src/common/randombytes_system.c`: MIT: Copyright (c) 2017 Daan Sprenkels <hello@dsprenkels.com>
-
