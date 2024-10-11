@@ -1189,7 +1189,12 @@ sampling_random_ideal_O0(quat_left_ideal_t *lideal, ibz_t *norm, int is_prime)
         }
     } else {
         // if it is not prime or we don't know if it is prime, we may just use represent integer
-        generate_random_prime(&n_temp, 1, ibz_bitsize(&QUATALG_PINFTY.p));
+        if (ibz_bitsize(norm) > ibz_bitsize(&QUATALG_PINFTY.p) + 20 ) {
+            ibz_set(&n_temp,1);
+        }
+        else {
+            generate_random_prime(&n_temp, 1, ibz_bitsize(&QUATALG_PINFTY.p) + 40 - ibz_bitsize(norm));
+        }
         ibz_mul(&n_temp, &n_temp, norm);
         found = represent_integer(&gen, &n_temp, &QUATALG_PINFTY);
     }

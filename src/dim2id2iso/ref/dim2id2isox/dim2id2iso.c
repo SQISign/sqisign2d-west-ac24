@@ -332,7 +332,8 @@ find_uv(ibz_t *u,
     // computing a reduced basis
     clock_t t = tic();
     quat_lideal_reduce_basis(&reduced, &gram, lideal, Bpoo);
-    // TOC(t,"\nbasis reduction");
+    // printf("%d-bit norm",ibz_bitsize(&lideal->norm));
+    // TOC_clock(t,"\nbasis reduction");
 
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {

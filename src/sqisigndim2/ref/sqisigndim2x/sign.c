@@ -83,7 +83,7 @@ commit(ec_curve_t *E_com, ec_basis_t *basis_even_com, quat_left_ideal_t *lideal_
     ibz_init(&n);
 
     // generate a random ideal of random norm for the secret ideal
-    generate_random_prime(&n, 1, ibz_bitsize(&QUATALG_PINFTY.p) / 2);
+    generate_random_prime(&n, 1, ibz_bitsize(&QUATALG_PINFTY.p) );
     sampling_random_ideal_O0(lideal_com, &n, 1);
 
     // ideal to isogeny clapotis
@@ -420,6 +420,7 @@ protocols_sign(signature_t *sig,
     // computing the commitment
     commit(&E_com, &Bcom0, &lideal_commit);
 
+
     // computing the challenge
     // vec_chall is a pair of coefficients encoding the kernel of the challenge isogeny
     // as vec_chall[0]*B[0] + vec_chall[1]*B[1] where B is the canonical basis of the
@@ -510,6 +511,7 @@ protocols_sign(signature_t *sig,
     // pushing forward
     quat_lideal_inter(&lideal_aux_resp_com, &lideal_com_resp, &lideal_aux, &QUATALG_PINFTY);
 
+
     // now we evaluate this isogeny on the basis of E0
     dim2id2iso_arbitrary_isogeny_evaluation(&Baux0, &E_aux, &lideal_aux_resp_com);
 
@@ -527,6 +529,7 @@ protocols_sign(signature_t *sig,
     assert(test_point_order_twof(&Baux0.Q, &E_aux, TORSION_PLUS_EVEN_POWER));
     assert(test_point_order_twof(&Baux0.PmQ, &E_aux, TORSION_PLUS_EVEN_POWER));
 #endif
+
 
     // applying the matrix to compute Baux
     // first, we copy and reduce to the relevant order
@@ -834,6 +837,7 @@ protocols_sign(signature_t *sig,
                                &Echall,
                                pow_dim2_deg_resp + exp_diadic_val_full_resp + 2);
 
+
     // filling the output
     sig->backtracking = backtracking;
     sig->two_resp_length = exp_diadic_val_full_resp;
@@ -944,7 +948,6 @@ protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned char *m
 
     // TOC_clock(t,"challenge and canonical basis");
 
-    t = tic();
 
     // setting to the right order
     ec_dbl_iter(&B_aux_can.P, sig->two_resp_length, &E_aux, &B_aux_can.P);
@@ -966,7 +969,6 @@ protocols_verif(signature_t *sig, const public_key_t *pk, const unsigned char *m
 
     // TOC_clock(t,"matrix application");
 
-    t = tic();
 
     ec_curve_t E_chall_2;
     ec_curve_t mem;
