@@ -260,7 +260,7 @@ main(int argc, char **argv)
     printf("\nRunning reduction test\n \n");
     test_LLL();
 
-    int runs = 0;
+    int runs = 100;
     if (argc > 1)
         runs = atoi(argv[1]);
 
